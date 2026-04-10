@@ -1,79 +1,253 @@
-import React from 'react';
-import { View, Text, TouchableOpacity, Alert } from 'react-native';
-import { SafeAreaView } from 'react-native-safe-area-context';
-import { Ionicons } from '@expo/vector-icons';
-import { C, R, roleColor } from '../../src/shared/design';
-import { useAuth } from '../../src/store/auth';
+import {
+  View, Text, ScrollView,
+  TouchableOpacity, Alert,
+} from 'react-native'
+import { router }   from 'expo-router'
+import { Ionicons } from '@expo/vector-icons'
+import { useAuth }  from '../../src/store/auth'
+import { useCart }  from '../../src/store/cart'
+import { C, R, roleColor }
+  from '../../src/shared/design'
+
+const ROLE_LABELS: Record<string, string> = {
+  BUYER:  'Худалдан авагч',
+  STORE:  'Дэлгүүр эзэн',
+  SELLER: 'Борлуулагч',
+  DRIVER: 'Жолооч',
+}
 
 export default function ProfileScreen() {
-  const { user, role, setRole, logout } = useAuth();
+  const { user, role, logout } = useAuth()
+  const { count }              = useCart()
+  const color                  = roleColor(role)
 
-  const handleLogout = () => {
-    Alert.alert('Гарах', 'Та гарахдаа итгэлтэй байна уу?', [
-      { text: 'Болих', style: 'cancel' },
-      { text: 'Гарах', style: 'destructive', onPress: logout },
-    ]);
-  };
-
-  const color = roleColor(role);
+  const MENU = user ? [
+    { icon:'cube-outline',
+      label:'Захиалгын түүх',
+      onPress: () => router.push('/orders' as any) },
+    { icon:'cart-outline',
+      label:`Сагс (${count()})`,
+      onPress: () => router.push('/cart' as any) },
+    { icon:'heart-outline',
+      label:'Хадгалсан',
+      onPress: () => {} },
+    { icon:'location-outline',
+      label:'Хүргэх хаяг',
+      onPress: () => {} },
+    { icon:'settings-outline',
+      label:'Тохиргоо',
+      onPress: () => {} },
+    { icon:'shield-checkmark-outline',
+      label:'Нууцлал',
+      onPress: () => {} },
+  ] : []
 
   return (
-    <SafeAreaView style={{ flex: 1, backgroundColor: C.bg }}>
-      <View style={{ padding: 20 }}>
-        <Text style={{ color: C.text, fontSize: 24, fontWeight: '800' }}>
-          Профайл
-        </Text>
+    <ScrollView style={{
+      flex:            1,
+      backgroundColor: C.bg,
+    }}>
 
+      {/* Header */}
+      <View style={{
+        paddingTop:      60,
+        paddingBottom:   32,
+        alignItems:      'center',
+        borderBottomWidth: 1,
+        borderBottomColor: C.border,
+        backgroundColor: C.bgCard,
+      }}>
         {/* Avatar */}
         <View style={{
-          alignItems: 'center', marginTop: 32,
+          width:           80,
+          height:          80,
+          borderRadius:    40,
+          backgroundColor: color,
+          alignItems:      'center',
+          justifyContent:  'center',
+          marginBottom:    12,
+          borderWidth:     2,
+          borderColor:     color + '60',
         }}>
-          <View style={{
-            width: 80, height: 80, borderRadius: 40,
-            backgroundColor: color + '20',
-            alignItems: 'center', justifyContent: 'center',
-            borderWidth: 2, borderColor: color,
+          <Text style={{
+            color:      C.white,
+            fontSize:   30,
+            fontWeight: '800',
           }}>
-            <Text style={{ fontSize: 32, color: color, fontWeight: '800' }}>
-              {user?.name?.[0] || '?'}
-            </Text>
-          </View>
-          <Text style={{ color: C.text, fontSize: 18, fontWeight: '700', marginTop: 12 }}>
-            {user?.name || 'Зочин'}
-          </Text>
-          <Text style={{ color: C.textSub, fontSize: 13, marginTop: 4 }}>
-            {user?.email || 'Нэвтрээгүй'}
+            {user
+              ? user.name?.[0]?.toUpperCase()
+              : '?'
+            }
           </Text>
         </View>
+
+        <Text style={{
+          color:      C.text,
+          fontSize:   20,
+          fontWeight: '800',
+          marginBottom: 4,
+        }}>
+          {user?.name || 'Зочин'}
+        </Text>
+        <Text style={{
+          color:        C.textMuted,
+          fontSize:     13,
+          marginBottom: 12,
+        }}>
+          {user?.email || 'Нэвтрээгүй'}
+        </Text>
 
         {/* Role badge */}
         <View style={{
-          alignSelf: 'center', marginTop: 16,
-          backgroundColor: color + '20', borderRadius: R.full,
-          paddingHorizontal: 16, paddingVertical: 8,
-          borderWidth: 1, borderColor: color + '40',
+          backgroundColor:   color + '18',
+          borderRadius:      R.full,
+          paddingHorizontal: 16,
+          paddingVertical:   6,
+          borderWidth:       1,
+          borderColor:       color + '40',
         }}>
-          <Text style={{ color, fontSize: 13, fontWeight: '700' }}>
-            {role}
+          <Text style={{
+            color:      color,
+            fontWeight: '700',
+            fontSize:   13,
+          }}>
+            {ROLE_LABELS[role] || role}
           </Text>
         </View>
+      </View>
 
-        {/* Actions */}
-        {user && (
+      {/* Нэвтрэх / Бүртгүүлэх */}
+      {!user && (
+        <View style={{
+          margin: 16,
+          gap:    10,
+        }}>
           <TouchableOpacity
-            onPress={handleLogout}
+            onPress={() =>
+              router.push('/(auth)/login' as any)
+            }
             style={{
-              backgroundColor: C.error + '15', borderRadius: R.lg,
-              padding: 16, alignItems: 'center', marginTop: 40,
-              borderWidth: 1, borderColor: C.error + '30',
+              backgroundColor: C.brand,
+              borderRadius:    R.lg,
+              padding:         16,
+              alignItems:      'center',
             }}
           >
-            <Text style={{ color: C.error, fontWeight: '700' }}>
+            <Text style={{
+              color:      C.white,
+              fontWeight: '700',
+              fontSize:   16,
+            }}>
+              Нэвтрэх
+            </Text>
+          </TouchableOpacity>
+          <TouchableOpacity
+            onPress={() =>
+              router.push('/(auth)/register' as any)
+            }
+            style={{
+              backgroundColor: C.bgSection,
+              borderRadius:    R.lg,
+              padding:         16,
+              alignItems:      'center',
+              borderWidth:     1,
+              borderColor:     C.border,
+            }}
+          >
+            <Text style={{
+              color:      C.text,
+              fontWeight: '600',
+              fontSize:   16,
+            }}>
+              Бүртгүүлэх
+            </Text>
+          </TouchableOpacity>
+        </View>
+      )}
+
+      {/* Menu */}
+      {user && (
+        <View style={{ padding: 16, gap: 8 }}>
+          {MENU.map((item, i) => (
+            <TouchableOpacity
+              key={i}
+              onPress={item.onPress}
+              style={{
+                flexDirection:   'row',
+                alignItems:      'center',
+                backgroundColor: C.bgSection,
+                borderRadius:    R.lg,
+                padding:         16,
+                gap:             12,
+                borderWidth:     1,
+                borderColor:     C.border,
+              }}
+            >
+              <Ionicons
+                name={item.icon as any}
+                size={22}
+                color={C.textSub}
+              />
+              <Text style={{
+                flex:       1,
+                color:      C.text,
+                fontSize:   15,
+                fontWeight: '500',
+              }}>
+                {item.label}
+              </Text>
+              <Ionicons
+                name="chevron-forward"
+                size={18}
+                color={C.border}
+              />
+            </TouchableOpacity>
+          ))}
+
+          {/* Гарах */}
+          <TouchableOpacity
+            onPress={() => Alert.alert(
+              'Гарах',
+              'Гарахдаа итгэлтэй байна уу?',
+              [
+                { text:'Болих', style:'cancel' },
+                {
+                  text:    'Гарах',
+                  style:   'destructive',
+                  onPress: logout,
+                },
+              ]
+            )}
+            style={{
+              flexDirection:   'row',
+              alignItems:      'center',
+              backgroundColor: C.bgSection,
+              borderRadius:    R.lg,
+              padding:         16,
+              gap:             12,
+              borderWidth:     1,
+              borderColor:     C.brand + '30',
+              marginTop:       8,
+            }}
+          >
+            <Ionicons
+              name="log-out-outline"
+              size={22}
+              color={C.brand}
+            />
+            <Text style={{
+              flex:       1,
+              color:      C.brand,
+              fontSize:   15,
+              fontWeight: '600',
+            }}>
               Гарах
             </Text>
           </TouchableOpacity>
-        )}
-      </View>
-    </SafeAreaView>
-  );
+        </View>
+      )}
+
+      <View style={{ height: 80 }} />
+    </ScrollView>
+  )
 }

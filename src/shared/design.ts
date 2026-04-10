@@ -1,74 +1,115 @@
 export const C = {
-  // Brand
+  // Primary — Buyer accent (цэнхэр)
+  primary:    '#1A73E8',
+  primaryDim: 'rgba(26,115,232,0.15)',
+
+  // Brand — eseller улаан (зөвхөн logo, CTA)
   brand:    '#E8242C',
   brandDim: 'rgba(232,36,44,0.15)',
 
-  // Role
+  // Secondary
+  secondary:   '#34A853',
+  secondaryDim:'rgba(52,168,83,0.15)',
+
+  // Gold
+  gold:    '#F9A825',
+  goldDim: 'rgba(249,168,37,0.15)',
+
+  // Error
+  error:    '#EA4335',
+  errorDim: 'rgba(234,67,53,0.15)',
+
+  // Role accent
   buyer:    '#1A73E8',
-  store:    '#0D9E5C',
+  store:    '#0D652D',
   seller:   '#E37400',
   driver:   '#C62828',
 
-  // Background
-  bg:       '#0A0A0A',
-  bgCard:   '#141414',
-  bgSection:'#1A1A1A',
+  // Dark mode background
+  bg:       '#121212',
+  bgCard:   '#1E1E1E',
+  bgSection:'#242424',
+  bgInput:  '#2A2A2A',
 
   // Border
-  border:   '#222222',
-  border2:  '#2A2A2A',
+  border:   '#2A2A2A',
+  border2:  '#333333',
 
   // Text
-  text:     '#EFEFEF',
-  textSub:  '#999999',
-  textMuted:'#555555',
+  text:     '#E0E0E0',
+  textSub:  '#9E9E9E',
+  textMuted:'#616161',
 
   // Status
   success:  '#34A853',
   warning:  '#F9A825',
-  error:    '#EA4335',
-  gold:     '#F9A825',
 
-  white:    '#FFFFFF',
-  black:    '#000000',
+  // Special
+  white: '#FFFFFF',
+  black: '#000000',
 };
 
 export const R = {
-  xs:   6,
+  xs:   4,
   sm:   8,
   md:   12,
   lg:   16,
-  xl:   24,
-  xxl:  32,
+  xl:   20,
+  xxl:  24,
+  xxxl: 32,
   full: 999,
+};
+
+export const F = {
+  h1:    { fontSize: 28, fontWeight: '900' as const, letterSpacing: -0.5 },
+  h2:    { fontSize: 22, fontWeight: '800' as const },
+  h3:    { fontSize: 18, fontWeight: '700' as const },
+  h4:    { fontSize: 16, fontWeight: '700' as const },
+  body:  { fontSize: 15, fontWeight: '400' as const },
+  small: { fontSize: 13, fontWeight: '400' as const },
+  tiny:  { fontSize: 11, fontWeight: '400' as const },
 };
 
 export const S = {
   card: {
     shadowColor:   '#000',
-    shadowOffset:  { width: 0, height: 4 },
-    shadowOpacity: 0.3,
+    shadowOffset:  { width: 0, height: 2 },
+    shadowOpacity: 0.4,
     shadowRadius:  8,
     elevation:     6,
+  },
+  elevated: {
+    shadowColor:   '#000',
+    shadowOffset:  { width: 0, height: 4 },
+    shadowOpacity: 0.5,
+    shadowRadius:  16,
+    elevation:     12,
   },
 };
 
 export function roleColor(role: string): string {
-  const map: Record<string, string> = {
+  return ({
     BUYER:  C.buyer,
     STORE:  C.store,
     SELLER: C.seller,
     DRIVER: C.driver,
-  };
-  return map[role] ?? C.brand;
+  } as Record<string, string>)[role] ?? C.primary;
 }
 
 export function roleIcon(role: string): string {
-  const map: Record<string, string> = {
+  return ({
     BUYER:  'cart',
     STORE:  'storefront',
     SELLER: 'megaphone',
     DRIVER: 'car',
-  };
-  return map[role] ?? 'person';
+  } as Record<string, string>)[role] ?? 'person';
+}
+
+export function roleName(role: string): string {
+  return ({
+    BUYER:  'Худалдан авагч',
+    STORE:  'Дэлгүүр эзэн',
+    SELLER: 'Борлуулагч',
+    DRIVER: 'Жолооч',
+  } as Record<string, string>)[role] ?? role;
 }

@@ -1,7 +1,7 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const BASE = 'https://eseller.mn/api';
+const BASE = 'https://sarana-backend.onrender.com/api';
 
 export const api = axios.create({
   baseURL: BASE,
@@ -27,7 +27,9 @@ api.interceptors.response.use(
     if (err.response?.status === 401) {
       await SecureStore.deleteItemAsync('token');
     }
-    throw err.response?.data || new Error('Network error');
+    const data = err.response?.data;
+    const message = data?.message || data?.error || 'Сервертэй холбогдож чадсангүй';
+    throw new Error(message);
   },
 );
 

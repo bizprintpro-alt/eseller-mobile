@@ -25,11 +25,11 @@ export default function LoginScreen() {
       return;
     }
     try {
-      Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
-      await login(email, pass);
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+      await login(email.trim().toLowerCase(), pass);
       router.replace('/(tabs)');
     } catch (e: any) {
-      Alert.alert('Алдаа', e.message || 'Нэвтрэх үед алдаа гарлаа');
+      Alert.alert('Алдаа', e?.message || 'Нэвтрэх үед алдаа гарлаа');
     }
   };
 

@@ -6,12 +6,13 @@ import * as LocalAuth from 'expo-local-authentication';
 import { post } from '../services/api';
 
 interface User {
-  id:     string;
-  name:   string;
-  email:  string;
-  phone:  string;
-  avatar: string | null;
-  roles:  string[];
+  _id?:    string;
+  id?:     string;
+  name:    string;
+  email:   string;
+  phone?:  string;
+  avatar?: string | null;
+  role:    string;
 }
 
 interface AuthStore {
@@ -19,7 +20,6 @@ interface AuthStore {
   token:     string | null;
   role:      string;
   loading:   boolean;
-  biometric: boolean;
 
   login:        (email: string, pass: string) => Promise<void>;
   loginWithOTP: (phone: string, otp: string) => Promise<void>;
@@ -29,44 +29,53 @@ interface AuthStore {
   loginWithBio: () => Promise<boolean>;
 }
 
+// Backend role → app role mapping
+function mapRole(backendRole?: string): string {
+  const map: Record<string, string> = {
+    buyer:     'BUYER',
+    seller:    'STORE',
+    affiliate: 'SELLER',
+    delivery:  'DRIVER',
+    admin:     'BUYER',
+  };
+  return map[backendRole || 'buyer'] || 'BUYER';
+}
+
 export const useAuth = create<AuthStore>()(
   persist(
     (set, _get) => ({
-      user:      null,
-      token:     null,
-      role:      'BUYER',
-      loading:   false,
-      biometric: false,
+      user:    null,
+      token:   null,
+      role:    'BUYER',
+      loading: false,
 
+      // POST /auth/login (Express backend)
       login: async (email, password) => {
         set({ loading: true });
         try {
-          const res: any = await post('/auth/signin', { email, password });
-          await SecureStore.setItemAsync('token', res.token);
+          const res: any = await post('/auth/login', { email, password });
+          const token = res.token;
+          const user = res.user;
+          await SecureStore.setItemAsync('token', token);
           set({
-            user:    res.user,
-            token:   res.token,
-            role:    res.user.roles?.[0] || 'BUYER',
+            user,
+            token,
+            role:    mapRole(user?.role),
             loading: false,
           });
-        } catch (e) {
+        } catch (e: any) {
           set({ loading: false });
-          throw e;
+          throw new Error(e?.message || 'Нэвтрэх амжилтгүй');
         }
       },
 
-      loginWithOTP: async (phone, otp) => {
+      // OTP — backend дээр одоогоор байхгүй, stub
+      loginWithOTP: async (_phone, _otp) => {
         set({ loading: true });
         try {
-          const res: any = await post('/auth/otp-verify', { phone, otp });
-          await SecureStore.setItemAsync('token', res.token);
-          set({
-            user:    res.user,
-            token:   res.token,
-            role:    res.user.roles?.[0] || 'BUYER',
-            loading: false,
-          });
-        } catch (e) {
+          // TODO: Backend-д OTP endpoint нэмэгдмэгц идэвхжүүлнэ
+          throw new Error('OTP нэвтрэлт одоогоор боломжгүй байна. Имэйлээр нэвтэрнэ үү.');
+        } catch (e: any) {
           set({ loading: false });
           throw e;
         }
@@ -80,18 +89,26 @@ export const useAuth = create<AuthStore>()(
       setRole: (role) => set({ role }),
 
       checkBio: async () => {
-        const hw = await LocalAuth.hasHardwareAsync();
-        const en = await LocalAuth.isEnrolledAsync();
-        return hw && en;
+        try {
+          const hw = await LocalAuth.hasHardwareAsync();
+          const en = await LocalAuth.isEnrolledAsync();
+          return hw && en;
+        } catch {
+          return false;
+        }
       },
 
       loginWithBio: async () => {
-        const result = await LocalAuth.authenticateAsync({
-          promptMessage:         'Нэвтрэхийн тулд',
-          cancelLabel:           'Болих',
-          disableDeviceFallback: false,
-        });
-        return result.success;
+        try {
+          const result = await LocalAuth.authenticateAsync({
+            promptMessage:         'Нэвтрэхийн тулд',
+            cancelLabel:           'Болих',
+            disableDeviceFallback: false,
+          });
+          return result.success;
+        } catch {
+          return false;
+        }
       },
     }),
     {
