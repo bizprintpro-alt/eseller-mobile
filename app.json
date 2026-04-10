@@ -61,7 +61,8 @@
           "icon": "./assets/adaptive-icon.png",
           "color": "#E8242C"
         }
-      ]
+      ],
+      "expo-font"
     ],
     "scheme": "eseller",
     "extra": {
