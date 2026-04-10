@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { post }     from '../../src/services/api'
 import { useAuth }  from '../../src/store/auth'
 import { C, R, F }  from '../../src/shared/design'
+import * as SecureStore from 'expo-secure-store'
 
 export default function RegisterScreen() {
   const { login }              = useAuth()
@@ -36,11 +37,26 @@ export default function RegisterScreen() {
 
     setLoading(true)
     try {
-      await post('/auth/register', {
-        name, email, phone, password: pass
+      // Register буцааж token + user өгдөг
+      const res: any = await post('/auth/register', {
+        name, email, phone: phone || undefined, password: pass,
       })
-      await login(email, pass)
-      router.replace('/(tabs)' as any)
+
+      if (res?.token && res?.user) {
+        // Token-г хадгалаад шууд нэвтрэх
+        await SecureStore.setItemAsync('token', res.token)
+        // Auth store-д user тохируулах — login дуудахгүй
+        useAuth.setState({
+          user:  res.user,
+          token: res.token,
+          role:  'BUYER',
+        })
+        router.replace('/(tabs)' as any)
+      } else {
+        // Token буцаагаагүй бол login хийх
+        await login(email, pass)
+        router.replace('/(tabs)' as any)
+      }
     } catch (e: any) {
       Alert.alert('Алдаа',
         e.message || 'Бүртгэл үүсгэхэд алдаа гарлаа')

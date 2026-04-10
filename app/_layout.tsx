@@ -110,6 +110,10 @@ function AppContent() {
       />
       <Stack.Screen name="search" />
       <Stack.Screen name="track/[code]" />
+      <Stack.Screen
+        name="feed/create"
+        options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
+      />
       <Stack.Screen name="storefront/[slug]" />
     </Stack>
   )

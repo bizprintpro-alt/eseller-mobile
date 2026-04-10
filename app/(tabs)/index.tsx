@@ -11,7 +11,7 @@ import { useAuth } from '../../src/store/auth'
 import { useCart } from '../../src/store/cart'
 import { get } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
-import { RoleSwitcher } from '../../src/shared/ui/RoleSwitcher'
+import { RoleBadge } from '../../src/shared/ui/RoleSwitcher'
 import { Skeleton } from '../../src/shared/ui/Skeleton'
 
 const { width } = Dimensions.get('window')
@@ -131,32 +131,33 @@ export default function HomeScreen() {
       >
         {/* ═══ HEADER ═══ */}
         <View style={{
-          flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center',
+          flexDirection: 'row', alignItems: 'center',
           paddingHorizontal: 16, paddingTop: 56, paddingBottom: 12,
+          gap: 10,
         }}>
-          <Text style={{ fontSize: 24, fontWeight: '900', color: C.text, letterSpacing: -0.5 }}>
+          <Text style={{ fontSize: 22, fontWeight: '900', color: C.text, letterSpacing: -0.5 }}>
             eseller<Text style={{ color: C.brand }}>.mn</Text>
           </Text>
-          <View style={{ flexDirection: 'row', gap: 12, alignItems: 'center' }}>
-            <TouchableOpacity
-              onPress={() => router.push('/cart' as any)}
-              style={{ position: 'relative' }}
-            >
-              <Ionicons name="cart-outline" size={26} color={C.text} />
-              {count() > 0 && (
-                <View style={{
-                  position: 'absolute', top: -4, right: -4,
-                  backgroundColor: C.brand, borderRadius: 8,
-                  minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
-                }}>
-                  <Text style={{ color: C.white, fontSize: 9, fontWeight: '700' }}>{count()}</Text>
-                </View>
-              )}
-            </TouchableOpacity>
-            <TouchableOpacity onPress={() => router.push('/search' as any)}>
-              <Ionicons name="search-outline" size={24} color={C.text} />
-            </TouchableOpacity>
-          </View>
+          <RoleBadge />
+          <View style={{ flex: 1 }} />
+          <TouchableOpacity
+            onPress={() => router.push('/cart' as any)}
+            style={{ position: 'relative' }}
+          >
+            <Ionicons name="cart-outline" size={24} color={C.text} />
+            {count() > 0 && (
+              <View style={{
+                position: 'absolute', top: -4, right: -4,
+                backgroundColor: C.brand, borderRadius: 8,
+                minWidth: 16, height: 16, alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Text style={{ color: C.white, fontSize: 9, fontWeight: '700' }}>{count()}</Text>
+              </View>
+            )}
+          </TouchableOpacity>
+          <TouchableOpacity onPress={() => router.push('/search' as any)}>
+            <Ionicons name="search-outline" size={22} color={C.text} />
+          </TouchableOpacity>
         </View>
 
         {/* ═══ HERO BANNER ═══ */}
@@ -545,7 +546,7 @@ export default function HomeScreen() {
 
       </ScrollView>
 
-      <RoleSwitcher />
+      {/* RoleBadge is now inline in header */}
     </View>
   )
 }
