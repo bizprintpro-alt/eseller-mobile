@@ -1,7 +1,9 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
 
-const BASE = 'https://sarana-backend.onrender.com/api';
+const BASE = __DEV__
+  ? 'http://192.168.1.9:3000/api'   // local dev
+  : 'https://eseller.mn/api';        // production
 
 export const api = axios.create({
   baseURL: BASE,
