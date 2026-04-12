@@ -13,6 +13,7 @@ import AsyncStorage
   from '@react-native-async-storage/async-storage'
 import * as Notifications from 'expo-notifications'
 import { useAuth }  from '../src/store/auth'
+import { registerPushToken } from '../src/lib/notifications'
 import { C }        from '../src/shared/design'
 import SplashScreen
   from '../src/shared/ui/SplashScreen'
@@ -55,6 +56,13 @@ function AppContent() {
       })
       .catch(() => {})
   }, [])
+
+  // Push token бүртгэх (нэвтэрсэн үед)
+  useEffect(() => {
+    if (user) {
+      registerPushToken()
+    }
+  }, [user])
 
   const finishOnboarding = async () => {
     try {

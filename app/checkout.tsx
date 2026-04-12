@@ -6,17 +6,25 @@ import { useCart } from '../src/store/cart'
 import { post } from '../src/services/api'
 import { C, R } from '../src/shared/design'
 
+const PAYMENT_METHODS = [
+  { id: 'qpay', label: 'QPay', icon: 'qr-code' as const, color: '#E8242C' },
+  { id: 'socialpay', label: 'SocialPay', icon: 'phone-portrait' as const, color: '#1A73E8' },
+  { id: 'card', label: 'Visa / MC', icon: 'card' as const, color: '#6366F1' },
+]
+
 const BANKS = [
-  { name: 'Хаан банк', icon: '🏦' },
-  { name: 'Голомт', icon: '🏛' },
-  { name: 'TDB', icon: '💳' },
-  { name: 'Мост Мани', icon: '📱' },
+  { name: 'Хаан банк', url: 'khanbank://', color: '#006341' },
+  { name: 'Голомт', url: 'golomt://', color: '#E8242C' },
+  { name: 'TDB', url: 'tdb://', color: '#003087' },
+  { name: 'Мост Мани', url: 'mostmoney://', color: '#FF6B00' },
+  { name: 'SocialPay', url: 'socialpay://', color: '#1A73E8' },
 ]
 
 export default function CheckoutScreen() {
   const { items, total, clear } = useCart()
   const [address, setAddress] = useState('')
   const [phone, setPhone] = useState('')
+  const [method, setMethod] = useState('qpay')
   const [loading, setLoading] = useState(false)
   const [qpayData, setQpayData] = useState<any>(null)
   const [countdown, setCountdown] = useState(300)
@@ -33,15 +41,12 @@ export default function CheckoutScreen() {
         deliveryAddress: address,
         phone,
         totalAmount: total(),
+        paymentMethod: method,
       })
       setQpayData(res)
       clear()
       let t = 300
-      const interval = setInterval(() => {
-        t--
-        setCountdown(t)
-        if (t <= 0) clearInterval(interval)
-      }, 1000)
+      const interval = setInterval(() => { t--; setCountdown(t); if (t <= 0) clearInterval(interval) }, 1000)
     } catch (e: any) {
       Alert.alert('Алдаа', e.message || 'Захиалга үүсгэхэд алдаа гарлаа')
     } finally {
@@ -49,41 +54,50 @@ export default function CheckoutScreen() {
     }
   }
 
-  // QPay payment screen
+  // ═══ QPay QR Screen ═══
   if (qpayData) return (
     <View style={{ flex: 1, backgroundColor: C.bg, alignItems: 'center', padding: 24, paddingTop: 80 }}>
+      {/* Escrow notice */}
+      <View style={{ backgroundColor: '#34A85315', borderRadius: R.lg, padding: 14, marginBottom: 24, borderWidth: 1, borderColor: '#34A85340', flexDirection: 'row', gap: 10, alignItems: 'flex-start', width: '100%' }}>
+        <Ionicons name="shield-checkmark" size={20} color="#34A853" />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#34A853', fontWeight: '700', fontSize: 13 }}>Дундын данс (Escrow)</Text>
+          <Text style={{ color: '#34A85390', fontSize: 12, marginTop: 2 }}>Таны төлбөр 3 хоног хамгаалагдаж, бараа хүргэгдсэний дараа л дэлгүүрт шилжинэ</Text>
+        </View>
+      </View>
+
       <Text style={{ color: C.text, fontSize: 22, fontWeight: '800', marginBottom: 8 }}>QPay төлбөр</Text>
       <Text style={{ color: C.textSub, marginBottom: 24, textAlign: 'center' }}>QR кодыг банкны аппаар скан хийнэ үү</Text>
 
       {qpayData.qrImage && (
         <View style={{ backgroundColor: '#fff', borderRadius: R.lg, padding: 12 }}>
-          <Image source={{ uri: `data:image/png;base64,${qpayData.qrImage}` }}
-            style={{ width: 200, height: 200 }} />
+          <Image source={{ uri: `data:image/png;base64,${qpayData.qrImage}` }} style={{ width: 200, height: 200 }} />
         </View>
       )}
 
       <Text style={{ color: C.brand, fontSize: 28, fontWeight: '900', marginTop: 16 }}>
         {Math.floor(countdown / 60)}:{String(countdown % 60).padStart(2, '0')}
       </Text>
-      <Text style={{ color: C.textMuted, marginTop: 4 }}>Хугацаа дуусахаас өмнө төлнө үү</Text>
+      <Text style={{ color: C.textMuted, marginTop: 4, marginBottom: 24 }}>Хугацаа дуусахаас өмнө төлнө үү</Text>
 
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, marginTop: 24, justifyContent: 'center' }}>
+      {/* Bank deep links */}
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', width: '100%' }}>
         {BANKS.map(b => (
           <TouchableOpacity key={b.name}
-            style={{ backgroundColor: C.bgSection, borderRadius: R.md, padding: 12, minWidth: 120, alignItems: 'center', borderWidth: 1, borderColor: C.border }}>
-            <Text style={{ fontSize: 20 }}>{b.icon}</Text>
-            <Text style={{ color: C.text, fontSize: 12, fontWeight: '600', marginTop: 4 }}>{b.name}</Text>
+            onPress={() => Linking.openURL(b.url).catch(() => Alert.alert('Апп олдсонгүй', `${b.name} апп суулгаагүй байна`))}
+            style={{ backgroundColor: b.color + '15', borderRadius: R.md, padding: 12, minWidth: '44%', alignItems: 'center', borderWidth: 1, borderColor: b.color + '40' }}>
+            <Text style={{ color: b.color, fontSize: 13, fontWeight: '700' }}>{b.name}</Text>
           </TouchableOpacity>
         ))}
       </View>
 
-      <TouchableOpacity onPress={() => router.push('/(tabs)/' as any)} style={{ marginTop: 32 }}>
+      <TouchableOpacity onPress={() => router.push('/(tabs)/' as any)} style={{ marginTop: 24, padding: 14 }}>
         <Text style={{ color: C.textSub, fontWeight: '600' }}>Нүүр хуудас руу буцах</Text>
       </TouchableOpacity>
     </View>
   )
 
-  // Checkout form
+  // ═══ Checkout Form ═══
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ paddingBottom: 40 }}>
       <View style={{ padding: 16, paddingTop: 60, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
@@ -93,8 +107,18 @@ export default function CheckoutScreen() {
         <Text style={{ color: C.text, fontSize: 20, fontWeight: '800' }}>Захиалга</Text>
       </View>
 
+      {/* Escrow notice */}
+      <View style={{ margin: 12, backgroundColor: '#34A85315', borderRadius: R.lg, padding: 14, borderWidth: 1, borderColor: '#34A85340', flexDirection: 'row', gap: 10 }}>
+        <Ionicons name="shield-checkmark" size={20} color="#34A853" />
+        <View style={{ flex: 1 }}>
+          <Text style={{ color: '#34A853', fontWeight: '700', fontSize: 13 }}>3 өдрийн дундын данс хамгаалалт</Text>
+          <Text style={{ color: '#34A85390', fontSize: 12, marginTop: 2 }}>Бараа хүргэгдсэний дараа л төлбөр шилжинэ</Text>
+        </View>
+      </View>
+
       {/* Items */}
       <View style={{ margin: 12, backgroundColor: C.bgCard, borderRadius: R.lg, padding: 16, borderWidth: 1, borderColor: C.border }}>
+        <Text style={{ color: C.textSub, fontWeight: '700', fontSize: 12, marginBottom: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Захиалгын дэлгэрэнгүй</Text>
         {items.map((item, i) => (
           <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', marginBottom: 8 }}>
             <Text style={{ color: C.text, flex: 1 }} numberOfLines={1}>{item.name} ×{item.qty}</Text>
@@ -107,10 +131,25 @@ export default function CheckoutScreen() {
         </View>
       </View>
 
+      {/* Payment method selector */}
+      <View style={{ margin: 12 }}>
+        <Text style={{ color: C.textSub, fontWeight: '600', marginBottom: 8, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Төлбөрийн арга</Text>
+        <View style={{ gap: 8 }}>
+          {PAYMENT_METHODS.map(m => (
+            <TouchableOpacity key={m.id} onPress={() => setMethod(m.id)}
+              style={{ flexDirection: 'row', alignItems: 'center', backgroundColor: method === m.id ? m.color + '15' : C.bgCard, borderRadius: R.lg, padding: 14, gap: 12, borderWidth: 1, borderColor: method === m.id ? m.color : C.border }}>
+              <Ionicons name={m.icon} size={22} color={m.color} />
+              <Text style={{ flex: 1, color: C.text, fontWeight: '600' }}>{m.label}</Text>
+              {method === m.id && <Ionicons name="checkmark-circle" size={20} color={m.color} />}
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
       {/* Address */}
       <View style={{ margin: 12 }}>
         <Text style={{ color: C.textSub, fontWeight: '600', marginBottom: 8, fontSize: 12, textTransform: 'uppercase', letterSpacing: 1 }}>Хүргэх хаяг</Text>
-        <TextInput placeholder="Дүүрэг, хороо, байшин..." placeholderTextColor={C.textMuted} value={address} onChangeText={setAddress}
+        <TextInput placeholder="Дүүрэг, хороо, байшин, орц, тоот..." placeholderTextColor={C.textMuted} value={address} onChangeText={setAddress}
           multiline style={{ backgroundColor: C.bgCard, borderRadius: R.lg, padding: 14, color: C.text, fontSize: 14, textAlignVertical: 'top', minHeight: 80, borderWidth: 1, borderColor: C.border }} />
       </View>
 
@@ -125,7 +164,9 @@ export default function CheckoutScreen() {
         style={{ margin: 12, backgroundColor: loading ? C.textMuted : C.brand, borderRadius: R.lg, padding: 18, alignItems: 'center' }}>
         {loading
           ? <ActivityIndicator color="#fff" />
-          : <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>💳 QPay-р төлөх</Text>
+          : <Text style={{ color: '#fff', fontWeight: '800', fontSize: 16 }}>
+              💳 {method === 'qpay' ? 'QPay-р' : method === 'socialpay' ? 'SocialPay-р' : 'Картаар'} төлөх
+            </Text>
         }
       </TouchableOpacity>
     </ScrollView>
