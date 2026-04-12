@@ -136,7 +136,7 @@ export default function StorefrontScreen() {
                 }}
               >
                 <Image
-                  source={{ uri: item.media?.[0]?.url }}
+                  source={{ uri: item.images?.[0] || item.media?.[0]?.url }}
                   style={{
                     width: '100%', aspectRatio: 1,
                     backgroundColor: C.bgSection,

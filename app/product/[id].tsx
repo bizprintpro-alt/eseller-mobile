@@ -32,7 +32,7 @@ export default function ProductDetailScreen() {
   })
 
   const p      = product as any
-  const images = p?.media || []
+  const images = p?.images || p?.media || []
 
   const handleAddToCart = () => {
     if (!p) return

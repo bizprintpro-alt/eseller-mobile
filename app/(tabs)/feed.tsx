@@ -128,7 +128,7 @@ export default function FeedScreen() {
               {/* Image */}
               <View style={{ position: 'relative' }}>
                 <Image
-                  source={{ uri: item.media?.[0]?.url || item.images?.[0] }}
+                  source={{ uri: item.images?.[0] || item.media?.[0]?.url }}
                   style={{
                     width: 110, height: 110, backgroundColor: C.bgSection,
                   }}

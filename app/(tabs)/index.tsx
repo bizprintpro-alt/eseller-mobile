@@ -359,7 +359,7 @@ function BuyerHome() {
                 >
                   <PromotedBadge />
                   <Image
-                    source={{ uri: item.media?.[0]?.url }}
+                    source={{ uri: item.images?.[0] || item.media?.[0]?.url }}
                     style={{ width: CARD_W, height: CARD_W, backgroundColor: C.bgSection }}
                     resizeMode="cover"
                   />
@@ -527,7 +527,7 @@ function BuyerHome() {
                   }}
                 >
                   <Image
-                    source={{ uri: item.media?.[0]?.url }}
+                    source={{ uri: item.images?.[0] || item.media?.[0]?.url }}
                     style={{ width: CARD_W, height: CARD_W, backgroundColor: C.bgSection }}
                     resizeMode="cover"
                   />
