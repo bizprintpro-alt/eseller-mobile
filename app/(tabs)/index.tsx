@@ -64,7 +64,95 @@ function PromotedBadge() {
   )
 }
 
+// ═══════════════════════════════════
+// STORE OWNER — Dashboard
+// ═══════════════════════════════════
+
+function StoreDashboard() {
+  const { data, refetch, isRefetching } = useQuery({
+    queryKey: ['store-dashboard'],
+    queryFn: () => get('/seller/analytics'),
+  })
+
+  const stats = (data as any) || {}
+
+  const CARDS = [
+    { icon: 'cash' as const, label: 'Борлуулалт', value: (stats.totalRevenue || 0).toLocaleString() + '₮', color: '#E8242C' },
+    { icon: 'receipt' as const, label: 'Захиалга', value: String(stats.totalOrders || 0), color: '#1A73E8' },
+    { icon: 'cube' as const, label: 'Бараа', value: String(stats.totalProducts || 0), color: '#34A853' },
+    { icon: 'star' as const, label: 'Үнэлгээ', value: (stats.rating || 0).toFixed(1), color: '#F9A825' },
+  ]
+
+  return (
+    <ScrollView style={{ flex: 1, backgroundColor: C.bg }}
+      refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.store} />}>
+      <View style={{ padding: 16, paddingTop: 60 }}>
+        <Text style={{ fontSize: 22, fontWeight: '900', color: C.text }}>
+          Дэлгүүрийн самбар
+        </Text>
+        <Text style={{ color: C.textSub, fontSize: 13, marginTop: 4 }}>Хяналтын самбар</Text>
+      </View>
+
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 10 }}>
+        {CARDS.map((c, i) => (
+          <View key={i} style={{ width: '47%', backgroundColor: C.bgCard, borderRadius: R.lg, padding: 16, borderLeftWidth: 3, borderLeftColor: c.color, borderWidth: 1, borderColor: C.border }}>
+            <Ionicons name={c.icon} size={24} color={c.color} />
+            <Text style={{ color: c.color, fontSize: 22, fontWeight: '900', marginTop: 8 }}>{c.value}</Text>
+            <Text style={{ color: C.textSub, fontSize: 12, marginTop: 4 }}>{c.label}</Text>
+          </View>
+        ))}
+      </View>
+
+      <View style={{ margin: 12 }}>
+        <Text style={{ fontSize: 16, fontWeight: '700', color: C.text, marginBottom: 12 }}>Хурдан үйлдэл</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+          {[
+            { icon: 'add-circle' as const, label: 'Бараа нэмэх', color: C.store, route: '/(tabs)/store' },
+            { icon: 'receipt' as const, label: 'Захиалгууд', color: '#1A73E8', route: '/orders' },
+            { icon: 'people' as const, label: 'Борлуулагчид', color: '#7C3AED', route: '/seller/products' },
+            { icon: 'bar-chart' as const, label: 'Тайлан', color: '#F9A825', route: '/seller/earnings' },
+          ].map((a, i) => (
+            <TouchableOpacity key={i} onPress={() => router.push(a.route as any)}
+              style={{ width: '47%', backgroundColor: a.color + '15', borderRadius: R.lg, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: a.color + '30' }}>
+              <Ionicons name={a.icon} size={26} color={a.color} />
+              <Text style={{ color: C.text, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>{a.label}</Text>
+            </TouchableOpacity>
+          ))}
+        </View>
+      </View>
+
+      <View style={{ height: 100 }} />
+    </ScrollView>
+  )
+}
+
+// ═══════════════════════════════════
+// ROUTER — Role-аар ялгах
+// ═══════════════════════════════════
+
 export default function HomeScreen() {
+  const { user, role } = useAuth()
+
+  // SELLER → seller dashboard
+  if (role === 'SELLER') {
+    router.replace('/seller/dashboard' as any)
+    return null
+  }
+
+  // DRIVER → driver deliveries
+  if (role === 'DRIVER') {
+    router.replace('/driver/deliveries' as any)
+    return null
+  }
+
+  // STORE → store dashboard
+  if (role === 'STORE') return <StoreDashboard />
+
+  // BUYER → home feed
+  return <BuyerHome />
+}
+
+function BuyerHome() {
   const { user, role } = useAuth()
   const { count } = useCart()
   const [bannerIdx, setBannerIdx] = useState(0)
