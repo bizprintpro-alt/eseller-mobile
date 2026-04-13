@@ -130,19 +130,29 @@ function StoreDashboard() {
 // ROUTER — Role-аар ялгах
 // ═══════════════════════════════════
 
+// Lazy import driver/seller screens to avoid circular deps
+const LazyDriverDeliveries = React.lazy(() => import('../driver/deliveries'))
+const LazySellerDashboard = React.lazy(() => import('../seller/dashboard'))
+
 export default function HomeScreen() {
   const { user, role } = useAuth()
 
-  // SELLER → seller dashboard
+  // SELLER → inline seller dashboard (tab bar харагдана)
   if (role === 'SELLER') {
-    router.replace('/seller/dashboard' as any)
-    return null
+    return (
+      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
+        <LazySellerDashboard />
+      </React.Suspense>
+    )
   }
 
-  // DRIVER → driver deliveries
+  // DRIVER → inline driver deliveries (tab bar харагдана)
   if (role === 'DRIVER') {
-    router.replace('/driver/deliveries' as any)
-    return null
+    return (
+      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
+        <LazyDriverDeliveries />
+      </React.Suspense>
+    )
   }
 
   // STORE → store dashboard
