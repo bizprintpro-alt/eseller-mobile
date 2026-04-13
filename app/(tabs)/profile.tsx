@@ -22,6 +22,7 @@ export default function ProfileScreen() {
   const color                  = roleColor(role)
 
   const MENU = user ? [
+    // Захиалга & Худалдан авалт
     { icon:'cube-outline',
       label:'Захиалгын түүх',
       onPress: () => router.push('/orders' as any) },
@@ -31,15 +32,45 @@ export default function ProfileScreen() {
     { icon:'heart-outline',
       label:'Хадгалсан',
       onPress: () => {} },
+    { icon:'refresh-outline',
+      label:'Буцаалт & Маргаан',
+      sub: '48 цагт буцаах',
+      onPress: () => router.push('/(customer)/returns' as any) },
     { icon:'location-outline',
-      label:'Хүргэх хаяг',
-      onPress: () => {} },
-    { icon:'settings-outline',
-      label:'Тохиргоо',
-      onPress: () => {} },
+      label:'Хүргэлтийн хаяг',
+      onPress: () => router.push('/(customer)/addresses' as any) },
+    // Хэтэвч & Урамшуулал
+    { icon:'wallet-outline',
+      label:'eSeller хэтэвч',
+      accent: true,
+      onPress: () => router.push('/(customer)/wallet' as any) },
+    { icon:'flash-outline',
+      label:'Flash Sale 🔥',
+      onPress: () => router.push('/(customer)/flash-sale' as any) },
+    { icon:'gift-outline',
+      label:'Купон & Промо код',
+      onPress: () => router.push('/(customer)/coupons' as any) },
+    { icon:'trophy-outline',
+      label:'Урамшааллын оноо',
+      onPress: () => router.push('/(customer)/tier-details' as any) },
+    // Бизнес
+    { icon:'storefront-outline',
+      label:'Дэлгүүр нээх',
+      accent: true,
+      onPress: () => router.push('/(customer)/register-shop' as any) },
+    // Тохиргоо
+    { icon:'person-outline',
+      label:'Профайл засах',
+      onPress: () => router.push('/(customer)/edit-profile' as any) },
+    { icon:'notifications-outline',
+      label:'Мэдэгдэл тохиргоо',
+      onPress: () => router.push('/(customer)/notification-settings' as any) },
     { icon:'shield-checkmark-outline',
-      label:'Нууцлал',
-      onPress: () => {} },
+      label:'Аюулгүй байдал',
+      onPress: () => router.push('/(customer)/security' as any) },
+    { icon:'help-circle-outline',
+      label:'Тусламж & FAQ',
+      onPress: () => router.push('/(customer)/help' as any) },
   ] : []
 
   return (
