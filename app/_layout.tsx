@@ -3,6 +3,7 @@ import React, {
 } from 'react'
 import { Stack }     from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
+import * as Updates  from 'expo-updates'
 import { SafeAreaProvider }
   from 'react-native-safe-area-context'
 import { QueryClient, QueryClientProvider }
@@ -48,6 +49,21 @@ function AppContent() {
   const [showOnboarding, setOnboarding]  =
     useState(false)
   const { user } = useAuth()
+
+  // OTA update шалгах
+  useEffect(() => {
+    async function checkUpdates() {
+      try {
+        if (__DEV__) return
+        const update = await Updates.checkForUpdateAsync()
+        if (update.isAvailable) {
+          await Updates.fetchUpdateAsync()
+          await Updates.reloadAsync()
+        }
+      } catch {}
+    }
+    checkUpdates()
+  }, [])
 
   useEffect(() => {
     AsyncStorage.getItem('onboarded')
