@@ -69,16 +69,28 @@ export const useAuth = create<AuthStore>()(
         }
       },
 
-      // OTP — backend дээр одоогоор байхгүй, stub
-      loginWithOTP: async (_phone, _otp) => {
+      // OTP нэвтрэлт
+      loginWithOTP: async (phone: string, otp: string) => {
         set({ loading: true });
         try {
-          // TODO: Backend-д OTP endpoint нэмэгдмэгц идэвхжүүлнэ
-          throw new Error('OTP нэвтрэлт одоогоор боломжгүй байна. Имэйлээр нэвтэрнэ үү.');
+          const res: any = await post('/auth/otp/verify', { phone, code: otp });
+          if (res?.token && res?.user) {
+            await SecureStore.setItemAsync('token', res.token);
+            const mappedRole = mapRole(res.user.role);
+            set({ user: res.user, token: res.token, role: mappedRole, loading: false });
+          } else {
+            throw new Error('OTP баталгаажуулалт амжилтгүй');
+          }
         } catch (e: any) {
           set({ loading: false });
           throw e;
         }
+      },
+
+      // OTP илгээх
+      sendOTP: async (phone: string) => {
+        const res: any = await post('/auth/otp/send', { phone });
+        return res;
       },
 
       logout: async () => {

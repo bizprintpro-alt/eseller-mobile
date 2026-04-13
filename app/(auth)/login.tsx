@@ -2,10 +2,12 @@ import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
   KeyboardAvoidingView, Platform,
-  ActivityIndicator, Alert,
+  ActivityIndicator, Alert, Linking,
 } from 'react-native';
 import { router } from 'expo-router';
+import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
+import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../src/store/auth';
 import { C, R } from '../../src/shared/design';
 
@@ -129,14 +131,43 @@ export default function LoginScreen() {
           </TouchableOpacity>
         )}
 
+        {/* Divider */}
+        <View style={{ flexDirection: 'row', alignItems: 'center', marginBottom: 16 }}>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: C.border }} />
+          <Text style={{ color: C.textMuted, fontSize: 12, marginHorizontal: 12 }}>эсвэл</Text>
+          <View style={{ flex: 1, height: 0.5, backgroundColor: C.border }} />
+        </View>
+
+        {/* Google */}
+        <TouchableOpacity
+          onPress={async () => {
+            try {
+              const baseUrl = __DEV__ ? 'http://192.168.1.9:3000' : 'https://eseller.mn';
+              await WebBrowser.openBrowserAsync(`${baseUrl}/api/auth/google?role=buyer&redirect=eseller://auth/callback`);
+            } catch {}
+          }}
+          style={{
+            backgroundColor: C.white, borderRadius: R.lg,
+            padding: 15, alignItems: 'center', marginBottom: 12,
+            flexDirection: 'row', justifyContent: 'center', gap: 10,
+          }}
+        >
+          <Ionicons name="logo-google" size={20} color="#4285F4" />
+          <Text style={{ color: '#333', fontSize: 15, fontWeight: '600' }}>Google-ээр нэвтрэх</Text>
+        </TouchableOpacity>
+
         {/* OTP */}
         <TouchableOpacity
           onPress={() => router.push('/(auth)/otp')}
-          style={{ alignItems: 'center', marginBottom: 16 }}
+          style={{
+            backgroundColor: C.bgSection, borderRadius: R.lg,
+            padding: 15, alignItems: 'center', marginBottom: 16,
+            flexDirection: 'row', justifyContent: 'center', gap: 10,
+            borderWidth: 1, borderColor: C.border,
+          }}
         >
-          <Text style={{ color: C.brand, fontSize: 14 }}>
-            Утасны дугаараар нэвтрэх
-          </Text>
+          <Ionicons name="phone-portrait" size={18} color={C.text} />
+          <Text style={{ color: C.text, fontSize: 15, fontWeight: '600' }}>Утсаар нэвтрэх</Text>
         </TouchableOpacity>
 
         {/* Register */}

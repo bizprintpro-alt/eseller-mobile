@@ -68,7 +68,8 @@
           "color": "#E8242C"
         }
       ],
-      "expo-font"
+      "expo-font",
+      "expo-web-browser"
     ],
     "scheme": "eseller",
     "extra": {
