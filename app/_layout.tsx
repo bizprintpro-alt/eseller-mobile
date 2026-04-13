@@ -123,6 +123,23 @@ function AppContent() {
         options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
       />
       <Stack.Screen name="storefront/[slug]" />
+      {/* Customer screens */}
+      <Stack.Screen name="(customer)/flash-sale" options={{ headerShown: true, title: 'Flash Sale 🔥' }} />
+      <Stack.Screen name="(customer)/wallet" options={{ headerShown: true, title: 'Хэтэвч' }} />
+      <Stack.Screen name="(customer)/addresses" options={{ headerShown: true, title: 'Хаяг' }} />
+      <Stack.Screen name="(customer)/returns" options={{ headerShown: true, title: 'Буцаалт' }} />
+      <Stack.Screen name="(customer)/coupons" options={{ headerShown: true, title: 'Купон' }} />
+      <Stack.Screen name="(customer)/edit-profile" options={{ headerShown: true, title: 'Профайл засах' }} />
+      <Stack.Screen name="(customer)/notification-settings" options={{ headerShown: true, title: 'Мэдэгдэл' }} />
+      <Stack.Screen name="(customer)/help" options={{ headerShown: true, title: 'Тусламж' }} />
+      <Stack.Screen name="(customer)/register-shop" options={{ headerShown: true, title: 'Дэлгүүр нээх' }} />
+      <Stack.Screen name="(customer)/tier-details" options={{ headerShown: true, title: 'Түвшин' }} />
+      <Stack.Screen name="(customer)/security" options={{ headerShown: true, title: 'Аюулгүй байдал' }} />
+      {/* Seller screens */}
+      <Stack.Screen name="seller/catalog" options={{ headerShown: true, title: 'Каталог' }} />
+      <Stack.Screen name="seller/leaderboard" options={{ headerShown: true, title: 'Рейтинг' }} />
+      <Stack.Screen name="seller/influencer" options={{ headerShown: true, title: 'Инфлюэнсер' }} />
+      <Stack.Screen name="feed/[id]" options={{ headerShown: true, title: 'Зарын дэлгэрэнгүй' }} />
     </Stack>
   )
 }
