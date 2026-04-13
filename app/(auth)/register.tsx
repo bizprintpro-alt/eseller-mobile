@@ -18,8 +18,16 @@ export default function RegisterScreen() {
   const [phone,    setPhone]   = useState('')
   const [pass,     setPass]    = useState('')
   const [pass2,    setPass2]   = useState('')
+  const [role,     setRole]    = useState('buyer')
   const [loading,  setLoading] = useState(false)
   const [showPass, setShowPass]= useState(false)
+
+  const ROLES = [
+    { key: 'buyer',    icon: 'cart-outline' as const,       label: 'Худалдан авагч', desc: 'Бараа захиалах', color: C.primary },
+    { key: 'seller',   icon: 'storefront-outline' as const, label: 'Дэлгүүр эзэн',  desc: 'Дэлгүүр удирдах', color: '#0D652D' },
+    { key: 'affiliate',icon: 'megaphone-outline' as const,  label: 'Борлуулагч',    desc: 'Комисс олох',    color: '#E37400' },
+    { key: 'delivery', icon: 'car-outline' as const,        label: 'Жолооч',        desc: 'Хүргэлт хийх',   color: '#C62828' },
+  ]
 
   const handleRegister = async () => {
     if (!name || !email || !pass) {
@@ -39,17 +47,18 @@ export default function RegisterScreen() {
     try {
       // Register буцааж token + user өгдөг
       const res: any = await post('/auth/register', {
-        name, email, phone: phone || undefined, password: pass,
+        name, email, phone: phone || undefined, password: pass, role,
       })
 
       if (res?.token && res?.user) {
         // Token-г хадгалаад шууд нэвтрэх
         await SecureStore.setItemAsync('token', res.token)
         // Auth store-д user тохируулах — login дуудахгүй
+        const mappedRole = role === 'buyer' ? 'BUYER' : role === 'seller' ? 'STORE' : role === 'affiliate' ? 'SELLER' : 'DRIVER'
         useAuth.setState({
           user:  res.user,
           token: res.token,
-          role:  'BUYER',
+          role:  mappedRole,
         })
         router.replace('/(tabs)' as any)
       } else {
@@ -86,6 +95,29 @@ export default function RegisterScreen() {
         }}>
           Eseller.mn-д тавтай морил
         </Text>
+
+        {/* Role picker */}
+        <Text style={{
+          color: C.textSub, fontSize: 13,
+          fontWeight: '600', marginBottom: 8,
+        }}>Ролл сонгох</Text>
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8, marginBottom: 20 }}>
+          {ROLES.map(r => (
+            <TouchableOpacity key={r.key} onPress={() => setRole(r.key)}
+              style={{
+                width: '47%' as any, flexDirection: 'row', alignItems: 'center', gap: 8,
+                backgroundColor: role === r.key ? r.color + '18' : C.bgSection,
+                borderRadius: R.lg, padding: 12,
+                borderWidth: 1.5, borderColor: role === r.key ? r.color : C.border,
+              }}>
+              <Ionicons name={r.icon} size={20} color={role === r.key ? r.color : C.textMuted} />
+              <View>
+                <Text style={{ color: role === r.key ? C.text : C.textSub, fontSize: 12, fontWeight: '700' }}>{r.label}</Text>
+                <Text style={{ color: C.textMuted, fontSize: 10 }}>{r.desc}</Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
 
         {[
           { label:'Нэр', value: name, set: setName,

@@ -31,7 +31,7 @@ export default function ProfileScreen() {
       onPress: () => router.push('/cart' as any) },
     { icon:'heart-outline',
       label:'Хадгалсан',
-      onPress: () => {} },
+      onPress: () => router.push('/(customer)/wishlist' as any) },
     { icon:'refresh-outline',
       label:'Буцаалт & Маргаан',
       sub: '48 цагт буцаах',

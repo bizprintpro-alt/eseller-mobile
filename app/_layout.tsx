@@ -140,6 +140,8 @@ function AppContent() {
       <Stack.Screen name="seller/leaderboard" options={{ headerShown: true, title: 'Рейтинг' }} />
       <Stack.Screen name="seller/influencer" options={{ headerShown: true, title: 'Инфлюэнсер' }} />
       <Stack.Screen name="feed/[id]" options={{ headerShown: true, title: 'Зарын дэлгэрэнгүй' }} />
+      <Stack.Screen name="(customer)/wishlist" options={{ headerShown: true, title: 'Хадгалсан' }} />
+      <Stack.Screen name="chat/ai-support" options={{ headerShown: true, title: 'AI Туслах' }} />
     </Stack>
   )
 }
