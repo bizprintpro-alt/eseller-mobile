@@ -11,6 +11,13 @@ export default function SellerDashboard() {
     queryFn: () => get('/affiliate/earnings'),
   })
 
+  // Stock alert
+  const { data: productsData } = useQuery({
+    queryKey: ['seller-products'],
+    queryFn: () => get('/products/my?status=active'),
+  })
+  const lowStock = ((productsData as any)?.products || []).filter((p: any) => (p.stock ?? p.inventory ?? 999) < 5)
+
   const stats = (data as any)?.stats || (data as any) || {}
 
   const CARDS = [
@@ -27,6 +34,18 @@ export default function SellerDashboard() {
         <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>Самбар</Text>
         <Text style={{ color: C.textSub, fontSize: 13, marginTop: 4 }}>Борлуулагчийн хяналтын самбар</Text>
       </View>
+
+      {/* Stock alert */}
+      {lowStock.length > 0 && (
+        <TouchableOpacity onPress={() => router.push('/seller/products' as any)}
+          style={{ marginHorizontal: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#EA433515', borderRadius: R.lg, padding: 14, borderWidth: 0.5, borderColor: '#EA433533' }}>
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+            <Ionicons name="warning" size={20} color="#EA4335" />
+            <Text style={{ color: '#EA4335', fontSize: 13, fontWeight: '700' }}>⚠️ {lowStock.length} бараа дуусах дөхөж байна</Text>
+          </View>
+          <Ionicons name="chevron-forward" size={18} color="#EA4335" />
+        </TouchableOpacity>
+      )}
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 10 }}>
         {CARDS.map((c, i) => (
