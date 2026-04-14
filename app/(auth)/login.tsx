@@ -1,7 +1,7 @@
 import React, { useEffect, useState } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity,
-  KeyboardAvoidingView, Platform,
+  KeyboardAvoidingView, Platform, ScrollView,
   ActivityIndicator, Alert, Linking,
 } from 'react-native';
 import { router } from 'expo-router';
@@ -10,6 +10,27 @@ import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../src/store/auth';
 import { C, R } from '../../src/shared/design';
+
+const TEST_USERS = [
+  { label: '🛍️ Худалдан авагч', phone: '99000001' },
+  { label: '🏪 Дэлгүүр эзэн',   phone: '99000002' },
+  { label: '🚚 Жолооч',          phone: '99000003' },
+  { label: '📢 Борлуулагч',      phone: '99000004' },
+];
+const TEST_PASSWORD = 'test1234';
+
+function routeByRole(role: string) {
+  const r = role?.toLowerCase();
+  if (r === 'delivery' || r === 'driver') {
+    router.replace('/(driver)' as any);
+  } else if (r === 'seller' || r === 'store' || r === 'owner') {
+    router.replace('/(owner)/dashboard' as any);
+  } else if (r === 'affiliate') {
+    router.replace('/(seller)' as any);
+  } else {
+    router.replace('/(tabs)');
+  }
+}
 
 export default function LoginScreen() {
   const { login, loginWithBio, checkBio, loading } = useAuth();
@@ -21,6 +42,17 @@ export default function LoginScreen() {
     checkBio().then(setHasBio);
   }, []);
 
+  async function quickLogin(testPhone: string) {
+    try {
+      try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
+      await login(testPhone, TEST_PASSWORD);
+      const currentUser = useAuth.getState().user;
+      routeByRole(currentUser?.role || 'buyer');
+    } catch (e: any) {
+      Alert.alert('Алдаа', e?.message || 'Нэвтрэх үед алдаа гарлаа');
+    }
+  }
+
   const handleLogin = async () => {
     if (!email || !pass) {
       Alert.alert('Анхаар', 'Бүх талбарыг бөглөнө үү');
@@ -29,7 +61,8 @@ export default function LoginScreen() {
     try {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
       await login(email.trim(), pass);
-      router.replace('/(tabs)');
+      const currentUser = useAuth.getState().user;
+      routeByRole(currentUser?.role || 'buyer');
     } catch (e: any) {
       Alert.alert('Алдаа', e?.message || 'Нэвтрэх үед алдаа гарлаа');
     }
@@ -45,9 +78,13 @@ export default function LoginScreen() {
       style={{ flex: 1, backgroundColor: C.bg }}
       behavior={Platform.OS === 'ios' ? 'padding' : undefined}
     >
-      <View style={{ flex: 1, padding: 24, justifyContent: 'center' }}>
+      <ScrollView
+        contentContainerStyle={{ padding: 24, paddingTop: 60, paddingBottom: 40 }}
+        keyboardShouldPersistTaps="handled"
+        showsVerticalScrollIndicator={false}
+      >
         {/* Logo */}
-        <View style={{ alignItems: 'center', marginBottom: 48 }}>
+        <View style={{ alignItems: 'center', marginBottom: 32 }}>
           <Text style={{
             fontSize: 40, fontWeight: '900', color: C.text, letterSpacing: -1,
           }}>
@@ -56,6 +93,41 @@ export default function LoginScreen() {
           <Text style={{ color: C.textMuted, fontSize: 14, marginTop: 8 }}>
             Монголын нэгдсэн платформ
           </Text>
+        </View>
+
+        {/* Quick Login — 4 test roles */}
+        <View style={{
+          backgroundColor: C.bgCard, borderRadius: R.lg,
+          padding: 14, marginBottom: 18,
+          borderWidth: 1, borderColor: C.border,
+        }}>
+          <Text style={{
+            color: C.textSub, fontSize: 12, fontWeight: '600',
+            marginBottom: 10, textAlign: 'center',
+          }}>
+            ⚡ Хурдан нэвтрэх (тест)
+          </Text>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+            {TEST_USERS.map((u) => (
+              <TouchableOpacity
+                key={u.phone}
+                onPress={() => quickLogin(u.phone)}
+                disabled={loading}
+                style={{
+                  flexBasis: '47%', backgroundColor: C.bgSection,
+                  borderRadius: R.md, padding: 10, alignItems: 'center',
+                  borderWidth: 1, borderColor: C.border,
+                }}
+              >
+                <Text style={{ color: C.text, fontSize: 12, fontWeight: '600' }}>
+                  {u.label}
+                </Text>
+                <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>
+                  {u.phone}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
         </View>
 
         {/* Email / Phone */}
@@ -190,7 +262,7 @@ export default function LoginScreen() {
             Нэвтрэлгүй үргэлжлүүлэх →
           </Text>
         </TouchableOpacity>
-      </View>
+      </ScrollView>
     </KeyboardAvoidingView>
   );
 }
