@@ -74,3 +74,25 @@ export const CartAPI = {
     return { ok: true };
   },
 };
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Orders API — buyer/seller/driver
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export const OrderAPI = {
+  // Buyer
+  myOrders: () => get('/buyer/orders'),
+  detail: (id: string) => get(`/buyer/orders/${id}`),
+
+  // Seller
+  sellerOrders: (status?: string) =>
+    get('/seller/orders', status ? { status } : undefined),
+  updateStatus: (id: string, status: string) =>
+    put(`/seller/orders/${id}/status`, { status }),
+
+  // Driver
+  availableOrders: () => get('/driver/orders', { type: 'available' }),
+  myDeliveries: () => get('/driver/orders', { type: 'mine' }),
+  accept: (id: string) => post(`/driver/orders/${id}/accept`),
+  deliver: (id: string) => post(`/driver/orders/${id}/deliver`),
+};
