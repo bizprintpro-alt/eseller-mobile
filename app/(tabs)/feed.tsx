@@ -16,8 +16,8 @@ import { FeedItemSkeleton } from '../../src/shared/ui/Skeleton'
 
 // Lazy imports for STORE/SELLER/DRIVER variants
 const LazyStoreOrders = React.lazy(() => import('../(owner)/orders'))
-const LazySellerInfluencer = React.lazy(() => import('../seller/influencer'))
-const LazyDriverEarnings = React.lazy(() => import('../driver/earnings'))
+const LazyAffiliateLink = React.lazy(() => import('../../src/screens/affiliate/LinkScreen'))
+const LazyDriverProof = React.lazy(() => import('../../src/screens/driver/ProofScreen'))
 
 const FEED_CATS = [
   { slug:'',                  name:'Бүгд',       icon:'grid' },
@@ -45,7 +45,7 @@ export default function FeedScreen() {
   if (role === 'SELLER') {
     return (
       <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazySellerInfluencer />
+        <LazyAffiliateLink />
       </React.Suspense>
     )
   }
@@ -53,7 +53,7 @@ export default function FeedScreen() {
   if (role === 'DRIVER') {
     return (
       <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverEarnings />
+        <LazyDriverProof />
       </React.Suspense>
     )
   }

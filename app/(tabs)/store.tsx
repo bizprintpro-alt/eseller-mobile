@@ -16,8 +16,8 @@ import { ProductCardSkeleton } from '../../src/shared/ui/Skeleton'
 import { FilterSheet } from '../../src/shared/ui/FilterSheet'
 
 // Lazy imports for SELLER + DRIVER variants
-const LazySellerEarnings = React.lazy(() => import('../seller/earnings'))
-const LazyDriverDeliveries = React.lazy(() => import('../driver/deliveries'))
+const LazyAffiliateProducts = React.lazy(() => import('../../src/screens/affiliate/ProductsScreen'))
+const LazyDriverRoute = React.lazy(() => import('../../src/screens/driver/RouteScreen'))
 
 // ═══════════════════════════════════
 // BUYER — Дэлгүүр хайх, бараа үзэх
@@ -443,7 +443,7 @@ export default function StoreScreen() {
   if (role === 'SELLER') {
     return (
       <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazySellerEarnings />
+        <LazyAffiliateProducts />
       </React.Suspense>
     )
   }
@@ -451,7 +451,7 @@ export default function StoreScreen() {
   if (role === 'DRIVER') {
     return (
       <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverDeliveries />
+        <LazyDriverRoute />
       </React.Suspense>
     )
   }

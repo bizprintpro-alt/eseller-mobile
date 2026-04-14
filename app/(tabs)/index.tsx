@@ -130,27 +130,27 @@ function StoreDashboard() {
 // ROUTER — Role-аар ялгах
 // ═══════════════════════════════════
 
-// Lazy import driver/seller screens to avoid circular deps
-const LazyDriverDeliveries = React.lazy(() => import('../driver/deliveries'))
-const LazySellerDashboard = React.lazy(() => import('../seller/dashboard'))
+// Lazy import role-specific home screens
+const LazyDriverHome = React.lazy(() => import('../../src/screens/driver/DriverHomeScreen'))
+const LazyAffiliateHome = React.lazy(() => import('../../src/screens/affiliate/AffiliateHomeScreen'))
 
 export default function HomeScreen() {
   const { user, role } = useAuth()
 
-  // SELLER → inline seller dashboard (tab bar харагдана)
+  // SELLER (affiliate) → affiliate dashboard
   if (role === 'SELLER') {
     return (
       <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazySellerDashboard />
+        <LazyAffiliateHome />
       </React.Suspense>
     )
   }
 
-  // DRIVER → inline driver deliveries (tab bar харагдана)
+  // DRIVER → driver deliveries
   if (role === 'DRIVER') {
     return (
       <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverDeliveries />
+        <LazyDriverHome />
       </React.Suspense>
     )
   }
