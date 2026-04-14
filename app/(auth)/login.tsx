@@ -22,12 +22,11 @@ const TEST_PASSWORD = 'test1234';
 function routeByRole(role: string) {
   const r = role?.toLowerCase();
   if (r === 'delivery' || r === 'driver') {
-    router.replace('/(driver)' as any);
+    router.replace('/driver/deliveries' as any);
   } else if (r === 'seller' || r === 'store' || r === 'owner') {
     router.replace('/(owner)/dashboard' as any);
-  } else if (r === 'affiliate') {
-    router.replace('/(seller)' as any);
   } else {
+    // buyer, affiliate, admin → main tabs
     router.replace('/(tabs)');
   }
 }
