@@ -9,6 +9,7 @@ import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { SocialAPI, CartAPI } from '../../src/services/api';
 import { useAuth } from '../../src/store/auth';
+import { QuickBuyBottomSheet } from '../components/QuickBuyBottomSheet';
 
 const { height: H } = Dimensions.get('window');
 
@@ -132,6 +133,7 @@ function PostCard({
   const [likeCount, setLikeCount] = useState(post._count.likes);
   const [showComment, setShowComment] = useState(false);
   const [addedToCart, setAddedToCart] = useState<string | null>(null);
+  const [quickBuyProduct, setQuickBuyProduct] = useState<any>(null);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const lastTap = useRef(0);
   const heartAnim = useRef(new Animated.Value(0)).current;
@@ -240,12 +242,10 @@ function PostCard({
                 </Text>
               </View>
               <TouchableOpacity
-                onPress={() => handleAddToCart(product.id)}
-                style={[s.addCartBtn, addedToCart === product.id && { backgroundColor: '#3B6D11' }]}
+                onPress={() => setQuickBuyProduct(product)}
+                style={s.addCartBtn}
               >
-                <Text style={s.addCartBtnText}>
-                  {addedToCart === product.id ? '✓ Нэмэгдлээ' : '🛒 Авах'}
-                </Text>
+                <Text style={s.addCartBtnText}>⚡ Шууд авах</Text>
               </TouchableOpacity>
             </TouchableOpacity>
           ))}
@@ -272,6 +272,18 @@ function PostCard({
       </View>
 
       <CommentModal postId={post.id} visible={showComment} onClose={() => setShowComment(false)} />
+
+      {quickBuyProduct && (
+        <QuickBuyBottomSheet
+          product={quickBuyProduct}
+          visible={!!quickBuyProduct}
+          onClose={() => setQuickBuyProduct(null)}
+          onSuccess={() => {
+            Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+            setQuickBuyProduct(null);
+          }}
+        />
+      )}
     </View>
   );
 }
