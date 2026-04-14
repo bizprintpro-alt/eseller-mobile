@@ -21,7 +21,7 @@ interface AuthStore {
   role:      string;
   loading:   boolean;
 
-  login:        (email: string, pass: string) => Promise<void>;
+  login:        (identifier: string, pass: string) => Promise<void>;
   loginWithOTP: (phone: string, otp: string) => Promise<void>;
   logout:       () => Promise<void>;
   setRole:      (role: string) => void;
@@ -50,10 +50,15 @@ export const useAuth = create<AuthStore>()(
       loading: false,
 
       // POST /auth/login (Express backend)
-      login: async (email, password) => {
+      login: async (identifier, password) => {
         set({ loading: true });
         try {
-          const res: any = await post('/auth/login', { email, password });
+          // Detect phone (digits only, 8 chars) vs email
+          const isPhone = /^\d{8,}$/.test(identifier.trim());
+          const body = isPhone
+            ? { phone: identifier.trim(), password }
+            : { email: identifier.trim().toLowerCase(), password };
+          const res: any = await post('/auth/login', body);
           const token = res.token;
           const user = res.user;
           await SecureStore.setItemAsync('token', token);

@@ -66,7 +66,11 @@ export const SocialAPI = {
     post('/social/posts', data),
 };
 
+// Cart is local (zustand + AsyncStorage). Use `useCart` from src/store/cart.
+// This CartAPI is kept as a noop stub for legacy callers. Prefer useCart().add().
 export const CartAPI = {
-  add: (data: { productId: string; quantity: number }) =>
-    post('/cart/add', data),
+  add: async (_data: { productId: string; quantity: number }) => {
+    // Local cart is primary — see src/store/cart.ts
+    return { ok: true };
+  },
 };

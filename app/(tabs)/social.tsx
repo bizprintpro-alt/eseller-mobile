@@ -8,8 +8,9 @@ import {
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import * as SecureStore from 'expo-secure-store';
-import { SocialAPI, CartAPI } from '../../src/services/api';
+import { SocialAPI } from '../../src/services/api';
 import { useAuth } from '../../src/store/auth';
+import { useCart } from '../../src/store/cart';
 import { QuickBuyBottomSheet } from '../components/QuickBuyBottomSheet';
 import { GroupBuyCard } from '../components/GroupBuyCard';
 
@@ -329,8 +330,8 @@ function PostCard({
   const [liked, setLiked] = useState(post.isLiked ?? false);
   const [likeCount, setLikeCount] = useState(post._count.likes);
   const [showComment, setShowComment] = useState(false);
-  const [addedToCart, setAddedToCart] = useState<string | null>(null);
   const [quickBuyProduct, setQuickBuyProduct] = useState<any>(null);
+  const addToCart = useCart((state) => state.add);
   const scaleAnim = useRef(new Animated.Value(1)).current;
   const lastTap = useRef(0);
   const heartAnim = useRef(new Animated.Value(0)).current;
@@ -369,11 +370,19 @@ function PostCard({
     }
   }
 
-  async function handleAddToCart(productId: string) {
+  function handleAddLocalCart(product: any) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
-    setAddedToCart(productId);
-    try { await CartAPI.add({ productId, quantity: 1 }); } catch {}
-    setTimeout(() => setAddedToCart(null), 2000);
+    addToCart(
+      {
+        id: product.id,
+        name: product.name,
+        price: product.salePrice ?? product.price,
+        image: product.images?.[0] || null,
+        entityId: '',
+        entityName: '',
+      },
+      1
+    );
   }
 
   async function handleShare() {

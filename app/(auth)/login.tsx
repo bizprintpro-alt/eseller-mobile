@@ -28,7 +28,7 @@ export default function LoginScreen() {
     }
     try {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-      await login(email.trim().toLowerCase(), pass);
+      await login(email.trim(), pass);
       router.replace('/(tabs)');
     } catch (e: any) {
       Alert.alert('Алдаа', e?.message || 'Нэвтрэх үед алдаа гарлаа');
@@ -58,16 +58,15 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* Email */}
+        {/* Email / Phone */}
         <Text style={{ color: C.textSub, fontSize: 13, marginBottom: 6, fontWeight: '600' }}>
-          Имэйл
+          Имэйл эсвэл утас
         </Text>
         <TextInput
           value={email}
           onChangeText={setEmail}
-          placeholder="example@gmail.com"
+          placeholder="example@gmail.com эсвэл 99XXXXXX"
           placeholderTextColor={C.textMuted}
-          keyboardType="email-address"
           autoCapitalize="none"
           style={{
             backgroundColor: C.bgSection, borderRadius: R.lg,
