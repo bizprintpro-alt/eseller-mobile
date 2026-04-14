@@ -12,6 +12,7 @@ const TAB_CONFIG: Record<string, Record<string, { title: string; icon: string; i
     index:   { title: 'Нүүр',    icon: 'home-outline',       iconActive: 'home' },
     store:   { title: 'Дэлгүүр', icon: 'storefront-outline', iconActive: 'storefront' },
     feed:    { title: 'Зар',     icon: 'pricetag-outline',   iconActive: 'pricetag' },
+    social:  { title: 'Найзууд', icon: 'people-outline',     iconActive: 'people' },
     chat:    { title: 'Чат',     icon: 'chatbubble-outline', iconActive: 'chatbubble' },
     profile: { title: 'Профайл', icon: 'person-outline',     iconActive: 'person' },
     gold:    { title: 'Gold',    icon: 'star-outline',       iconActive: 'star' },
@@ -40,7 +41,7 @@ const TAB_CONFIG: Record<string, Record<string, { title: string; icon: string; i
 }
 
 // Бүх tab screen-ийн нэр (static)
-const ALL_TABS = ['index', 'store', 'feed', 'chat', 'profile', 'gold'] as const
+const ALL_TABS = ['index', 'store', 'feed', 'social', 'chat', 'profile', 'gold'] as const
 
 export default function TabsLayout() {
   const { role } = useAuth()
