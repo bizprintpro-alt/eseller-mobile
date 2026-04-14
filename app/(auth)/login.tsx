@@ -21,14 +21,17 @@ const TEST_PASSWORD = 'test1234';
 
 function routeByRole(role: string) {
   const r = role?.toLowerCase();
-  if (r === 'delivery' || r === 'driver') {
-    router.replace('/driver/deliveries' as any);
-  } else if (r === 'seller' || r === 'store' || r === 'owner') {
+  // Store owner gets separate (owner) tab layout with dashboard/products/orders/...
+  if (r === 'seller' || r === 'store' || r === 'owner') {
     router.replace('/(owner)/dashboard' as any);
-  } else {
-    // buyer, affiliate, admin → main tabs
-    router.replace('/(tabs)');
+    return;
   }
+  // Everyone else → main (tabs) layout — it auto-configures per role:
+  //   BUYER    → home feed
+  //   SELLER   → seller dashboard (affiliate commission)
+  //   DRIVER   → driver deliveries
+  // via (tabs)/index.tsx + (tabs)/_layout.tsx
+  router.replace('/(tabs)');
 }
 
 export default function LoginScreen() {
