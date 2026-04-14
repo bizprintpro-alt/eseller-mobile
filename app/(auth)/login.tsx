@@ -10,6 +10,13 @@ import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../src/store/auth';
 import { C, R } from '../../src/shared/design';
+import {
+  isBiometricAvailable,
+  isBiometricEnabled,
+  authenticateWithBiometric,
+  getSavedCredentials,
+  saveCredentials,
+} from '../../src/shared/biometric';
 
 const TEST_USERS = [
   { label: '🛍️ Худалдан авагч', phone: '99000001', color: '#1A73E8' },
@@ -35,13 +42,25 @@ function routeByRole(role: string) {
 }
 
 export default function LoginScreen() {
-  const { login, loginWithBio, checkBio, loading } = useAuth();
+  const { login, loading } = useAuth();
   const [email, setEmail] = useState('');
   const [pass, setPass] = useState('');
-  const [hasBio, setHasBio] = useState(false);
+  const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioEnabled, setBioEnabled] = useState(false);
+  const [bioType, setBioType] = useState('');
 
   useEffect(() => {
-    checkBio().then(setHasBio);
+    (async () => {
+      const { available, type } = await isBiometricAvailable();
+      const enabled = await isBiometricEnabled();
+      setBioAvailable(available);
+      setBioEnabled(enabled);
+      setBioType(type);
+      if (available && enabled) {
+        handleBio();
+      }
+    })();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
 
   async function quickLogin(testPhone: string) {
@@ -55,6 +74,29 @@ export default function LoginScreen() {
     }
   }
 
+  const finishLogin = (role: string) => routeByRole(role);
+
+  const offerBioSave = (phone: string, password: string, role: string) => {
+    if (!bioAvailable || bioEnabled) {
+      finishLogin(role);
+      return;
+    }
+    Alert.alert(
+      `${bioType || 'Биометр'} идэвхжүүлэх үү?`,
+      'Дараа нь хурдан нэвтрэх боломжтой болно',
+      [
+        { text: 'Болих', style: 'cancel', onPress: () => finishLogin(role) },
+        {
+          text: 'Идэвхжүүлэх',
+          onPress: async () => {
+            try { await saveCredentials(phone, password); } catch {}
+            finishLogin(role);
+          },
+        },
+      ],
+    );
+  };
+
   const handleLogin = async () => {
     if (!email || !pass) {
       Alert.alert('Анхаар', 'Бүх талбарыг бөглөнө үү');
@@ -62,17 +104,32 @@ export default function LoginScreen() {
     }
     try {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
-      await login(email.trim(), pass);
+      const phone = email.trim();
+      await login(phone, pass);
       const currentUser = useAuth.getState().user;
-      routeByRole(currentUser?.role || 'buyer');
+      offerBioSave(phone, pass, currentUser?.role || 'buyer');
     } catch (e: any) {
       Alert.alert('Алдаа', e?.message || 'Нэвтрэх үед алдаа гарлаа');
     }
   };
 
   const handleBio = async () => {
-    const ok = await loginWithBio();
-    if (ok) router.replace('/(tabs)');
+    const ok = await authenticateWithBiometric(
+      `${bioType || 'Биометр'}-ээр нэвтрэх`,
+    );
+    if (!ok) return;
+    const creds = await getSavedCredentials();
+    if (!creds) {
+      Alert.alert('Анхаар', 'Хадгалсан нэвтрэлт олдсонгүй. Нууц үгээр нэвтэрнэ үү');
+      return;
+    }
+    try {
+      await login(creds.phone, creds.password);
+      const currentUser = useAuth.getState().user;
+      routeByRole(currentUser?.role || 'buyer');
+    } catch (e: any) {
+      Alert.alert('Алдаа', e?.message || 'Биометр нэвтрэлт амжилтгүй');
+    }
   };
 
   return (
@@ -185,7 +242,7 @@ export default function LoginScreen() {
         </TouchableOpacity>
 
         {/* Biometric */}
-        {hasBio && (
+        {bioAvailable && bioEnabled && (
           <TouchableOpacity
             onPress={handleBio}
             style={{
