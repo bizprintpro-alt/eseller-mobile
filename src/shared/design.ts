@@ -113,3 +113,46 @@ export function roleName(role: string): string {
     DRIVER: 'Жолооч',
   } as Record<string, string>)[role] ?? role;
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// THEME PALETTES (light + dark)
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export const LIGHT = {
+  bg:            '#FAFAFA',
+  bgCard:        '#FFFFFF',
+  bgSection:     '#F5F5F5',
+  bgInput:       '#F0F0F0',
+  border:        '#E0E0E0',
+  border2:       '#EEEEEE',
+  text:          '#1A1A2E',
+  textSub:       '#616161',
+  textMuted:     '#9E9E9E',
+} as const;
+
+export const DARK = {
+  bg:            '#121212',
+  bgCard:        '#1E1E1E',
+  bgSection:     '#242424',
+  bgInput:       '#2A2A2A',
+  border:        '#2A2A2A',
+  border2:       '#333333',
+  text:          '#E0E0E0',
+  textSub:       '#9E9E9E',
+  textMuted:     '#616161',
+} as const;
+
+// Role color map (lowercase role → hex)
+export const ROLE_ACCENT: Record<string, string> = {
+  buyer:     C.buyer,
+  store:     C.store,
+  owner:     C.store,
+  seller:    C.store,    // backend "seller" = STORE owner in app
+  affiliate: C.seller,   // backend "affiliate" = SELLER (commission)
+  delivery:  C.driver,
+  driver:    C.driver,
+  BUYER:     C.buyer,
+  STORE:     C.store,
+  SELLER:    C.seller,
+  DRIVER:    C.driver,
+};

@@ -12,10 +12,10 @@ import { useAuth } from '../../src/store/auth';
 import { C, R } from '../../src/shared/design';
 
 const TEST_USERS = [
-  { label: '🛍️ Худалдан авагч', phone: '99000001' },
-  { label: '🏪 Дэлгүүр эзэн',   phone: '99000002' },
-  { label: '🚚 Жолооч',          phone: '99000003' },
-  { label: '📢 Борлуулагч',      phone: '99000004' },
+  { label: '🛍️ Худалдан авагч', phone: '99000001', color: '#1A73E8' },
+  { label: '🏪 Дэлгүүр эзэн',   phone: '99000002', color: '#0D652D' },
+  { label: '🚚 Жолооч',          phone: '99000003', color: '#C62828' },
+  { label: '📢 Борлуулагч',      phone: '99000004', color: '#E37400' },
 ];
 const TEST_PASSWORD = 'test1234';
 
@@ -118,10 +118,10 @@ export default function LoginScreen() {
                 style={{
                   flexBasis: '47%', backgroundColor: C.bgSection,
                   borderRadius: R.md, padding: 10, alignItems: 'center',
-                  borderWidth: 1, borderColor: C.border,
+                  borderWidth: 1.5, borderColor: u.color,
                 }}
               >
-                <Text style={{ color: C.text, fontSize: 12, fontWeight: '600' }}>
+                <Text style={{ color: u.color, fontSize: 12, fontWeight: '600' }}>
                   {u.label}
                 </Text>
                 <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>
