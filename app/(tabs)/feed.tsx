@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   View, Text, FlatList,
   TouchableOpacity, Image, ScrollView,
@@ -9,8 +10,14 @@ import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { get }      from '../../src/services/api'
+import { useAuth }  from '../../src/store/auth'
 import { C, R, F, S } from '../../src/shared/design'
 import { FeedItemSkeleton } from '../../src/shared/ui/Skeleton'
+
+// Lazy imports for STORE/SELLER/DRIVER variants
+const LazyStoreOrders = React.lazy(() => import('../(owner)/orders'))
+const LazySellerInfluencer = React.lazy(() => import('../seller/influencer'))
+const LazyDriverEarnings = React.lazy(() => import('../driver/earnings'))
 
 const FEED_CATS = [
   { slug:'',                  name:'Бүгд',       icon:'grid' },
@@ -24,6 +31,37 @@ const FEED_CATS = [
 ]
 
 export default function FeedScreen() {
+  const { role } = useAuth()
+
+  // Role-based routing
+  if (role === 'STORE') {
+    return (
+      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
+        <LazyStoreOrders />
+      </React.Suspense>
+    )
+  }
+
+  if (role === 'SELLER') {
+    return (
+      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
+        <LazySellerInfluencer />
+      </React.Suspense>
+    )
+  }
+
+  if (role === 'DRIVER') {
+    return (
+      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
+        <LazyDriverEarnings />
+      </React.Suspense>
+    )
+  }
+
+  return <BuyerFeedScreen />
+}
+
+function BuyerFeedScreen() {
   const [category, setCategory] = useState('')
 
   const { data, isLoading, refetch } = useQuery({

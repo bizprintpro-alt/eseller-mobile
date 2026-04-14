@@ -1,3 +1,4 @@
+import React from 'react'
 import {
   View, Text, FlatList, TextInput,
   TouchableOpacity, Image, ScrollView,
@@ -13,6 +14,10 @@ import { useAuth }  from '../../src/store/auth'
 import { C, R, F, S } from '../../src/shared/design'
 import { ProductCardSkeleton } from '../../src/shared/ui/Skeleton'
 import { FilterSheet } from '../../src/shared/ui/FilterSheet'
+
+// Lazy imports for SELLER + DRIVER variants
+const LazySellerEarnings = React.lazy(() => import('../seller/earnings'))
+const LazyDriverDeliveries = React.lazy(() => import('../driver/deliveries'))
 
 // ═══════════════════════════════════
 // BUYER — Дэлгүүр хайх, бараа үзэх
@@ -434,5 +439,22 @@ export default function StoreScreen() {
   const { role } = useAuth()
 
   if (role === 'STORE') return <StoreOwnerProductsScreen />
+
+  if (role === 'SELLER') {
+    return (
+      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
+        <LazySellerEarnings />
+      </React.Suspense>
+    )
+  }
+
+  if (role === 'DRIVER') {
+    return (
+      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
+        <LazyDriverDeliveries />
+      </React.Suspense>
+    )
+  }
+
   return <BuyerStoreScreen />
 }
