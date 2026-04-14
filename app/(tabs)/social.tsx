@@ -1,15 +1,19 @@
 import { useState, useEffect, useRef } from 'react';
 import {
-  View, Text, FlatList, Image, TouchableOpacity,
+  View, Text, FlatList, Image, TouchableOpacity, ScrollView,
   StyleSheet, Dimensions, Animated, RefreshControl,
   TextInput, KeyboardAvoidingView, Platform, Modal,
   Share, ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
+import * as SecureStore from 'expo-secure-store';
 import { SocialAPI, CartAPI } from '../../src/services/api';
 import { useAuth } from '../../src/store/auth';
 import { QuickBuyBottomSheet } from '../components/QuickBuyBottomSheet';
+import { GroupBuyCard } from '../components/GroupBuyCard';
+
+const API = process.env.EXPO_PUBLIC_API_URL || 'https://eseller.mn';
 
 const { height: H } = Dimensions.get('window');
 
@@ -41,6 +45,71 @@ export default function SocialScreen() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
   const { user } = useAuth();
+
+  // Tabs: feed | trending | live
+  const [activeTab, setActiveTab] = useState<'feed' | 'trending' | 'live'>('feed');
+  const [trending, setTrending] = useState<Post[]>([]);
+  const [groupBuys, setGroupBuys] = useState<any[]>([]);
+  const [stories, setStories] = useState<any[]>([]);
+  const [activeStory, setActiveStory] = useState<any>(null);
+  const [storyProgress, setStoryProgress] = useState(0);
+
+  // Fetch stories + group buys on mount
+  useEffect(() => {
+    fetch(`${API}/api/stories`)
+      .then((r) => r.json())
+      .then((d) => setStories(d?.data?.stories || []))
+      .catch(() => {});
+    fetch(`${API}/api/group-buy`)
+      .then((r) => r.json())
+      .then((d) => setGroupBuys(d?.data?.groupBuys || []))
+      .catch(() => {});
+  }, []);
+
+  // Trending fetch
+  useEffect(() => {
+    if (activeTab === 'trending' && trending.length === 0) {
+      fetch(`${API}/api/social/trending`)
+        .then((r) => r.json())
+        .then((d) => {
+          const list = d?.data?.posts || [];
+          setTrending(list.map((p: any) => ({ ...p, isLiked: false, likes: p.likes || [] })));
+        })
+        .catch(() => {});
+    }
+  }, [activeTab, trending.length]);
+
+  // Story auto-advance
+  useEffect(() => {
+    if (!activeStory) return;
+    const timer = setInterval(() => {
+      setStoryProgress((p) => {
+        if (p >= 100) {
+          setActiveStory(null);
+          return 0;
+        }
+        return p + 2;
+      });
+    }, 100);
+    return () => clearInterval(timer);
+  }, [activeStory]);
+
+  function openStory(story: any) {
+    setActiveStory(story);
+    setStoryProgress(0);
+    fetch(`${API}/api/stories/${story.id}/view`, { method: 'POST' }).catch(() => {});
+  }
+
+  function closeStory() {
+    setActiveStory(null);
+    setStoryProgress(0);
+  }
+
+  function handleGroupBuyJoin(id: string) {
+    setGroupBuys((prev) =>
+      prev.map((g) => (g.id === id ? { ...g, currentCount: g.currentCount + 1 } : g))
+    );
+  }
 
   async function fetchPosts(p = 1, replace = false) {
     try {
@@ -97,7 +166,7 @@ export default function SocialScreen() {
       </View>
 
       <FlatList
-        data={posts}
+        data={activeTab === 'trending' ? trending : posts}
         keyExtractor={(p) => p.id}
         renderItem={({ item }) => (
           <PostCard
@@ -112,9 +181,137 @@ export default function SocialScreen() {
         onEndReachedThreshold={0.5}
         showsVerticalScrollIndicator={false}
         ItemSeparatorComponent={() => <View style={{ height: 8 }} />}
-        contentContainerStyle={{ padding: 12, paddingBottom: 80 }}
+        contentContainerStyle={{ paddingBottom: 80 }}
+        ListHeaderComponent={
+          <View>
+            {/* Story circles */}
+            {stories.length > 0 && (
+              <View style={s.storyBar}>
+                <ScrollView horizontal showsHorizontalScrollIndicator={false}
+                  contentContainerStyle={{ padding: 10, gap: 12 }}>
+                  <TouchableOpacity style={s.storyItem}>
+                    <View style={s.storyAddCircle}>
+                      <Text style={{ fontSize: 22, color: '#E67E22' }}>＋</Text>
+                    </View>
+                    <Text style={s.storyName}>Минийх</Text>
+                  </TouchableOpacity>
+                  {stories.map((story) => (
+                    <TouchableOpacity key={story.id} onPress={() => openStory(story)} style={s.storyItem}>
+                      <View style={[
+                        s.storyCircle,
+                        { borderColor: story.product ? '#E67E22' : '#1B3A5C' },
+                      ]}>
+                        <Image
+                          source={{ uri: story.user?.avatar || story.imageUrl }}
+                          style={s.storyImg}
+                        />
+                        {story.product && (
+                          <View style={s.storyProductBadge}>
+                            <Text style={{ fontSize: 9 }}>🛍</Text>
+                          </View>
+                        )}
+                      </View>
+                      <Text style={s.storyName} numberOfLines={1}>
+                        {story.user?.name || 'Хэрэглэгч'}
+                      </Text>
+                    </TouchableOpacity>
+                  ))}
+                </ScrollView>
+              </View>
+            )}
+
+            {/* Tab switcher */}
+            <View style={s.tabSwitcher}>
+              {([
+                { key: 'feed', label: '👥 Feed' },
+                { key: 'trending', label: '🔥 Trending' },
+                { key: 'live', label: '📡 Live' },
+              ] as const).map((tab) => (
+                <TouchableOpacity
+                  key={tab.key}
+                  onPress={() => setActiveTab(tab.key)}
+                  style={[s.tabBtn, activeTab === tab.key && s.tabBtnActive]}
+                >
+                  <Text style={[s.tabBtnText, activeTab === tab.key && s.tabBtnTextActive]}>
+                    {tab.label}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
+
+            {/* Group Buy cards (only on Feed tab) */}
+            {activeTab === 'feed' && groupBuys.length > 0 && (
+              <View style={{ paddingHorizontal: 12, paddingTop: 12 }}>
+                {groupBuys.slice(0, 2).map((g) => (
+                  <GroupBuyCard key={g.id} group={g} onJoin={handleGroupBuyJoin} />
+                ))}
+              </View>
+            )}
+
+            <View style={{ height: 12 }} />
+          </View>
+        }
         ListEmptyComponent={<EmptyFeed />}
       />
+
+      {/* Story full-screen modal */}
+      <Modal visible={!!activeStory} animationType="fade" statusBarTranslucent>
+        <View style={{ flex: 1, backgroundColor: '#000' }}>
+          <View style={s.storyProgressTrack}>
+            <View style={[s.storyProgressFill, { width: `${storyProgress}%` as any }]} />
+          </View>
+
+          <TouchableOpacity onPress={closeStory} style={s.storyClose}>
+            <Text style={{ color: '#fff', fontSize: 22 }}>✕</Text>
+          </TouchableOpacity>
+
+          <View style={s.storyUserInfo}>
+            <View style={s.storyUserAvatar}>
+              <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>
+                {activeStory?.user?.name?.[0] || '?'}
+              </Text>
+            </View>
+            <Text style={{ color: '#fff', fontSize: 13, fontWeight: '600' }}>
+              {activeStory?.user?.name || 'Хэрэглэгч'}
+            </Text>
+          </View>
+
+          {activeStory?.imageUrl && (
+            <Image source={{ uri: activeStory.imageUrl }}
+              style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+          )}
+
+          {activeStory?.caption && (
+            <View style={[s.storyCaption, { bottom: activeStory?.product ? 140 : 60 }]}>
+              <Text style={{ color: '#fff', fontSize: 13 }}>{activeStory.caption}</Text>
+            </View>
+          )}
+
+          {activeStory?.product && (
+            <View style={s.storyProductCard}>
+              <Image source={{ uri: activeStory.product.images?.[0] || 'https://via.placeholder.com/52' }}
+                style={{ width: 52, height: 52, borderRadius: 10 }} />
+              <View style={{ flex: 1 }}>
+                <Text style={{ fontSize: 13, fontWeight: '600', color: '#1a1a1a' }} numberOfLines={1}>
+                  {activeStory.product.name}
+                </Text>
+                <Text style={{ fontSize: 14, fontWeight: '700', color: '#1B3A5C' }}>
+                  {activeStory.product.price?.toLocaleString()}₮
+                </Text>
+              </View>
+              <TouchableOpacity
+                onPress={() => {
+                  closeStory();
+                  router.push(`/product/${activeStory.product.id}` as any);
+                }}
+                style={s.storyBuyBtn}
+              >
+                <Text style={{ color: '#fff', fontSize: 12, fontWeight: '600' }}>⚡ Авах</Text>
+              </TouchableOpacity>
+            </View>
+          )}
+        </View>
+      </Modal>
     </View>
   );
 }
@@ -316,10 +513,31 @@ function CommentModal({
     setSending(true);
     try {
       const resp: any = await SocialAPI.comment(postId, text.trim());
-      const c = resp?.data || resp;
-      setComments((prev) => [c, ...prev]);
+      const data = resp?.data || resp;
+      // Server returns { comment, botReply }
+      const newComment = data?.comment || data;
+      const botReply = data?.botReply;
+
+      setComments((prev) => [newComment, ...prev]);
       setText('');
       Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light);
+
+      // Bot reply — synthetic comment with isBot flag
+      if (botReply) {
+        setTimeout(() => {
+          setComments((prev) => [
+            {
+              id: `bot-${Date.now()}`,
+              content: botReply.content,
+              user: { name: 'eSeller Bot' },
+              isBot: true,
+              quickBuyProductId: botReply.productId,
+            },
+            ...prev,
+          ]);
+          Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
+        }, 800);
+      }
     } catch {}
     setSending(false);
   }
@@ -338,17 +556,40 @@ function CommentModal({
           data={comments}
           keyExtractor={(c) => c.id}
           style={{ flex: 1, paddingHorizontal: 16 }}
-          renderItem={({ item }) => (
-            <View style={s.commentItem}>
-              <View style={s.commentAvatar}>
-                <Text style={s.commentAvatarText}>{item.user?.name?.[0] || '?'}</Text>
+          renderItem={({ item }) =>
+            item.isBot ? (
+              <View style={s.commentItem}>
+                <View style={[s.commentAvatar, { backgroundColor: '#E67E22' }]}>
+                  <Text style={{ fontSize: 14 }}>🤖</Text>
+                </View>
+                <View style={s.botBubble}>
+                  <Text style={s.botLabel}>eSeller Bot</Text>
+                  <Text style={s.commentText}>{item.content}</Text>
+                  {item.quickBuyProductId && (
+                    <TouchableOpacity
+                      onPress={() => {
+                        onClose();
+                        router.push(`/product/${item.quickBuyProductId}` as any);
+                      }}
+                      style={s.botBuyBtn}
+                    >
+                      <Text style={s.botBuyBtnText}>⚡ Шууд захиалах</Text>
+                    </TouchableOpacity>
+                  )}
+                </View>
               </View>
-              <View style={s.commentBody}>
-                <Text style={s.commentUser}>{item.user?.name || 'Хэрэглэгч'}</Text>
-                <Text style={s.commentText}>{item.content}</Text>
+            ) : (
+              <View style={s.commentItem}>
+                <View style={s.commentAvatar}>
+                  <Text style={s.commentAvatarText}>{item.user?.name?.[0] || '?'}</Text>
+                </View>
+                <View style={s.commentBody}>
+                  <Text style={s.commentUser}>{item.user?.name || 'Хэрэглэгч'}</Text>
+                  <Text style={s.commentText}>{item.content}</Text>
+                </View>
               </View>
-            </View>
-          )}
+            )
+          }
           ListEmptyComponent={<Text style={s.emptyText}>Сэтгэгдэл байхгүй байна</Text>}
         />
 
@@ -477,4 +718,84 @@ const s = StyleSheet.create({
   empty: { alignItems: 'center', paddingTop: 80 },
   emptyTitle: { fontSize: 16, fontWeight: '600', color: '#333' },
   emptySub: { fontSize: 13, color: '#aaa', marginTop: 6, textAlign: 'center', lineHeight: 18 },
+
+  // Story bar
+  storyBar: { backgroundColor: '#fff', borderBottomWidth: 0.5, borderBottomColor: '#f0f0f0' },
+  storyItem: { alignItems: 'center', gap: 4 },
+  storyAddCircle: {
+    width: 56, height: 56, borderRadius: 28,
+    borderWidth: 2, borderColor: '#E67E22', borderStyle: 'dashed',
+    alignItems: 'center', justifyContent: 'center', backgroundColor: '#FFF8F0',
+  },
+  storyCircle: {
+    width: 56, height: 56, borderRadius: 28, padding: 2, borderWidth: 2,
+    position: 'relative',
+  },
+  storyImg: { width: 48, height: 48, borderRadius: 24 },
+  storyProductBadge: {
+    position: 'absolute', bottom: 0, right: 0,
+    width: 18, height: 18, borderRadius: 9,
+    backgroundColor: '#E67E22', borderWidth: 1.5, borderColor: '#fff',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  storyName: { fontSize: 9, color: '#555', maxWidth: 56 },
+
+  // Story modal
+  storyProgressTrack: {
+    position: 'absolute', top: 48, left: 12, right: 12,
+    height: 2.5, backgroundColor: 'rgba(255,255,255,0.3)',
+    borderRadius: 2, zIndex: 10,
+  },
+  storyProgressFill: { height: '100%', backgroundColor: '#fff', borderRadius: 2 },
+  storyClose: {
+    position: 'absolute', top: 52, right: 16, zIndex: 11,
+    width: 32, height: 32, alignItems: 'center', justifyContent: 'center',
+  },
+  storyUserInfo: {
+    position: 'absolute', top: 62, left: 16, zIndex: 11,
+    flexDirection: 'row', alignItems: 'center', gap: 8,
+  },
+  storyUserAvatar: {
+    width: 32, height: 32, borderRadius: 16, backgroundColor: '#1B3A5C',
+    alignItems: 'center', justifyContent: 'center',
+  },
+  storyCaption: {
+    position: 'absolute', left: 16, right: 16,
+    backgroundColor: 'rgba(0,0,0,0.5)', borderRadius: 10, padding: 10,
+  },
+  storyProductCard: {
+    position: 'absolute', bottom: 40, left: 16, right: 16,
+    backgroundColor: '#fff', borderRadius: 16, padding: 12,
+    flexDirection: 'row', alignItems: 'center', gap: 10,
+  },
+  storyBuyBtn: {
+    backgroundColor: '#E67E22', borderRadius: 10,
+    paddingHorizontal: 14, paddingVertical: 9,
+  },
+
+  // Tab switcher
+  tabSwitcher: {
+    flexDirection: 'row', backgroundColor: '#F0F0F0',
+    margin: 12, marginBottom: 0, borderRadius: 10, padding: 3,
+  },
+  tabBtn: {
+    flex: 1, paddingVertical: 7, borderRadius: 8, alignItems: 'center',
+    backgroundColor: 'transparent',
+  },
+  tabBtnActive: { backgroundColor: '#fff' },
+  tabBtnText: { fontSize: 11, fontWeight: '400', color: '#888' },
+  tabBtnTextActive: { fontWeight: '600', color: '#1B3A5C' },
+
+  // Bot reply
+  botBubble: {
+    flex: 1, backgroundColor: '#FFF8F0', borderRadius: 12,
+    paddingHorizontal: 10, paddingVertical: 8,
+    borderWidth: 0.5, borderColor: '#F0C060',
+  },
+  botLabel: { fontSize: 11, fontWeight: '600', color: '#E67E22', marginBottom: 3 },
+  botBuyBtn: {
+    backgroundColor: '#E67E22', borderRadius: 8, padding: 8,
+    alignItems: 'center', marginTop: 6,
+  },
+  botBuyBtnText: { color: '#fff', fontSize: 11, fontWeight: '600' },
 });
