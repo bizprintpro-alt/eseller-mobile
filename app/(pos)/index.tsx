@@ -12,8 +12,9 @@ import {
   type POSProduct,
   type POSCartItem,
 } from '../../src/services/api';
-import { BarcodeScanner } from '../components/BarcodeScanner';
-import { printReceipt } from '../../src/utils/posReceipt';
+// HOTFIX: native modules not yet in production binary — temporarily unused
+// import { BarcodeScanner } from '../components/BarcodeScanner';
+// import { printReceipt } from '../../src/utils/posReceipt';
 
 type PayMethod = 'cash' | 'qpay' | 'card';
 
@@ -104,48 +105,13 @@ export default function POSTerminal() {
     );
   }
 
-  // ── Barcode → auto-add ──
-  async function handleBarcodeScan(barcode: string) {
-    setScannerOpen(false);
-    try {
-      const res = await POSAPI.searchProducts(barcode);
-      const body = unwrap<any>(res);
-      const list: POSProduct[] = body?.products ?? (Array.isArray(body) ? body : []);
-      const found = list[0];
-      if (found) {
-        addToCart(found);
-        Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-      } else {
-        Alert.alert('Олдсонгүй', `Barcode: ${barcode}`);
-      }
-    } catch (e: any) {
-      Alert.alert('Алдаа', e?.message || 'Хайх үед алдаа гарлаа');
-    }
-  }
-
-  // ── Receipt print helper ──
-  function openReceipt(opts: {
-    orderId: string;
-    paymentMethod: 'cash' | 'qpay' | 'card';
-    cashReceived?: number;
-    change?: number;
-    snapshot: POSCartItem[];
-  }) {
-    printReceipt({
-      orderId: opts.orderId,
-      items: opts.snapshot.map((i) => ({
-        name: i.product.name,
-        qty: i.qty,
-        price: i.product.price,
-      })),
-      subtotal,
-      vatAmount,
-      total,
-      paymentMethod: opts.paymentMethod,
-      cashReceived: opts.cashReceived,
-      change: opts.change,
-    }).catch((e) => Alert.alert('Хэвлэх алдаа', e?.message || 'PDF үүсгэж чадсангүй'));
-  }
+  // ── HOTFIX: barcode + receipt native modules disabled until EAS build ──
+  // BarcodeScanner (expo-camera) + printReceipt (expo-print) are native
+  // modules not yet in the production binary. Calling them on the current
+  // OTA crashes the POS screen. Re-enable after next `eas build`.
+  //
+  // async function handleBarcodeScan(barcode: string) { ... }
+  // function openReceipt(opts: ...) { printReceipt(...) }
 
   function clearCart() {
     Alert.alert('Сагс цэвэрлэх', 'Бүх барааг хасах уу?', [
@@ -177,27 +143,12 @@ export default function POSTerminal() {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
       const body = unwrap<{ orderId?: string; change?: number }>(res);
       const orderId = String(body?.orderId ?? '');
-      const snapshot = [...cart];
       Alert.alert(
         '✅ Амжилттай',
         `Захиалга #${orderId.slice(-6).toUpperCase()}\n` +
           `Нийт: ${total.toLocaleString()}₮\n` +
           `Хариулт: ${change.toLocaleString()}₮`,
         [
-          {
-            text: '🖨 Баримт',
-            onPress: () => {
-              openReceipt({
-                orderId,
-                paymentMethod: 'cash',
-                cashReceived,
-                change,
-                snapshot,
-              });
-              setCart([]);
-              setCashInput('');
-            },
-          },
           {
             text: 'OK',
             onPress: () => {
@@ -248,7 +199,7 @@ export default function POSTerminal() {
           setPolling(false);
           setQpayModal(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
-          const posRes = await POSAPI.createOrder({
+          await POSAPI.createOrder({
             items: cart.map((c) => ({
               productId: c.product.id,
               qty: c.qty,
@@ -258,26 +209,10 @@ export default function POSTerminal() {
             total,
             vatIncluded: vatEnabled,
           });
-          const posBody = unwrap<{ orderId?: string }>(posRes);
-          const posOrderId = String(posBody?.orderId ?? `QPAY-${Date.now()}`);
-          const snapshot = [...cart];
           Alert.alert(
             '✅ Төлбөр амжилттай',
             `${total.toLocaleString()}₮ төлөгдлөө`,
-            [
-              {
-                text: '🖨 Баримт',
-                onPress: () => {
-                  openReceipt({
-                    orderId: posOrderId,
-                    paymentMethod: 'qpay',
-                    snapshot,
-                  });
-                  setCart([]);
-                },
-              },
-              { text: 'OK', onPress: () => setCart([]) },
-            ],
+            [{ text: 'OK', onPress: () => setCart([]) }],
           );
           return;
         }
@@ -373,10 +308,13 @@ export default function POSTerminal() {
             {searching && <ActivityIndicator size="small" color="#94A3B8" />}
           </View>
           <TouchableOpacity
-            onPress={() => {
-              Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-              setScannerOpen(true);
-            }}
+            onPress={() =>
+              Alert.alert(
+                'Шинэ билд шаардлагатай',
+                'Barcode сканнер ажиллахын тулд аппын шинэ хувилбарыг суулгана уу.',
+                [{ text: 'OK' }],
+              )
+            }
             style={{
               width: 44,
               height: 44,
@@ -384,6 +322,7 @@ export default function POSTerminal() {
               borderRadius: 10,
               alignItems: 'center',
               justifyContent: 'center',
+              opacity: 0.5,
             }}
           >
             <Ionicons name="barcode-outline" size={22} color="#94A3B8" />
@@ -699,12 +638,12 @@ export default function POSTerminal() {
         </View>
       </View>
 
-      {/* ─── Barcode scanner ─── */}
-      <BarcodeScanner
+      {/* ─── Barcode scanner — DISABLED until EAS build ─── */}
+      {/* <BarcodeScanner
         visible={scannerOpen}
         onScan={handleBarcodeScan}
         onClose={() => setScannerOpen(false)}
-      />
+      /> */}
 
       {/* ─── QPay modal ─── */}
       {qpayModal && (
