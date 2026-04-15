@@ -141,9 +141,41 @@ export interface LiveStreamItem {
   products?: unknown[];
 }
 
+export interface LiveProductItem {
+  id: string;
+  productId: string;
+  flashPrice?: number | null;
+  flashStock?: number | null;
+  soldCount: number;
+  isPinned: boolean;
+  product: { id: string; name: string; price: number; images?: string[] };
+}
+
+export interface LiveMessageItem {
+  id: string;
+  content: string;
+  type: 'TEXT' | 'PURCHASE' | 'LIKE' | 'JOIN' | string;
+  createdAt: string;
+  user: { id: string; name: string };
+}
+
 export const LiveAPI = {
   /** GET /api/live?status=LIVE — currently broadcasting streams */
   getActive: () => get('/live', { status: 'LIVE' }),
+
+  /** GET /api/live?status=SCHEDULED — upcoming streams */
+  getScheduled: () => get('/live', { status: 'SCHEDULED' }),
+
+  /** GET /api/live/[id] — stream detail + products + recent messages */
+  getById: (id: string) => get(`/live/${id}`),
+
+  /** POST /api/live/[id]/messages — send chat message (type TEXT default) */
+  sendMessage: (id: string, content: string, type: string = 'TEXT') =>
+    post(`/live/${id}/messages`, { content, type }),
+
+  /** POST /api/live/[id]/purchase — buy a live product */
+  purchase: (id: string, productId: string) =>
+    post(`/live/${id}/purchase`, { productId }),
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━

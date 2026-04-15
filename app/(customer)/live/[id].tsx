@@ -6,14 +6,12 @@ import {
 import { WebView } from 'react-native-webview';
 import { Ionicons } from '@expo/vector-icons';
 import { useLocalSearchParams, router } from 'expo-router';
-import * as SecureStore from 'expo-secure-store';
+import { LiveAPI } from '../../../src/services/api';
 
 const BRAND = '#E8242C';
-const API = process.env.EXPO_PUBLIC_API_URL || 'https://eseller.mn';
 
-async function authHeaders(): Promise<Record<string, string>> {
-  const token = await SecureStore.getItemAsync('token');
-  return token ? { Authorization: `Bearer ${token}`, 'Content-Type': 'application/json' } : { 'Content-Type': 'application/json' };
+function unwrap<T = any>(res: any): T {
+  return (res?.data ?? res) as T;
 }
 
 interface Product { id: string; name: string; price: number; images?: string[] }
@@ -57,10 +55,8 @@ export default function LiveDetailScreen() {
   const fetchStream = useCallback(async () => {
     if (!id) return;
     try {
-      const headers = await authHeaders();
-      const res = await fetch(`${API}/api/live/${id}`, { headers });
-      const json = await res.json();
-      const data = json?.data || json;
+      const res = await LiveAPI.getById(id);
+      const data = unwrap<StreamDetail>(res);
       if (data) {
         setStream(data);
         setMessages((data.messages || []).slice().reverse());
@@ -82,14 +78,8 @@ export default function LiveDetailScreen() {
     if (!chatInput.trim() || sending || !id) return;
     setSending(true);
     try {
-      const headers = await authHeaders();
-      const res = await fetch(`${API}/api/live/${id}/messages`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ content: chatInput.trim() }),
-      });
-      const json = await res.json();
-      const msg = json?.data || json;
+      const res = await LiveAPI.sendMessage(id, chatInput.trim());
+      const msg = unwrap<Message>(res);
       if (msg?.id) {
         setMessages((prev) => [...prev, msg]);
         setChatInput('');
@@ -102,21 +92,16 @@ export default function LiveDetailScreen() {
     if (purchasing || !id) return;
     setPurchasing(productId);
     try {
-      const headers = await authHeaders();
-      const res = await fetch(`${API}/api/live/${id}/purchase`, {
-        method: 'POST',
-        headers,
-        body: JSON.stringify({ productId }),
-      });
-      const json = await res.json();
-      if (json?.data?.id || json?.id) {
+      const res = await LiveAPI.purchase(id, productId);
+      const body = unwrap<any>(res);
+      if (body?.id || body?.orderId) {
         Alert.alert('Амжилттай', 'Захиалга үүслээ!');
         fetchStream();
       } else {
-        Alert.alert('Алдаа', json?.error || 'Алдаа гарлаа');
+        Alert.alert('Алдаа', (res as any)?.error || 'Алдаа гарлаа');
       }
-    } catch {
-      Alert.alert('Алдаа', 'Алдаа гарлаа');
+    } catch (e: any) {
+      Alert.alert('Алдаа', e?.message || 'Алдаа гарлаа');
     }
     setPurchasing(null);
   };
