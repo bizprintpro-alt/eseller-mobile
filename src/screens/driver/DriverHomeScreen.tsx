@@ -1,2 +1,2 @@
-import DeliveriesScreen from '../../../app/driver/deliveries'
+import DeliveriesScreen from '../../../app/(driver)/deliveries'
 export default DeliveriesScreen

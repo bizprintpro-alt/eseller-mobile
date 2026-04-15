@@ -110,8 +110,8 @@ function StoreDashboard() {
           {[
             { icon: 'add-circle' as const, label: 'Бараа нэмэх', color: C.store, route: '/(tabs)/store' },
             { icon: 'receipt' as const, label: 'Захиалгууд', color: '#1A73E8', route: '/orders' },
-            { icon: 'people' as const, label: 'Борлуулагчид', color: '#7C3AED', route: '/seller/products' },
-            { icon: 'bar-chart' as const, label: 'Тайлан', color: '#F9A825', route: '/seller/earnings' },
+            { icon: 'people' as const, label: 'Борлуулагчид', color: '#7C3AED', route: '/(seller)/products' },
+            { icon: 'bar-chart' as const, label: 'Тайлан', color: '#F9A825', route: '/(seller)/earnings' },
           ].map((a, i) => (
             <TouchableOpacity key={i} onPress={() => router.push(a.route as any)}
               style={{ width: '47%', backgroundColor: a.color + '15', borderRadius: R.lg, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: a.color + '30' }}>

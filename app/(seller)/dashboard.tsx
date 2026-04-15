@@ -37,7 +37,7 @@ export default function SellerDashboard() {
 
       {/* Stock alert */}
       {lowStock.length > 0 && (
-        <TouchableOpacity onPress={() => router.push('/seller/products' as any)}
+        <TouchableOpacity onPress={() => router.push('/(seller)/products' as any)}
           style={{ marginHorizontal: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#EA433515', borderRadius: R.lg, padding: 14, borderWidth: 0.5, borderColor: '#EA433533' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="warning" size={20} color="#EA4335" />
@@ -61,8 +61,8 @@ export default function SellerDashboard() {
         <Text style={{ ...F.h4, color: C.text, marginBottom: 12 }}>Хурдан үйлдэл</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {[
-            { icon: 'link' as const, label: 'Линк үүсгэх', route: '/seller/products' },
-            { icon: 'stats-chart' as const, label: 'Орлого харах', route: '/seller/earnings' },
+            { icon: 'link' as const, label: 'Линк үүсгэх', route: '/(seller)/products' },
+            { icon: 'stats-chart' as const, label: 'Орлого харах', route: '/(seller)/earnings' },
           ].map((a, i) => (
             <TouchableOpacity key={i} onPress={() => router.push(a.route as any)}
               style={{ flex: 1, backgroundColor: C.bgSection, borderRadius: R.lg, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: C.border }}>
