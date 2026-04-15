@@ -128,6 +128,38 @@ export default function OrderDetailScreen() {
         </View>
       )}
 
+      {/* Review (DELIVERED only) */}
+      {order.status === 'delivered' && !order.hasReview && (
+        <TouchableOpacity
+          onPress={() => router.push(`/review/${order.id}` as any)}
+          style={{
+            marginHorizontal: 12, marginTop: 4,
+            backgroundColor: '#FEF9C3', borderRadius: 12,
+            padding: 14, alignItems: 'center',
+            borderWidth: 0.5, borderColor: '#FDE68A',
+          }}
+        >
+          <Text style={{ fontSize: 14, fontWeight: '700', color: '#92400E' }}>
+            ⭐ Үнэлгээ өгөх
+          </Text>
+        </TouchableOpacity>
+      )}
+
+      {/* Receipt */}
+      <TouchableOpacity
+        onPress={() => router.push(`/receipt/${order.id}` as any)}
+        style={{
+          marginHorizontal: 12, marginTop: 8,
+          backgroundColor: '#EEF2FF', borderRadius: 12,
+          padding: 14, alignItems: 'center',
+          borderWidth: 0.5, borderColor: '#C7D2FE',
+        }}
+      >
+        <Text style={{ fontSize: 14, fontWeight: '700', color: '#3730A3' }}>
+          📄 Баримт харах
+        </Text>
+      </TouchableOpacity>
+
       <View style={{ height: 40 }} />
     </ScrollView>
   );
