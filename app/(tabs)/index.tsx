@@ -15,6 +15,12 @@ import { RoleBadge } from '../../src/shared/ui/RoleSwitcher'
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
 import { Skeleton } from '../../src/shared/ui/Skeleton'
 import { LiveCarousel } from '../components/LiveCarousel'
+import { StoriesRow } from '../components/home/StoriesRow'
+import { FlashSaleRow } from '../components/home/FlashSaleRow'
+import { GoldCta } from '../components/home/GoldCta'
+import { AiShopperCard } from '../components/home/AiShopperCard'
+import { BnplBanner } from '../components/home/BnplBanner'
+import { HerderRow } from '../components/home/HerderRow'
 
 const { width } = Dimensions.get('window')
 const CARD_W = 156
@@ -298,8 +304,20 @@ function BuyerHome() {
           </Text>
         </TouchableOpacity>
 
+        {/* ═══ STORIES (24h) ═══ */}
+        <StoriesRow />
+
+        {/* ═══ FLASH SALE ═══ */}
+        <FlashSaleRow />
+
         {/* ═══ LIVE CAROUSEL ═══ */}
         <LiveCarousel />
+
+        {/* ═══ GOLD CTA ═══ */}
+        <GoldCta />
+
+        {/* ═══ AI SHOPPER ═══ */}
+        <AiShopperCard />
 
         {/* ═══ ENTITY TYPES ═══ */}
         <View style={{ marginBottom: 24 }}>
@@ -391,6 +409,9 @@ function BuyerHome() {
             />
           </View>
         )}
+
+        {/* ═══ BNPL BANNER ═══ */}
+        <BnplBanner />
 
         {/* ═══ ОНЦГОЙ ДЭЛГҮҮРҮҮД (PROMOTED - ТӨЛБӨРТЭЙ) ═══ */}
         <View style={{ marginBottom: 24 }}>
@@ -493,6 +514,9 @@ function BuyerHome() {
             />
           )}
         </View>
+
+        {/* ═══ ХЕРДЭР БУЛАН ═══ */}
+        <HerderRow />
 
         {/* ═══ ШИНЭ БАРАА ═══ */}
         <View style={{ marginBottom: 24 }}>
