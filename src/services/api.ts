@@ -76,6 +76,57 @@ export const CartAPI = {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Wallet API — eseller.mn wallet + escrow
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Backend wraps JSON with { success, data, error }. Mobile axios interceptor
+// already unwraps axios `response.data`, so the raw body is returned here.
+// Callers should accept `res?.data ?? res` to handle both wrapped and raw shapes.
+
+export interface WalletHistoryEntry {
+  type?: string;
+  amount?: number;
+  description?: string;
+  status?: string;
+  orderId?: string;
+  reference?: string;
+  createdAt?: string;
+  date?: string; // legacy entries
+  method?: string;
+}
+
+export const WalletAPI = {
+  getWallet: () => get('/wallet'),
+
+  getTransactions: (page = 1, type?: string) => {
+    const params: Record<string, string | number> = { page };
+    if (type) params.type = type;
+    return get('/wallet/transactions', params);
+  },
+
+  topUp: (data: {
+    amount: number;
+    method: 'qpay' | 'socialpay' | 'card';
+    reference: string;
+  }) => post('/wallet/topup', data),
+
+  requestPayout: (data: {
+    amount: number;
+    bankName: string;
+    bankAccount: string;
+  }) => post('/wallet/payout', data),
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Loyalty API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export const LoyaltyAPI = {
+  get: () => get('/loyalty'),
+  redeemForCash: (points: number) => post('/loyalty/redeem-cash', { points }),
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Orders API — buyer/seller/driver
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
