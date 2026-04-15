@@ -1,83 +1,90 @@
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, Text, ScrollView } from 'react-native';
 import { router } from 'expo-router';
+import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../src/store/auth';
-import { C } from '../../src/shared/design';
+import { get } from '../../src/services/api';
 import { LogoutButton } from '../components/LogoutButton';
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
 import {
   ProfileHeader,
   SectionTitle,
-  InfoCard,
+  Card,
   InfoRow,
   MenuRow,
+  StatCard,
+  PC,
 } from '../components/profile-ui';
+import { formatCurrency, formatCount } from '../../src/utils/profile';
 
 export default function OwnerProfile() {
   const { user } = useAuth();
 
+  const { data } = useQuery({
+    queryKey: ['owner-stats'],
+    queryFn: () => get('/seller/analytics'),
+  });
+  const stats = (data as any)?.stats || (data as any) || {};
+
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: C.bg }}
-      contentContainerStyle={{ paddingBottom: 120 }}
-    >
+    <View style={{ flex: 1, backgroundColor: PC.bg }}>
       <RoleSwitcherBar />
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        <ProfileHeader
+          gradient={['#059669', '#10B981']}
+          icon="🏪"
+          name={user?.name ?? 'Дэлгүүрийн эзэн'}
+          sub={user?.email ?? user?.phone ?? ''}
+          roleLabel="БАТАЛГААЖСАН ДЭЛГҮҮР"
+        />
 
-      <ProfileHeader
-        icon="🏪"
-        name={user?.name ?? 'Дэлгүүрийн эзэн'}
-        sub={user?.email ?? user?.phone ?? ''}
-        roleLabel="Дэлгүүр эзэн"
-        color={C.store}
-      />
+        <View style={{ padding: 12, gap: 2 }}>
+          {/* Stats 2×2 */}
+          <SectionTitle>Хурдан статистик</SectionTitle>
+          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
+            <StatCard
+              icon="📦"
+              label="Нийт бараа"
+              value={formatCount(stats.products)}
+              color="#10B981"
+            />
+            <StatCard
+              icon="🛒"
+              label="Нийт захиалга"
+              value={formatCount(stats.orders)}
+              color="#3B82F6"
+            />
+            <StatCard
+              icon="💰"
+              label="Нийт орлого"
+              value={formatCurrency(stats.revenue)}
+              color="#F59E0B"
+            />
+            <StatCard
+              icon="⭐"
+              label="Дундаж үнэлгээ"
+              value={stats.rating ? `${stats.rating}` : '—'}
+              color="#7C3AED"
+            />
+          </View>
 
-      <View style={{ padding: 12, gap: 12 }}>
-        <View>
           <SectionTitle>Хувийн мэдээлэл</SectionTitle>
-          <InfoCard>
-            <InfoRow icon="👤" label="Нэр"   value={user?.name ?? '—'} />
+          <Card>
+            <InfoRow icon="👤" label="Нэр" value={user?.name ?? '—'} />
             <InfoRow icon="📧" label="Имэйл" value={user?.email ?? '—'} />
-            <InfoRow icon="📱" label="Утас"  value={user?.phone ?? '—'} />
+            <InfoRow icon="📱" label="Утас" value={user?.phone ?? '—'} />
             <MenuRow
               icon="✏️"
               label="Профайл засах"
               onPress={() => router.push('/(customer)/edit-profile' as never)}
             />
-          </InfoCard>
-        </View>
+          </Card>
 
-        <View>
-          <SectionTitle>Дэлгүүр</SectionTitle>
-          <InfoCard>
-            <MenuRow
-              icon="⚙️"
-              label="Дэлгүүрийн тохиргоо"
-              onPress={() => router.push('/(owner)/settings' as never)}
-            />
-            <MenuRow
-              icon="📦"
-              label="Бараа"
-              onPress={() => router.push('/(owner)/products' as never)}
-            />
-            <MenuRow
-              icon="🧾"
-              label="Захиалгууд"
-              onPress={() => router.push('/(owner)/orders' as never)}
-            />
-            <MenuRow
-              icon="📊"
-              label="Тайлан"
-              onPress={() => router.push('/(owner)/analytics' as never)}
-            />
-          </InfoCard>
-        </View>
-
-        <View>
-          <SectionTitle>Хэтэвч ба оноо</SectionTitle>
-          <InfoCard>
+          <SectionTitle>Хэтэвч</SectionTitle>
+          <Card>
             <MenuRow
               icon="💳"
-              label="Хэтэвч харах"
+              label="Баланс харах"
               onPress={() => router.push('/(customer)/wallet' as never)}
             />
             <MenuRow
@@ -85,12 +92,29 @@ export default function OwnerProfile() {
               label="Урамшааллын оноо"
               onPress={() => router.push('/(customer)/tier-details' as never)}
             />
-          </InfoCard>
-        </View>
+          </Card>
 
-        <View>
+          <SectionTitle>Дэлгүүр</SectionTitle>
+          <Card>
+            <MenuRow
+              icon="⚙️"
+              label="Дэлгүүрийн тохиргоо"
+              onPress={() => router.push('/(owner)/settings' as never)}
+            />
+            <MenuRow
+              icon="🖥️"
+              label="POS терминал"
+              onPress={() => router.push('/(pos)/' as never)}
+            />
+            <MenuRow
+              icon="📊"
+              label="Тайлан"
+              onPress={() => router.push('/(owner)/analytics' as never)}
+            />
+          </Card>
+
           <SectionTitle>Тохиргоо</SectionTitle>
-          <InfoCard>
+          <Card>
             <MenuRow
               icon="🔔"
               label="Мэдэгдэл"
@@ -106,11 +130,11 @@ export default function OwnerProfile() {
               label="Тусламж"
               onPress={() => router.push('/(customer)/help' as never)}
             />
-          </InfoCard>
+          </Card>
         </View>
-      </View>
 
-      <LogoutButton />
-    </ScrollView>
+        <LogoutButton />
+      </ScrollView>
+    </View>
   );
 }

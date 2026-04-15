@@ -1,57 +1,63 @@
 import React from 'react';
-import { View, ScrollView } from 'react-native';
+import { View, Text, ScrollView, Alert } from 'react-native';
 import { router } from 'expo-router';
+import * as Clipboard from 'expo-clipboard';
+import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/store/auth';
-import { C } from '../../src/shared/design';
 import { LogoutButton } from '../components/LogoutButton';
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
 import {
   ProfileHeader,
   SectionTitle,
-  InfoCard,
+  Card,
   InfoRow,
   MenuRow,
-  SocialRow,
+  PC,
 } from '../components/profile-ui';
+import { getReferralLink, getReferralCode, getTierLabel } from '../../src/utils/profile';
 
 export default function SellerProfile() {
   const { user } = useAuth();
-  const refCode = (user?.id ?? user?._id ?? '').toString().slice(-6).toUpperCase();
+  const refLink = getReferralLink(user?.id ?? user?._id);
+  const refCode = getReferralCode(user?.id ?? user?._id);
+
+  async function copyReferral() {
+    try {
+      await Clipboard.setStringAsync(refLink);
+      Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      Alert.alert('Хуулсан', refLink);
+    } catch {}
+  }
 
   return (
-    <ScrollView
-      style={{ flex: 1, backgroundColor: C.bg }}
-      contentContainerStyle={{ paddingBottom: 120 }}
-    >
+    <View style={{ flex: 1, backgroundColor: PC.bg }}>
       <RoleSwitcherBar />
+      <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
+        <ProfileHeader
+          gradient={['#7C3AED', '#A855F7']}
+          icon="📢"
+          name={user?.name ?? 'Борлуулагч'}
+          sub={user?.email ?? user?.phone ?? ''}
+          roleLabel="БОРЛУУЛАГЧ"
+        />
 
-      <ProfileHeader
-        icon="📢"
-        name={user?.name ?? 'Борлуулагч'}
-        sub={user?.email ?? user?.phone ?? ''}
-        roleLabel="Борлуулагч"
-        color={C.seller}
-      />
-
-      <View style={{ padding: 12, gap: 12 }}>
-        <View>
+        <View style={{ padding: 12, gap: 2 }}>
           <SectionTitle>Борлуулагчийн мэдээлэл</SectionTitle>
-          <InfoCard>
+          <Card>
             <InfoRow
               icon="🔗"
               label="Referral код"
-              value={refCode || '—'}
-              copyable
+              value={refCode}
+              accent="#7C3AED"
+              onCopy={copyReferral}
             />
             <InfoRow icon="💰" label="Комиссын хувь"   value="—" />
-            <InfoRow icon="🏆" label="Influencer tier" value="—" />
+            <InfoRow icon="🏆" label="Tier"             value={getTierLabel(null)} />
             <InfoRow icon="📊" label="Нийт борлуулалт" value="—" />
-          </InfoCard>
-        </View>
+          </Card>
 
-        <View>
-          <SectionTitle>Миний самбар</SectionTitle>
-          <InfoCard>
+          <SectionTitle>Самбар</SectionTitle>
+          <Card>
             <MenuRow
               icon="🏠"
               label="Самбар"
@@ -72,21 +78,17 @@ export default function SellerProfile() {
               label="Топ жагсаалт"
               onPress={() => router.push('/(seller)/leaderboard' as never)}
             />
-          </InfoCard>
-        </View>
+          </Card>
 
-        <View>
           <SectionTitle>Нийгмийн сүлжээ</SectionTitle>
-          <InfoCard>
-            <SocialRow icon="📸" label="Instagram" />
-            <SocialRow icon="🎵" label="TikTok" />
-            <SocialRow icon="📘" label="Facebook" />
-          </InfoCard>
-        </View>
+          <Card>
+            <MenuRow icon="📸" label="Instagram холбох" onPress={() => {}} />
+            <MenuRow icon="🎵" label="TikTok холбох"    onPress={() => {}} />
+            <MenuRow icon="📘" label="Facebook холбох"  onPress={() => {}} />
+          </Card>
 
-        <View>
           <SectionTitle>Тохиргоо</SectionTitle>
-          <InfoCard>
+          <Card>
             <MenuRow
               icon="✏️"
               label="Профайл засах"
@@ -102,11 +104,11 @@ export default function SellerProfile() {
               label="Аюулгүй байдал"
               onPress={() => router.push('/(customer)/security' as never)}
             />
-          </InfoCard>
+          </Card>
         </View>
-      </View>
 
-      <LogoutButton />
-    </ScrollView>
+        <LogoutButton />
+      </ScrollView>
+    </View>
   );
 }
