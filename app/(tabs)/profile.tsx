@@ -1,6 +1,6 @@
 import {
   View, Text, ScrollView,
-  TouchableOpacity, Alert,
+  TouchableOpacity,
 } from 'react-native'
 import { router }   from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -8,6 +8,7 @@ import { useAuth }  from '../../src/store/auth'
 import { useCart }  from '../../src/store/cart'
 import { C, R, roleColor }
   from '../../src/shared/design'
+import { LogoutButton } from '../components/LogoutButton'
 
 const ROLE_LABELS: Record<string, string> = {
   BUYER:  'Худалдан авагч',
@@ -17,9 +18,9 @@ const ROLE_LABELS: Record<string, string> = {
 }
 
 export default function ProfileScreen() {
-  const { user, role, logout } = useAuth()
-  const { count }              = useCart()
-  const color                  = roleColor(role)
+  const { user, role } = useAuth()
+  const { count }      = useCart()
+  const color          = roleColor(role)
 
   const MENU = user ? [
     // Захиалга & Худалдан авалт
@@ -235,46 +236,7 @@ export default function ProfileScreen() {
             </TouchableOpacity>
           ))}
 
-          {/* Гарах */}
-          <TouchableOpacity
-            onPress={() => Alert.alert(
-              'Гарах',
-              'Гарахдаа итгэлтэй байна уу?',
-              [
-                { text:'Болих', style:'cancel' },
-                {
-                  text:    'Гарах',
-                  style:   'destructive',
-                  onPress: logout,
-                },
-              ]
-            )}
-            style={{
-              flexDirection:   'row',
-              alignItems:      'center',
-              backgroundColor: C.bgSection,
-              borderRadius:    R.lg,
-              padding:         16,
-              gap:             12,
-              borderWidth:     1,
-              borderColor:     C.brand + '30',
-              marginTop:       8,
-            }}
-          >
-            <Ionicons
-              name="log-out-outline"
-              size={22}
-              color={C.brand}
-            />
-            <Text style={{
-              flex:       1,
-              color:      C.brand,
-              fontSize:   15,
-              fontWeight: '600',
-            }}>
-              Гарах
-            </Text>
-          </TouchableOpacity>
+          <LogoutButton />
         </View>
       )}
 

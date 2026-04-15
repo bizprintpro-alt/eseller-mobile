@@ -59,6 +59,13 @@ export default function SellerLayout() {
         }}
       />
       <Tabs.Screen
+        name="profile"
+        options={{
+          title: 'Профайл',
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} />,
+        }}
+      />
+      <Tabs.Screen
         name="influencer"
         options={{ href: null }}
       />

@@ -49,11 +49,15 @@ export default function OwnerLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
-          title: 'Тохиргоо',
-          tabBarIcon: ({ color }) => <Ionicons name="settings" size={22} color={color} />,
+          title: 'Профайл',
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} />,
         }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{ href: null }}
       />
     </Tabs>
   )
