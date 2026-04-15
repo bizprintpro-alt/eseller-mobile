@@ -286,6 +286,14 @@ export default function LoginScreen() {
           <Text style={{ color: C.text, fontSize: 15, fontWeight: '600' }}>Утсаар нэвтрэх</Text>
         </TouchableOpacity>
 
+        {/* Forgot password */}
+        <TouchableOpacity
+          onPress={() => router.push('/(auth)/forgot-password' as never)}
+          style={{ alignItems: 'center', marginBottom: 12 }}
+        >
+          <Text style={{ color: C.textSub, fontSize: 13 }}>Нууц үгээ мартсан уу?</Text>
+        </TouchableOpacity>
+
         {/* Register */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
           <Text style={{ color: C.textMuted, fontSize: 14 }}>

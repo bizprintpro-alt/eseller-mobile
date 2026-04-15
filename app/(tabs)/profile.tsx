@@ -72,6 +72,19 @@ export default function ProfileScreen() {
     { icon:'help-circle-outline',
       label:'Тусламж & FAQ',
       onPress: () => router.push('/(customer)/help' as any) },
+    // Legal & info
+    { icon:'information-circle-outline',
+      label:'Тухай',
+      onPress: () => router.push('/(customer)/about' as any) },
+    { icon:'call-outline',
+      label:'Холбоо барих',
+      onPress: () => router.push('/(customer)/contact' as any) },
+    { icon:'document-text-outline',
+      label:'Нууцлалын бодлого',
+      onPress: () => router.push('/(customer)/legal/privacy' as any) },
+    { icon:'reader-outline',
+      label:'Үйлчилгээний нөхцөл',
+      onPress: () => router.push('/(customer)/legal/terms' as any) },
   ] : []
 
   return (

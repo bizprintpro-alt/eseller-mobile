@@ -189,6 +189,12 @@ function AppContent() {
       <Stack.Screen name="(customer)/register-shop" options={{ headerShown: true, title: 'Дэлгүүр нээх' }} />
       <Stack.Screen name="(customer)/tier-details" options={{ headerShown: true, title: 'Түвшин' }} />
       <Stack.Screen name="(customer)/security" options={{ headerShown: true, title: 'Аюулгүй байдал' }} />
+      <Stack.Screen name="(customer)/about" options={{ headerShown: true, title: 'Тухай' }} />
+      <Stack.Screen name="(customer)/contact" options={{ headerShown: true, title: 'Холбоо барих' }} />
+      <Stack.Screen name="(customer)/legal/privacy" options={{ headerShown: true, title: 'Нууцлалын бодлого' }} />
+      <Stack.Screen name="(customer)/legal/terms" options={{ headerShown: true, title: 'Үйлчилгээний нөхцөл' }} />
+      <Stack.Screen name="receipt/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="review/[orderId]" options={{ headerShown: false }} />
       {/* Seller + Driver groups now have their own Tabs layout */}
       <Stack.Screen name="(seller)" options={{ headerShown: false }} />
       <Stack.Screen name="(driver)" options={{ headerShown: false }} />
