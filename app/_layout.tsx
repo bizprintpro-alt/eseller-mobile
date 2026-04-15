@@ -152,9 +152,10 @@ function AppContent() {
       <Stack.Screen name="(customer)/register-shop" options={{ headerShown: true, title: 'Дэлгүүр нээх' }} />
       <Stack.Screen name="(customer)/tier-details" options={{ headerShown: true, title: 'Түвшин' }} />
       <Stack.Screen name="(customer)/security" options={{ headerShown: true, title: 'Аюулгүй байдал' }} />
-      {/* Seller + Driver navigation groups */}
-      <Stack.Screen name="(seller)" options={{ headerShown: false }} />
-      <Stack.Screen name="(driver)" options={{ headerShown: false }} />
+      {/* Seller screens that need a header — grouped under (seller) */}
+      <Stack.Screen name="(seller)/catalog" options={{ headerShown: true, title: 'Каталог' }} />
+      <Stack.Screen name="(seller)/leaderboard" options={{ headerShown: true, title: 'Рейтинг' }} />
+      <Stack.Screen name="(seller)/influencer" options={{ headerShown: true, title: 'Инфлюэнсер' }} />
       <Stack.Screen name="feed/[id]" options={{ headerShown: true, title: 'Зарын дэлгэрэнгүй' }} />
       <Stack.Screen name="(customer)/wishlist" options={{ headerShown: true, title: 'Хадгалсан' }} />
       <Stack.Screen name="chat/ai-support" options={{ headerShown: true, title: 'AI Туслах' }} />

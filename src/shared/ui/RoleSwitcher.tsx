@@ -105,13 +105,11 @@ function RoleModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     setRole(key);
     onClose();
 
-    // Cross-group navigation: each role has its own root group
+    // Cross-group navigation: STORE owners live in /(owner),
+    // everyone else (BUYER/SELLER/DRIVER) renders inside /(tabs)
+    // where the role-based tab bar + lazy-loaded screens do the work.
     if (key === 'STORE') {
       router.replace('/(owner)/dashboard' as never);
-    } else if (key === 'DRIVER') {
-      router.replace('/(driver)/deliveries' as never);
-    } else if (key === 'SELLER') {
-      router.replace('/(seller)/dashboard' as never);
     } else {
       router.replace('/(tabs)' as never);
     }
