@@ -15,7 +15,10 @@ import AsyncStorage
 import * as Notifications from 'expo-notifications'
 import { useAuth }  from '../src/store/auth'
 import { routeByRole } from '../src/shared/routing'
-import { registerPushToken } from '../src/lib/notifications'
+import {
+  registerPushToken,
+  resolveNotificationRoute,
+} from '../src/lib/notifications'
 import { C }        from '../src/shared/design'
 import SplashScreen
   from '../src/shared/ui/SplashScreen'
@@ -75,10 +78,27 @@ function AppContent() {
       .catch(() => {})
   }, [])
 
-  // Push token бүртгэх (нэвтэрсэн үед)
+  // Push token бүртгэх + foreground/tap listeners (нэвтэрсэн үед)
   useEffect(() => {
-    if (user) {
-      registerPushToken()
+    if (!user) return
+
+    registerPushToken()
+
+    const receivedSub = Notifications.addNotificationReceivedListener((n) => {
+      console.log('[Push]', n.request.content.title, n.request.content.body)
+    })
+    const responseSub = Notifications.addNotificationResponseReceivedListener((r) => {
+      const route = resolveNotificationRoute(r)
+      try {
+        router.push(route as never)
+      } catch (e) {
+        console.warn('[Push] route error:', e)
+      }
+    })
+
+    return () => {
+      receivedSub.remove()
+      responseSub.remove()
     }
   }, [user])
 
