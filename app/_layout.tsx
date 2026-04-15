@@ -1,7 +1,7 @@
 import React, {
-  useState, useEffect
+  useState, useEffect, useRef
 } from 'react'
-import { Stack }     from 'expo-router'
+import { Stack, router }     from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as Updates  from 'expo-updates'
 import { SafeAreaProvider }
@@ -14,6 +14,7 @@ import AsyncStorage
   from '@react-native-async-storage/async-storage'
 import * as Notifications from 'expo-notifications'
 import { useAuth }  from '../src/store/auth'
+import { routeByRole } from '../src/shared/routing'
 import { registerPushToken } from '../src/lib/notifications'
 import { C }        from '../src/shared/design'
 import SplashScreen
@@ -49,6 +50,7 @@ function AppContent() {
   const [showOnboarding, setOnboarding]  =
     useState(false)
   const { user } = useAuth()
+  const hasAutoRouted = useRef(false)
 
   // OTA update шалгах
   useEffect(() => {
@@ -79,6 +81,21 @@ function AppContent() {
       registerPushToken()
     }
   }, [user])
+
+  // Auto-route DRIVER/SELLER to their own navigation group on cold start.
+  // BUYER + STORE keep the default (tabs) entry so role-branching / legacy
+  // screens continue to work for them.
+  useEffect(() => {
+    if (showSplash || showOnboarding) return
+    if (!user) return
+    if (hasAutoRouted.current) return
+
+    const role = (user.role ?? '').toLowerCase()
+    if (role === 'delivery' || role === 'driver' || role === 'affiliate') {
+      hasAutoRouted.current = true
+      routeByRole(role)
+    }
+  }, [user, showSplash, showOnboarding])
 
   const finishOnboarding = async () => {
     try {
