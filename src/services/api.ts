@@ -216,6 +216,13 @@ export const POSAPI = {
     get('/orders/pos/history', {
       date: date ?? new Date().toISOString().split('T')[0],
     }),
+
+  /** POST /api/orders/pos/refund — reverse a completed POS sale */
+  refundOrder: (orderId: string, reason?: string) =>
+    post('/orders/pos/refund', { orderId, reason }),
+
+  /** POST /api/orders/pos/void — cancel within 5-minute window */
+  voidOrder: (orderId: string) => post('/orders/pos/void', { orderId }),
 };
 
 export const LiveAPI = {
