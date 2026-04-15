@@ -159,6 +159,69 @@ export interface LiveMessageItem {
   user: { id: string; name: string };
 }
 
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// POS Terminal API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export interface POSProduct {
+  id: string;
+  name: string;
+  price: number;
+  images?: string[];
+  barcode?: string;
+  stock: number;
+  category?: string;
+}
+
+export interface POSCartItem {
+  product: POSProduct;
+  qty: number;
+  subtotal: number;
+}
+
+export interface POSOrderInput {
+  items: { productId: string; qty: number; price: number }[];
+  paymentMethod: 'cash' | 'qpay' | 'card';
+  cashReceived?: number;
+  total: number;
+  vatIncluded: boolean;
+}
+
+export const POSAPI = {
+  /** Product search for terminal (name / barcode) */
+  searchProducts: (query: string) =>
+    get('/products', { search: query, limit: 20 }),
+
+  /**
+   * Create QPay invoice — backend route requires `orderId`.
+   * POS generates a synthetic `POS-<timestamp>` id so the invoice
+   * can be looked up later when the POS order route lands.
+   */
+  createQPayInvoice: (orderId: string, amount: number, description?: string) =>
+    post('/payment/qpay/create', {
+      orderId,
+      amount,
+      description: description || 'POS захиалга',
+    }),
+
+  /** Poll payment status — POST body `{invoiceId}`; response `{paid, paidDate?}` */
+  checkPayment: (invoiceId: string) =>
+    post('/payment/qpay/check', { invoiceId }),
+
+  /**
+   * Create POS order (offline/local only for now).
+   * TODO: rewire to real backend once `/api/orders/pos` lands.
+   */
+  createOrder: async (data: POSOrderInput): Promise<{ orderId: string }> => {
+    console.warn('[POS] createOrder: backend route байхгүй — local only', {
+      itemCount: data.items.length,
+      method: data.paymentMethod,
+      total: data.total,
+    });
+    return { orderId: `LOCAL-${Date.now()}` };
+  },
+};
+
 export const LiveAPI = {
   /** GET /api/live?status=LIVE — currently broadcasting streams */
   getActive: () => get('/live', { status: 'LIVE' }),

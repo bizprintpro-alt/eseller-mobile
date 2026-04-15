@@ -118,6 +118,7 @@ function AppContent() {
     >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(auth)" />
+      <Stack.Screen name="(pos)" options={{ headerShown: false, animation: 'fade' }} />
       <Stack.Screen
         name="product/[id]"
         options={{
