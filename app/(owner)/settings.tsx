@@ -4,6 +4,7 @@ import { useQuery, useMutation } from '@tanstack/react-query'
 import * as Haptics from 'expo-haptics'
 import { get, put } from '../../src/services/api'
 import { C, R } from '../../src/shared/design'
+import { LogoutButton } from '../components/LogoutButton'
 
 const FIELDS = [
   { key: 'name', label: 'Дэлгүүрийн нэр', placeholder: 'Миний дэлгүүр' },
@@ -85,6 +86,7 @@ export default function OwnerSettings() {
           </Text>
         </TouchableOpacity>
       </View>
+      <LogoutButton />
     </ScrollView>
   )
 }

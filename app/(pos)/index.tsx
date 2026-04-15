@@ -15,6 +15,7 @@ import {
 // HOTFIX: native modules not yet in production binary — temporarily unused
 // import { BarcodeScanner } from '../components/BarcodeScanner';
 // import { printReceipt } from '../../src/utils/posReceipt';
+import { LogoutButton } from '../components/LogoutButton';
 
 type PayMethod = 'cash' | 'qpay' | 'card';
 
@@ -280,6 +281,7 @@ export default function POSTerminal() {
             <Ionicons name="time-outline" size={12} color="#94A3B8" />
             <Text style={{ color: '#94A3B8', fontSize: 12 }}>Түүх</Text>
           </TouchableOpacity>
+          <LogoutButton variant="icon" />
         </View>
 
         {/* Search + barcode scanner */}

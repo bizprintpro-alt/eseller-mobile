@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { get } from '../../src/services/api'
 import { C, R, F } from '../../src/shared/design'
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
+import { LogoutButton } from '../components/LogoutButton'
 
 export default function SellerDashboard() {
   const { data, refetch, isRefetching } = useQuery({
@@ -96,6 +97,7 @@ export default function SellerDashboard() {
         )}
       </View>
 
+      <LogoutButton />
       <View style={{ height: 40 }} />
     </ScrollView>
   )
