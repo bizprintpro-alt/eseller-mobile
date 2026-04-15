@@ -32,6 +32,7 @@ export default function OwnerDashboard() {
   return (
     <ScrollView
       style={{ flex: 1, backgroundColor: C.bg }}
+      contentContainerStyle={{ paddingBottom: 120 }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.brand} />}
     >
       <View style={{
