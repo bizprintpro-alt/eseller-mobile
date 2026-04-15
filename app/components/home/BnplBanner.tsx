@@ -1,24 +1,24 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
+import { H } from './tokens';
 
 export function BnplBanner() {
   return (
     <TouchableOpacity
       onPress={() => router.push('/(customer)/bnpl' as never)}
-      activeOpacity={0.85}
+      activeOpacity={0.88}
       style={{
-        marginHorizontal: 12,
-        marginBottom: 16,
+        marginHorizontal: H.mx,
+        marginBottom: 14,
         backgroundColor: '#0F172A',
-        borderRadius: 16,
-        padding: 16,
+        borderRadius: H.cardRadius,
+        padding: 18,
         flexDirection: 'row',
         alignItems: 'center',
         justifyContent: 'space-between',
         overflow: 'hidden',
-        borderWidth: 0.5,
-        borderColor: '#1E293B',
+        position: 'relative',
       }}
     >
       <Text
@@ -41,7 +41,7 @@ export function BnplBanner() {
             paddingHorizontal: 8,
             paddingVertical: 2,
             alignSelf: 'flex-start',
-            marginBottom: 6,
+            marginBottom: 7,
           }}
         >
           <Text style={{ color: '#fff', fontSize: 9, fontWeight: '900', letterSpacing: 0.4 }}>
@@ -62,7 +62,9 @@ export function BnplBanner() {
           borderRadius: 10,
           paddingHorizontal: 14,
           paddingVertical: 9,
-          marginLeft: 8,
+          flexShrink: 0,
+          position: 'relative',
+          zIndex: 1,
         }}
       >
         <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>Мэдэх →</Text>

@@ -1,23 +1,28 @@
 import React, { useEffect, useState } from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { Ionicons } from '@expo/vector-icons';
+import { router } from 'expo-router';
 import { get } from '../../../src/services/api';
-import { C, R } from '../../../src/shared/design';
+import { H } from './tokens';
+import { SectionHeader } from './SectionHeader';
 
 interface FlashItem {
   id: string;
   name: string;
-  images?: string[];
   salePrice?: number;
   originalPrice?: number;
   price?: number;
   discountPct?: number;
+  images?: string[];
+  emoji?: string;
+}
+
+function unwrap<T = any>(res: any): T {
+  return (res?.data ?? res) as T;
 }
 
 function useCountdown(endsAt?: string | null) {
-  const [label, setLabel] = useState<string>('');
+  const [label, setLabel] = useState('');
   useEffect(() => {
     if (!endsAt) return;
     const tick = () => {
@@ -29,75 +34,50 @@ function useCountdown(endsAt?: string | null) {
       const h = Math.floor(diff / 3_600_000);
       const m = Math.floor((diff % 3_600_000) / 60_000);
       const s = Math.floor((diff % 60_000) / 1_000);
-      setLabel(`${h}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`);
+      setLabel(
+        `${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`,
+      );
     };
     tick();
-    const id = setInterval(tick, 1000);
+    const id = setInterval(tick, 1_000);
     return () => clearInterval(id);
   }, [endsAt]);
   return label;
 }
 
 export function FlashSaleRow() {
-  // Backend /flash-sales route байхгүй — /search?flashSale=true ашиглана
   const { data } = useQuery({
     queryKey: ['flash-sales-home'],
-    queryFn: () => get('/search', { flashSale: true, limit: 8 }),
-    refetchInterval: 60_000,
+    queryFn: async () => {
+      const res = await get('/search', { flashSale: true, limit: 8 });
+      return unwrap<any>(res);
+    },
+    staleTime: 60_000,
     retry: false,
   });
 
-  const body: any = (data as any)?.data ?? data;
-  const items: FlashItem[] =
-    body?.items ?? body?.products ?? (Array.isArray(body) ? body : []);
-  const endsAt: string | undefined = body?.endsAt;
-  const timeLeft = useCountdown(endsAt);
+  const items: FlashItem[] = data?.items ?? data?.products ?? [];
+  const countdown = useCountdown(data?.endsAt);
 
-  if (!items?.length) return null;
+  if (!items.length) return null;
 
   return (
-    <View style={{ marginBottom: 20 }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          marginBottom: 10,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 14, fontWeight: '800', color: '#EF4444' }}>
-            ⚡ Flash Sale
-          </Text>
-          {!!timeLeft && (
-            <View
-              style={{
-                backgroundColor: '#EF444422',
-                borderRadius: 6,
-                paddingHorizontal: 7,
-                paddingVertical: 2,
-                borderWidth: 0.5,
-                borderColor: '#EF444455',
-              }}
-            >
-              <Text style={{ fontSize: 11, fontWeight: '800', color: '#EF4444' }}>
-                {timeLeft}
-              </Text>
-            </View>
-          )}
-        </View>
-        <TouchableOpacity onPress={() => router.push('/(customer)/flash-sale' as never)}>
-          <Text style={{ fontSize: 12, color: C.brand, fontWeight: '600' }}>Бүгд →</Text>
-        </TouchableOpacity>
-      </View>
-
+    <View style={{ marginBottom: 16 }}>
+      <SectionHeader
+        title="Flash Sale"
+        icon="⚡"
+        badge={countdown || undefined}
+        badgeBg="#7F1D1D"
+        badgeColor="#FCA5A5"
+        onMore={() => router.push('/(customer)/flash-sale' as never)}
+        moreColor="#FCA5A5"
+      />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
+        contentContainerStyle={{ paddingHorizontal: H.mx, gap: H.gap2 }}
       >
-        {items.slice(0, 8).map((item) => {
+        {items.map((item) => {
           const sale = item.salePrice ?? item.price ?? 0;
           const original = item.originalPrice ?? 0;
           const pct =
@@ -107,21 +87,24 @@ export function FlashSaleRow() {
             <TouchableOpacity
               key={item.id}
               onPress={() => router.push(`/product/${item.id}` as never)}
+              activeOpacity={0.85}
               style={{
-                width: 120,
-                backgroundColor: C.bgCard,
-                borderRadius: R.lg,
+                width: 118,
+                backgroundColor: H.card,
+                borderRadius: H.cardRadiusSm,
                 overflow: 'hidden',
                 borderWidth: 0.5,
-                borderColor: C.border,
+                borderColor: H.cardBorder,
+                ...H.shadow,
               }}
             >
               <View
                 style={{
-                  height: 90,
-                  backgroundColor: C.bgSection,
+                  height: 88,
+                  backgroundColor: '#F5F5F5',
                   alignItems: 'center',
                   justifyContent: 'center',
+                  position: 'relative',
                 }}
               >
                 {item.images?.[0] ? (
@@ -131,18 +114,18 @@ export function FlashSaleRow() {
                     resizeMode="cover"
                   />
                 ) : (
-                  <Ionicons name="flash" size={28} color="#EF4444" />
+                  <Text style={{ fontSize: 32 }}>{item.emoji ?? '📦'}</Text>
                 )}
                 {pct > 0 && (
                   <View
                     style={{
                       position: 'absolute',
-                      top: 5,
-                      left: 5,
+                      top: 6,
+                      left: 6,
                       backgroundColor: '#EF4444',
                       borderRadius: 4,
-                      paddingHorizontal: 6,
-                      paddingVertical: 2,
+                      paddingHorizontal: 5,
+                      paddingVertical: 1,
                     }}
                   >
                     <Text style={{ color: '#fff', fontSize: 9, fontWeight: '900' }}>
@@ -151,10 +134,10 @@ export function FlashSaleRow() {
                   </View>
                 )}
               </View>
-              <View style={{ padding: 8 }}>
+              <View style={{ padding: 9 }}>
                 <Text
                   numberOfLines={1}
-                  style={{ fontSize: 10, color: C.textSub, marginBottom: 3 }}
+                  style={{ fontSize: 10, color: H.textSub, marginBottom: 3 }}
                 >
                   {item.name}
                 </Text>
@@ -165,7 +148,7 @@ export function FlashSaleRow() {
                   <Text
                     style={{
                       fontSize: 9,
-                      color: C.textMuted,
+                      color: '#D1D5DB',
                       textDecorationLine: 'line-through',
                     }}
                   >

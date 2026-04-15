@@ -1,9 +1,9 @@
 import React from 'react';
-import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { router } from 'expo-router';
+import { ScrollView, View, Text, TouchableOpacity, Image } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { get } from '../../../src/services/api';
-import { C } from '../../../src/shared/design';
+import { H } from './tokens';
 
 interface Story {
   id: string;
@@ -13,53 +13,62 @@ interface Story {
   seen?: boolean;
 }
 
+function unwrap<T = any>(res: any): T {
+  return (res?.data ?? res) as T;
+}
+
 export function StoriesRow() {
   const { data } = useQuery({
     queryKey: ['stories-home'],
-    queryFn: () => get('/stories'),
+    queryFn: async () => {
+      const res = await get('/stories');
+      return unwrap<{ stories?: Story[] } | Story[]>(res);
+    },
     staleTime: 30_000,
     retry: false,
   });
 
-  const body: any = (data as any)?.data ?? data;
-  const stories: Story[] = body?.stories ?? (Array.isArray(body) ? body : []);
-
-  if (!stories?.length) return null;
+  const stories: Story[] = Array.isArray(data)
+    ? data
+    : (data as any)?.stories ?? [];
 
   return (
     <ScrollView
       horizontal
       showsHorizontalScrollIndicator={false}
       contentContainerStyle={{
-        paddingHorizontal: 16,
+        paddingHorizontal: H.mx,
         gap: 14,
-        paddingBottom: 4,
+        paddingVertical: 4,
       }}
-      style={{ marginBottom: 16 }}
+      style={{ marginBottom: 4 }}
     >
-      {/* "Нэмэх" товч */}
+      {/* Add */}
       <TouchableOpacity
-        onPress={() => router.push('/(customer)/create-post' as never)}
-        style={{ alignItems: 'center', gap: 4, width: 64 }}
+        onPress={() => router.push('/feed/create' as never)}
+        style={{ alignItems: 'center', gap: 5, width: 64 }}
       >
         <View
           style={{
             width: 60,
             height: 60,
             borderRadius: 30,
-            backgroundColor: C.bgCard,
+            backgroundColor: '#1B1B3A',
             alignItems: 'center',
             justifyContent: 'center',
             borderWidth: 2,
-            borderColor: C.brand,
+            borderColor: H.primary,
             borderStyle: 'dashed',
           }}
         >
-          <Text style={{ fontSize: 22, color: C.brand, fontWeight: '700' }}>+</Text>
+          <Text style={{ fontSize: 22, color: H.primary, fontWeight: '800' }}>+</Text>
         </View>
         <Text
-          style={{ fontSize: 9, color: C.textSub, fontWeight: '600' }}
-          numberOfLines={1}
+          style={{
+            fontSize: 10,
+            color: 'rgba(255,255,255,0.5)',
+            fontWeight: '600',
+          }}
         >
           Нэмэх
         </Text>
@@ -69,7 +78,7 @@ export function StoriesRow() {
         <TouchableOpacity
           key={s.id}
           onPress={() => router.push(`/feed/${s.id}` as never)}
-          style={{ alignItems: 'center', gap: 4, width: 64 }}
+          style={{ alignItems: 'center', gap: 5, width: 64 }}
         >
           <View
             style={{
@@ -77,7 +86,7 @@ export function StoriesRow() {
               height: 60,
               borderRadius: 30,
               borderWidth: 2.5,
-              borderColor: s.seen ? C.border : C.brand,
+              borderColor: s.seen ? 'rgba(255,255,255,0.15)' : H.primary,
               padding: 2,
             }}
           >
@@ -85,7 +94,7 @@ export function StoriesRow() {
               style={{
                 flex: 1,
                 borderRadius: 26,
-                backgroundColor: C.bgSection,
+                backgroundColor: '#1E1E1E',
                 alignItems: 'center',
                 justifyContent: 'center',
                 overflow: 'hidden',
@@ -105,9 +114,9 @@ export function StoriesRow() {
           <Text
             numberOfLines={1}
             style={{
-              fontSize: 9,
-              color: C.textSub,
-              fontWeight: '500',
+              fontSize: 10,
+              color: 'rgba(255,255,255,0.55)',
+              fontWeight: '600',
               maxWidth: 60,
               textAlign: 'center',
             }}

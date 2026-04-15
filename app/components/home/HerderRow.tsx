@@ -1,9 +1,10 @@
 import React from 'react';
 import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
-import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { get } from '../../../src/services/api';
-import { C, R } from '../../../src/shared/design';
+import { H } from './tokens';
+import { SectionHeader } from './SectionHeader';
 
 interface HerderProduct {
   id: string;
@@ -12,120 +13,98 @@ interface HerderProduct {
   images?: string[];
   province?: string;
   district?: string;
+  emoji?: string;
+}
+
+function unwrap<T = any>(res: any): T {
+  return (res?.data ?? res) as T;
 }
 
 export function HerderRow() {
   const { data } = useQuery({
     queryKey: ['herder-home'],
-    queryFn: () => get('/herder/products', { limit: 5 }),
+    queryFn: async () => {
+      const res = await get('/herder/products', { limit: 6 });
+      return unwrap<any>(res);
+    },
     staleTime: 120_000,
     retry: false,
   });
 
-  const body: any = (data as any)?.data ?? data;
   const products: HerderProduct[] =
-    body?.products ?? (Array.isArray(body) ? body : []);
+    data?.products ?? (Array.isArray(data) ? data : []);
 
-  if (!products?.length) return null;
+  if (!products.length) return null;
 
   return (
-    <View style={{ marginBottom: 20 }}>
-      <View
-        style={{
-          flexDirection: 'row',
-          alignItems: 'center',
-          justifyContent: 'space-between',
-          paddingHorizontal: 16,
-          marginBottom: 10,
-        }}
-      >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 14, fontWeight: '800', color: '#10B981' }}>
-            🐄 Малчны булан
-          </Text>
-          <View
-            style={{
-              backgroundColor: '#10B98122',
-              borderRadius: 5,
-              paddingHorizontal: 7,
-              paddingVertical: 2,
-              borderWidth: 0.5,
-              borderColor: '#10B98155',
-            }}
-          >
-            <Text style={{ fontSize: 9, fontWeight: '800', color: '#10B981' }}>
-              Шинэ
-            </Text>
-          </View>
-        </View>
-        <TouchableOpacity onPress={() => router.push('/(customer)/herder' as never)}>
-          <Text style={{ fontSize: 12, color: '#10B981', fontWeight: '700' }}>
-            Бүгд →
-          </Text>
-        </TouchableOpacity>
-      </View>
-
+    <View style={{ marginBottom: 16 }}>
+      <SectionHeader
+        title="Малчны булан"
+        icon="🐄"
+        badge="Шинэ"
+        badgeBg="#064E3B"
+        badgeColor="#6EE7B7"
+        onMore={() => router.push('/(customer)/herder' as never)}
+        moreColor="#6EE7B7"
+      />
       <ScrollView
         horizontal
         showsHorizontalScrollIndicator={false}
-        contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
+        contentContainerStyle={{ paddingHorizontal: H.mx, gap: H.gap2 }}
       >
-        {products.slice(0, 5).map((p) => (
+        {products.map((item) => (
           <TouchableOpacity
-            key={p.id}
-            onPress={() => router.push(`/product/${p.id}` as never)}
+            key={item.id}
+            onPress={() => router.push(`/product/${item.id}` as never)}
+            activeOpacity={0.85}
             style={{
-              width: 140,
-              backgroundColor: C.bgCard,
-              borderRadius: R.lg,
+              width: 134,
+              backgroundColor: H.card,
+              borderRadius: H.cardRadius,
               overflow: 'hidden',
               borderWidth: 0.5,
-              borderColor: C.border,
+              borderColor: H.cardBorder,
+              ...H.shadow,
             }}
           >
             <View
               style={{
-                height: 90,
-                backgroundColor: '#064E3B',
+                height: 88,
+                backgroundColor: '#F0FDF4',
                 alignItems: 'center',
                 justifyContent: 'center',
               }}
             >
-              {p.images?.[0] ? (
+              {item.images?.[0] ? (
                 <Image
-                  source={{ uri: p.images[0] }}
+                  source={{ uri: item.images[0] }}
                   style={{ width: '100%', height: '100%' }}
                   resizeMode="cover"
                 />
               ) : (
-                <Text style={{ fontSize: 32 }}>🥩</Text>
+                <Text style={{ fontSize: 34 }}>{item.emoji ?? '🥩'}</Text>
               )}
             </View>
-            <View style={{ padding: 9 }}>
+            <View style={{ padding: 10 }}>
               <Text
                 numberOfLines={1}
                 style={{
                   fontSize: 11,
-                  fontWeight: '600',
-                  color: C.text,
-                  marginBottom: 2,
+                  fontWeight: '700',
+                  color: H.textPrimary,
+                  marginBottom: 3,
                 }}
               >
-                {p.name}
+                {item.name}
               </Text>
-              <Text style={{ fontSize: 13, fontWeight: '900', color: '#10B981' }}>
-                {(p.price ?? 0).toLocaleString()}₮
+              <Text style={{ fontSize: 13, fontWeight: '900', color: '#065F46' }}>
+                {(item.price ?? 0).toLocaleString()}₮
               </Text>
-              <Text
-                style={{
-                  fontSize: 9,
-                  color: C.textMuted,
-                  marginTop: 2,
-                }}
-                numberOfLines={1}
-              >
-                📍 {p.province ?? p.district ?? 'Монгол'}
-              </Text>
+              {(item.province || item.district) && (
+                <Text style={{ fontSize: 9, color: H.textHint, marginTop: 2 }}>
+                  📍 {item.province ?? item.district}
+                </Text>
+              )}
             </View>
           </TouchableOpacity>
         ))}

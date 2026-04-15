@@ -1,7 +1,7 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
-import { C, R } from '../../../src/shared/design';
+import { H } from './tokens';
 
 export function AiShopperCard() {
   return (
@@ -9,16 +9,17 @@ export function AiShopperCard() {
       onPress={() => router.push('/(customer)/ai-shopper' as never)}
       activeOpacity={0.85}
       style={{
-        marginHorizontal: 12,
-        marginBottom: 16,
-        backgroundColor: C.bgCard,
-        borderRadius: R.lg,
+        marginHorizontal: H.mx,
+        marginBottom: 14,
+        backgroundColor: H.card,
+        borderRadius: H.cardRadius,
         padding: 14,
         flexDirection: 'row',
         alignItems: 'center',
         gap: 12,
         borderWidth: 0.5,
-        borderColor: C.border,
+        borderColor: H.cardBorder,
+        ...H.shadow,
       }}
     >
       <View
@@ -26,48 +27,44 @@ export function AiShopperCard() {
           width: 48,
           height: 48,
           borderRadius: 14,
-          backgroundColor: '#4F46E522',
+          backgroundColor: H.primaryTint,
           alignItems: 'center',
           justifyContent: 'center',
-          borderWidth: 1,
-          borderColor: '#4F46E555',
+          flexShrink: 0,
         }}
       >
-        <Text style={{ fontSize: 24 }}>🤖</Text>
+        <Text style={{ fontSize: 22 }}>🤖</Text>
       </View>
 
       <View style={{ flex: 1 }}>
         <Text
           style={{
-            fontSize: 13,
+            fontSize: 14,
             fontWeight: '800',
-            color: C.text,
+            color: H.textPrimary,
             marginBottom: 3,
           }}
         >
           AI худалдан авалтын туслах
         </Text>
         <Text
-          style={{
-            fontSize: 10,
-            color: C.textMuted,
-            lineHeight: 14,
-          }}
+          style={{ fontSize: 11, color: H.textHint, lineHeight: 16 }}
           numberOfLines={1}
         >
-          "Надад iPhone 14-тай тохирох кейс олоорой"
+          "Надад iPhone-тай тохирох кейс хайж өгөөч"
         </Text>
       </View>
 
       <View
         style={{
-          backgroundColor: '#4F46E5',
+          backgroundColor: H.primary,
           borderRadius: 9,
-          paddingHorizontal: 11,
+          paddingHorizontal: 12,
           paddingVertical: 7,
+          flexShrink: 0,
         }}
       >
-        <Text style={{ color: '#fff', fontSize: 10, fontWeight: '800' }}>Асуух →</Text>
+        <Text style={{ color: '#fff', fontSize: 11, fontWeight: '800' }}>Асуух →</Text>
       </View>
     </TouchableOpacity>
   );

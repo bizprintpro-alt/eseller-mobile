@@ -1,56 +1,63 @@
 import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
-import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
+import { router } from 'expo-router';
 import { LoyaltyAPI } from '../../../src/services/api';
+import { H } from './tokens';
+
+const TIER_THRESHOLD: Record<string, number> = {
+  BRONZE: 5_000,
+  SILVER: 20_000,
+  GOLD: 50_000,
+};
+
+const NEXT_TIER: Record<string, string> = {
+  BRONZE: 'Silver',
+  SILVER: 'Gold',
+  GOLD: 'Platinum',
+};
 
 function unwrap<T = any>(res: any): T {
   return (res?.data ?? res) as T;
 }
 
-const TIER_NEXT: Record<string, { next: string; threshold: number }> = {
-  BRONZE:   { next: 'Silver',    threshold: 5_000  },
-  SILVER:   { next: 'Gold',      threshold: 20_000 },
-  GOLD:     { next: 'Platinum',  threshold: 50_000 },
-  PLATINUM: { next: '',          threshold: 0      },
-};
-
 export function GoldCta() {
   const { data } = useQuery({
-    queryKey: ['loyalty-cta'],
+    queryKey: ['loyalty-home'],
     queryFn: async () => {
       const res = await LoyaltyAPI.get();
       return unwrap<{
+        tier?: string;
         balance?: number;
         lifetimeEarned?: number;
-        tier?: string;
       }>(res);
     },
+    staleTime: 120_000,
     retry: false,
   });
 
   const tier = (data?.tier ?? 'BRONZE').toUpperCase();
-  // Already at top tier — hide
   if (tier === 'PLATINUM' || tier === 'DIAMOND') return null;
 
+  const threshold = TIER_THRESHOLD[tier] ?? 5_000;
   const lifetime = data?.lifetimeEarned ?? 0;
   const balance = data?.balance ?? 0;
-  const info = TIER_NEXT[tier] ?? TIER_NEXT.BRONZE;
-  const progress = Math.max(0, Math.min(1, lifetime / info.threshold));
-  const needed = Math.max(0, info.threshold - lifetime);
+  const pct = Math.max(0, Math.min(1, lifetime / threshold));
+  const needed = Math.max(0, threshold - lifetime);
+  const nextTier = NEXT_TIER[tier] ?? 'Silver';
 
   return (
     <TouchableOpacity
       onPress={() => router.push('/(customer)/tier-details' as never)}
       activeOpacity={0.85}
       style={{
-        marginHorizontal: 12,
+        marginHorizontal: H.mx,
         marginBottom: 16,
         backgroundColor: '#1A1100',
-        borderRadius: 16,
-        padding: 14,
-        borderWidth: 1,
-        borderColor: '#F59E0B55',
+        borderRadius: H.cardRadius,
+        padding: 16,
+        borderWidth: 0.5,
+        borderColor: '#78350F',
       }}
     >
       <View
@@ -58,16 +65,16 @@ export function GoldCta() {
           flexDirection: 'row',
           alignItems: 'center',
           justifyContent: 'space-between',
-          marginBottom: 10,
+          marginBottom: 12,
         }}
       >
-        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-          <Text style={{ fontSize: 18 }}>⭐</Text>
-          <Text style={{ fontSize: 13, fontWeight: '900', color: '#F59E0B' }}>
-            {info.next} болох
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 7 }}>
+          <Text style={{ fontSize: 20 }}>⭐</Text>
+          <Text style={{ fontSize: 14, fontWeight: '800', color: '#FDE68A' }}>
+            {nextTier} болох
           </Text>
         </View>
-        <Text style={{ fontSize: 11, color: '#FBBF24', fontWeight: '700' }}>
+        <Text style={{ fontSize: 12, fontWeight: '700', color: '#FCA5A5' }}>
           {balance.toLocaleString()} оноо
         </Text>
       </View>
@@ -75,7 +82,7 @@ export function GoldCta() {
       <View
         style={{
           height: 6,
-          backgroundColor: '#78350F',
+          backgroundColor: '#451A03',
           borderRadius: 3,
           overflow: 'hidden',
         }}
@@ -83,7 +90,7 @@ export function GoldCta() {
         <View
           style={{
             height: 6,
-            width: `${progress * 100}%`,
+            width: `${Math.round(pct * 100)}%`,
             backgroundColor: '#F59E0B',
             borderRadius: 3,
           }}
@@ -93,7 +100,7 @@ export function GoldCta() {
       <Text
         style={{
           fontSize: 10,
-          color: '#FCD34D',
+          color: '#D97706',
           marginTop: 6,
           textAlign: 'right',
           fontWeight: '600',
