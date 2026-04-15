@@ -127,6 +127,26 @@ export const LoyaltyAPI = {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Live Commerce API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export interface LiveStreamItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  thumbnailUrl?: string | null;
+  viewerCount?: number;
+  startedAt?: string | null;
+  shop?: { id: string; name: string; logo?: string | null } | null;
+  products?: unknown[];
+}
+
+export const LiveAPI = {
+  /** GET /api/live?status=LIVE — currently broadcasting streams */
+  getActive: () => get('/live', { status: 'LIVE' }),
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Orders API — buyer/seller/driver
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

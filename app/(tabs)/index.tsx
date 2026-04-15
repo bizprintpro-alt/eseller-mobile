@@ -13,6 +13,7 @@ import { get } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
 import { RoleBadge } from '../../src/shared/ui/RoleSwitcher'
 import { Skeleton } from '../../src/shared/ui/Skeleton'
+import { LiveCarousel } from '../components/LiveCarousel'
 
 const { width } = Dimensions.get('window')
 const CARD_W = 156
@@ -313,6 +314,9 @@ function BuyerHome() {
             Бараа, дэлгүүр хайх...
           </Text>
         </TouchableOpacity>
+
+        {/* ═══ LIVE CAROUSEL ═══ */}
+        <LiveCarousel />
 
         {/* ═══ ENTITY TYPES ═══ */}
         <View style={{ marginBottom: 24 }}>
