@@ -128,38 +128,17 @@ function StoreDashboard() {
 }
 
 // ═══════════════════════════════════
-// ROUTER — Role-аар ялгах
+// ROUTER — Role-аар ялгах (STORE-only legacy;
+// DRIVER/SELLER now route to their own groups)
 // ═══════════════════════════════════
 
-// Lazy import role-specific home screens
-const LazyDriverHome = React.lazy(() => import('../../src/screens/driver/DriverHomeScreen'))
-const LazyAffiliateHome = React.lazy(() => import('../../src/screens/affiliate/AffiliateHomeScreen'))
-
 export default function HomeScreen() {
-  const { user, role } = useAuth()
+  const { role } = useAuth()
 
-  // SELLER (affiliate) → affiliate dashboard
-  if (role === 'SELLER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyAffiliateHome />
-      </React.Suspense>
-    )
-  }
-
-  // DRIVER → driver deliveries
-  if (role === 'DRIVER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverHome />
-      </React.Suspense>
-    )
-  }
-
-  // STORE → store dashboard
+  // STORE → store dashboard (legacy; STORE usually routes to /(owner))
   if (role === 'STORE') return <StoreDashboard />
 
-  // BUYER → home feed
+  // BUYER / default → home feed
   return <BuyerHome />
 }
 

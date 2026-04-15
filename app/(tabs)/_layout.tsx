@@ -24,20 +24,9 @@ const TAB_CONFIG: Record<string, Record<string, { title: string; icon: string; i
     chat:    { title: 'Чат',       icon: 'chatbubble-outline', iconActive: 'chatbubble' },
     profile: { title: 'Профайл',   icon: 'person-outline',     iconActive: 'person' },
   },
-  SELLER: {
-    index:   { title: 'Бараа',   icon: 'bag-outline',         iconActive: 'bag' },
-    store:   { title: 'Комисс',  icon: 'trending-up-outline', iconActive: 'trending-up' },
-    feed:    { title: 'Линк',    icon: 'link-outline',        iconActive: 'link' },
-    chat:    { title: 'Таталт',  icon: 'wallet-outline',      iconActive: 'wallet' },
-    profile: { title: 'Профайл', icon: 'person-outline',      iconActive: 'person' },
-  },
-  DRIVER: {
-    index:   { title: 'Хүргэлт',  icon: 'car-outline',       iconActive: 'car' },
-    store:   { title: 'Маршрут',   icon: 'navigate-outline',  iconActive: 'navigate' },
-    feed:    { title: 'Баталгаа',  icon: 'camera-outline',    iconActive: 'camera' },
-    chat:    { title: 'Орлого',    icon: 'cash-outline',      iconActive: 'cash' },
-    profile: { title: 'Профайл',   icon: 'person-outline',    iconActive: 'person' },
-  },
+  // NOTE: DRIVER + SELLER configs removed — those roles now land in their
+  // own (driver)/(seller) groups via routeByRole. Leftover access falls
+  // back to BUYER via `TAB_CONFIG[role] || TAB_CONFIG.BUYER`.
 }
 
 // Бүх tab screen-ийн нэр (static)

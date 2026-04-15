@@ -15,10 +15,6 @@ import { C, R, F, S } from '../../src/shared/design'
 import { ProductCardSkeleton } from '../../src/shared/ui/Skeleton'
 import { FilterSheet } from '../../src/shared/ui/FilterSheet'
 
-// Lazy imports for SELLER + DRIVER variants
-const LazyAffiliateProducts = React.lazy(() => import('../../src/screens/affiliate/ProductsScreen'))
-const LazyDriverRoute = React.lazy(() => import('../../src/screens/driver/RouteScreen'))
-
 // ═══════════════════════════════════
 // BUYER — Дэлгүүр хайх, бараа үзэх
 // ═══════════════════════════════════
@@ -440,21 +436,6 @@ export default function StoreScreen() {
 
   if (role === 'STORE') return <StoreOwnerProductsScreen />
 
-  if (role === 'SELLER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyAffiliateProducts />
-      </React.Suspense>
-    )
-  }
-
-  if (role === 'DRIVER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverRoute />
-      </React.Suspense>
-    )
-  }
-
+  // BUYER / default — DRIVER/SELLER now have their own groups
   return <BuyerStoreScreen />
 }
