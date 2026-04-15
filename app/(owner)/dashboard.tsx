@@ -4,7 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { get } from '../../src/services/api'
 import { C, R } from '../../src/shared/design'
-import { RoleBadge } from '../../src/shared/ui/RoleSwitcher'
+import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
 
 export default function OwnerDashboard() {
   const { data, refetch, isRefetching } = useQuery({
@@ -34,15 +34,13 @@ export default function OwnerDashboard() {
       style={{ flex: 1, backgroundColor: C.bg }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.brand} />}
     >
-      <View style={{
-        padding: 16, paddingTop: 60,
-        flexDirection: 'row', justifyContent: 'space-between', alignItems: 'flex-start',
-      }}>
-        <View style={{ flex: 1 }}>
-          <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>Самбар</Text>
-          <Text style={{ color: C.textSub, fontSize: 13, marginTop: 2 }}>Дэлгүүрийн хяналтын самбар</Text>
-        </View>
-        <RoleBadge />
+      <View style={{ paddingTop: 52 }}>
+        <RoleSwitcherBar />
+      </View>
+
+      <View style={{ padding: 16 }}>
+        <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>Самбар</Text>
+        <Text style={{ color: C.textSub, fontSize: 13, marginTop: 2 }}>Дэлгүүрийн хяналтын самбар</Text>
       </View>
 
       {/* Stats cards */}

@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { get } from '../../src/services/api'
 import { C, R, F } from '../../src/shared/design'
+import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
 
 export default function SellerDashboard() {
   const { data, refetch, isRefetching } = useQuery({
@@ -30,7 +31,10 @@ export default function SellerDashboard() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.brand} />}>
-      <View style={{ padding: 16, paddingTop: 60 }}>
+      <View style={{ paddingTop: 52 }}>
+        <RoleSwitcherBar />
+      </View>
+      <View style={{ padding: 16 }}>
         <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>Самбар</Text>
         <Text style={{ color: C.textSub, fontSize: 13, marginTop: 4 }}>Борлуулагчийн хяналтын самбар</Text>
       </View>

@@ -12,6 +12,7 @@ import { useCart } from '../../src/store/cart'
 import { get } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
 import { RoleBadge } from '../../src/shared/ui/RoleSwitcher'
+import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
 import { Skeleton } from '../../src/shared/ui/Skeleton'
 import { LiveCarousel } from '../components/LiveCarousel'
 
@@ -237,6 +238,9 @@ function BuyerHome() {
             <Ionicons name="search-outline" size={22} color={C.text} />
           </TouchableOpacity>
         </View>
+
+        {/* ═══ ROLE SWITCHER ═══ */}
+        <RoleSwitcherBar />
 
         {/* ═══ HERO BANNER ═══ */}
         <View style={{
