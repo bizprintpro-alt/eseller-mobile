@@ -26,6 +26,8 @@ export function RoleBadge() {
   const [open, setOpen] = useState(false);
 
   if (!user) return null;
+  // Show only for test accounts or in dev builds — avoid confusing real users
+  if (!__DEV__ && !isTestUser(user.phone)) return null;
 
   const current = ROLES.find((r) => r.key === role);
   const color = roleColor(role);
@@ -39,16 +41,16 @@ export function RoleBadge() {
         }}
         style={{
           flexDirection: 'row', alignItems: 'center',
-          backgroundColor: color + '22', borderRadius: R.full,
-          paddingHorizontal: 12, paddingVertical: 7, gap: 5,
-          borderWidth: 1, borderColor: color + '55',
+          backgroundColor: color + '18', borderRadius: R.full,
+          paddingHorizontal: 10, paddingVertical: 5, gap: 4,
+          borderWidth: 1, borderColor: color + '40',
         }}
       >
-        <Ionicons name={current?.icon as any} size={14} color={color} />
-        <Text style={{ color, fontSize: 12, fontWeight: '700' }}>
+        <Ionicons name={current?.icon as any} size={12} color={color} />
+        <Text style={{ color, fontSize: 10, fontWeight: '700' }}>
           {current?.label}
         </Text>
-        <Ionicons name="chevron-down" size={12} color={color} />
+        <Ionicons name="chevron-down" size={10} color={color} />
       </TouchableOpacity>
 
       <RoleModal open={open} onClose={() => setOpen(false)} />
@@ -62,6 +64,7 @@ export function RoleSwitcher() {
   const [open, setOpen] = useState(false);
 
   if (!user) return null;
+  if (!__DEV__ && !isTestUser(user.phone)) return null;
 
   const current = ROLES.find((r) => r.key === role);
   const color = roleColor(role);
