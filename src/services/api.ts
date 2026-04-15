@@ -208,18 +208,14 @@ export const POSAPI = {
   checkPayment: (invoiceId: string) =>
     post('/payment/qpay/check', { invoiceId }),
 
-  /**
-   * Create POS order (offline/local only for now).
-   * TODO: rewire to real backend once `/api/orders/pos` lands.
-   */
-  createOrder: async (data: POSOrderInput): Promise<{ orderId: string }> => {
-    console.warn('[POS] createOrder: backend route байхгүй — local only', {
-      itemCount: data.items.length,
-      method: data.paymentMethod,
-      total: data.total,
-    });
-    return { orderId: `LOCAL-${Date.now()}` };
-  },
+  /** POST /api/orders/pos — create completed POS sale */
+  createOrder: (data: POSOrderInput) => post('/orders/pos', data),
+
+  /** GET /api/orders/pos/history?date=YYYY-MM-DD — daily sales list */
+  getSalesHistory: (date?: string) =>
+    get('/orders/pos/history', {
+      date: date ?? new Date().toISOString().split('T')[0],
+    }),
 };
 
 export const LiveAPI = {

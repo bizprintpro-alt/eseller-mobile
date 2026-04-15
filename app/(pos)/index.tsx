@@ -127,9 +127,11 @@ export default function POSTerminal() {
       }),
     onSuccess: (res) => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
+      const body = unwrap<{ orderId?: string; change?: number }>(res);
+      const orderId = String(body?.orderId ?? '');
       Alert.alert(
         '✅ Амжилттай',
-        `Захиалга #${res.orderId.slice(-6).toUpperCase()}\n` +
+        `Захиалга #${orderId.slice(-6).toUpperCase()}\n` +
           `Нийт: ${total.toLocaleString()}₮\n` +
           `Хариулт: ${change.toLocaleString()}₮`,
         [
