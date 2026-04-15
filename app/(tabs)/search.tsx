@@ -3,8 +3,8 @@ import { View, Text, TextInput, FlatList, TouchableOpacity, Image, ActivityIndic
 import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
-import { get } from '../src/services/api'
-import { C, R, S } from '../src/shared/design'
+import { get } from '../../src/services/api'
+import { C, R, S } from '../../src/shared/design'
 
 export default function SearchScreen() {
   const [q, setQ] = useState('')
