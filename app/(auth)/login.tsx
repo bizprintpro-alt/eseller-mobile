@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../src/store/auth';
+import { routeByRole } from '../../src/shared/routing';
 import { C, R } from '../../src/shared/design';
 import {
   isBiometricAvailable,
@@ -25,21 +26,6 @@ const TEST_USERS = [
   { label: '📢 Борлуулагч',      phone: '99000004', color: '#E37400' },
 ];
 const TEST_PASSWORD = 'test1234';
-
-function routeByRole(role: string) {
-  const r = role?.toLowerCase();
-  // Store owner gets separate (owner) tab layout with dashboard/products/orders/...
-  if (r === 'seller' || r === 'store' || r === 'owner') {
-    router.replace('/(owner)/dashboard' as any);
-    return;
-  }
-  // Everyone else → main (tabs) layout — it auto-configures per role:
-  //   BUYER    → home feed
-  //   SELLER   → seller dashboard (affiliate commission)
-  //   DRIVER   → driver deliveries
-  // via (tabs)/index.tsx + (tabs)/_layout.tsx
-  router.replace('/(tabs)');
-}
 
 export default function LoginScreen() {
   const { login, loading } = useAuth();
