@@ -196,6 +196,7 @@ function AppContent() {
       <Stack.Screen name="receipt/[id]" options={{ headerShown: false }} />
       <Stack.Screen name="review/[orderId]" options={{ headerShown: false }} />
       {/* Seller + Driver groups now have their own Tabs layout */}
+      <Stack.Screen name="(owner)" options={{ headerShown: false }} />
       <Stack.Screen name="(seller)" options={{ headerShown: false }} />
       <Stack.Screen name="(driver)" options={{ headerShown: false }} />
       <Stack.Screen name="(seller)/influencer" options={{ headerShown: true, title: 'Инфлюэнсер' }} />
