@@ -66,6 +66,17 @@ import { HerderRow } from '../components/home/HerderRow'
 const { width } = Dimensions.get('window')
 const CARD_W = 156
 
+const QA_ITEMS = [
+  { icon: 'bag-outline' as const, label: 'Захиалах', color: '#4338CA', bg: '#EEF2FF', route: '/orders' },
+  { icon: 'car-outline' as const, label: 'Хүргэлт', color: '#EA580C', bg: '#FFF7ED', route: '/track/search' },
+  { icon: 'cash-outline' as const, label: 'Хэтэвч', color: '#059669', bg: '#ECFDF5', route: '/(customer)/wallet' },
+  { icon: 'star-outline' as const, label: 'Gold', color: '#CA8A04', bg: '#FEF9C3', route: '/(customer)/tier-details' },
+  { icon: 'heart-outline' as const, label: 'Wishlist', color: '#E11D48', bg: '#FFF1F2', route: '/(customer)/wishlist' },
+  { icon: 'chatbubble-outline' as const, label: 'Чат', color: '#2563EB', bg: '#EFF6FF', route: '/chat/list' },
+  { icon: 'globe-outline' as const, label: 'Dropship', color: '#16A34A', bg: '#F0FDF4', route: '/(customer)/herder' },
+  { icon: 'lock-closed-outline' as const, label: 'BNPL', color: '#7C3AED', bg: '#FAF5FF', route: '/(customer)/bnpl' },
+]
+
 const SERVICE_ITEMS = [
   {
     icon: 'radio-button-on' as const,
@@ -372,6 +383,60 @@ function BuyerHome() {
             Бараа, дэлгүүр хайх...
           </Text>
         </TouchableOpacity>
+
+        {/* ═══ QUICK ACTION GRID — Toki style ═══ */}
+        <View style={{
+          marginHorizontal: 16,
+          marginBottom: 14,
+          backgroundColor: '#FFFFFF',
+          borderRadius: 20,
+          padding: 12,
+          borderWidth: 0.5,
+          borderColor: 'rgba(0,0,0,0.06)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 6,
+          elevation: 2,
+        }}>
+          <View style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+          }}>
+            {QA_ITEMS.map(item => (
+              <TouchableOpacity
+                key={item.route}
+                onPress={() => router.push(item.route as any)}
+                style={{
+                  width: '25%',
+                  alignItems: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 4,
+                }}
+              >
+                <View style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  backgroundColor: item.bg,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 5,
+                }}>
+                  <Ionicons name={item.icon} size={22} color={item.color} />
+                </View>
+                <Text style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  color: '#374151',
+                  textAlign: 'center',
+                }}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
 
         {/* ═══ STORIES (24h) ═══ */}
         <StoriesRow />
