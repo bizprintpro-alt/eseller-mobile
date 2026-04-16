@@ -1,10 +1,10 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useCallback } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, ScrollView,
   Alert, ActivityIndicator, Image,
 } from 'react-native';
 import { router, useFocusEffect } from 'expo-router';
-import { useCallback } from 'react';
+import * as ScreenOrientation from 'expo-screen-orientation';
 import { useAuth } from '../../src/store/auth';
 import { useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
@@ -27,6 +27,16 @@ function unwrap<T = any>(res: any): T {
 
 export default function POSTerminal() {
   const { role } = useAuth()
+
+  // Landscape зөвхөн POS screen focused үед
+  useFocusEffect(
+    useCallback(() => {
+      ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {})
+      return () => {
+        ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {})
+      }
+    }, [])
+  )
 
   // POS ?????? STORE role-?
   useFocusEffect(useCallback(() => {
