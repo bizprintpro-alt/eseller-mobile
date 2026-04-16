@@ -1,5 +1,5 @@
 import { useEffect } from 'react';
-import { Stack } from 'expo-router';
+import { Stack, router } from 'expo-router';
 import { StatusBar } from 'expo-status-bar';
 import * as ScreenOrientation from 'expo-screen-orientation';
 
@@ -12,6 +12,8 @@ export default function POSLayout() {
     ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.LANDSCAPE).catch(() => {});
     return () => {
       ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {});
+      // POS-? ??????? tabs ??? ????? — cache restore ???????
+      router.replace('/(tabs)' as never);
     };
   }, []);
 
@@ -22,3 +24,4 @@ export default function POSLayout() {
     </>
   );
 }
+
