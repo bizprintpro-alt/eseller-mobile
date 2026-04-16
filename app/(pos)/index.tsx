@@ -3,7 +3,9 @@ import {
   View, Text, TextInput, TouchableOpacity, FlatList, ScrollView,
   Alert, ActivityIndicator, Image,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
+import { useCallback } from 'react';
+import { useAuth } from '../../src/store/auth';
 import { useMutation } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -24,6 +26,14 @@ function unwrap<T = any>(res: any): T {
 }
 
 export default function POSTerminal() {
+  const { role } = useAuth()
+
+  // POS ?????? STORE role-?
+  useFocusEffect(useCallback(() => {
+    if (role !== 'STORE') {
+      router.replace('/(tabs)' as never)
+    }
+  }, [role]))
   // ── Search + products ──
   const [search, setSearch] = useState('');
   const [products, setProducts] = useState<POSProduct[]>([]);
@@ -721,3 +731,4 @@ export default function POSTerminal() {
     </View>
   );
 }
+
