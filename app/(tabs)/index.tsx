@@ -286,9 +286,6 @@ function BuyerHome() {
           </TouchableOpacity>
         </View>
 
-        {/* ═══ CONTEXT CHIP ═══ */}
-        <ContextChip role={role} />
-
         {/* ═══ HERO BANNER ═══ */}
         <View style={{
           height: 170, marginHorizontal: 12, borderRadius: R.xl,
@@ -700,3 +697,4 @@ function BuyerHome() {
     </View>
   )
 }
+
