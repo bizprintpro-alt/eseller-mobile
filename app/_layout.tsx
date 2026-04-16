@@ -111,7 +111,7 @@ function AppContent() {
     if (hasAutoRouted.current) return
 
     const role = (user.role ?? '').toLowerCase()
-    if (role === 'delivery' || role === 'driver' || role === 'affiliate') {
+    if (['delivery', 'driver', 'affiliate', 'seller', 'store', 'owner'].includes(role)) {
       hasAutoRouted.current = true
       routeByRole(role)
     }

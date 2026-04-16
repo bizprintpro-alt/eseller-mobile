@@ -11,49 +11,7 @@ import { useAuth } from '../../src/store/auth'
 import { useCart } from '../../src/store/cart'
 import { get } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
-import { RoleBadge } from '../../src/shared/ui/RoleSwitcher'
 
-const ROLE_META: Record<string, { label: string; dot: string }> = {
-  BUYER:  { label: 'Авагч горим',        dot: '#1A73E8' },
-  STORE:  { label: 'Дэлгүүр эзэн горим', dot: '#0D652D' },
-  SELLER: { label: 'Борлуулагч горим',   dot: '#E37400' },
-  DRIVER: { label: 'Жолооч горим',       dot: '#C62828' },
-}
-
-function ContextChip({ role }: { role: string }) {
-  const meta = ROLE_META[role] ?? ROLE_META.BUYER
-  return (
-    <TouchableOpacity
-      onPress={() => router.push('/(tabs)/profile')}
-      style={{
-        flexDirection: 'row',
-        alignItems: 'center',
-        justifyContent: 'space-between',
-        marginHorizontal: 16,
-        marginBottom: 10,
-        backgroundColor: '#1A1A1A',
-        borderRadius: 9,
-        paddingVertical: 7,
-        paddingHorizontal: 12,
-        borderWidth: 0.5,
-        borderColor: '#2A2A2A',
-      }}
-    >
-      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-        <View style={{
-          width: 7, height: 7, borderRadius: 4,
-          backgroundColor: meta.dot,
-        }} />
-        <Text style={{ fontSize: 11, color: 'rgba(255,255,255,.65)', fontWeight: '500' }}>
-          {meta.label}
-        </Text>
-      </View>
-      <Text style={{ fontSize: 10, color: 'rgba(255,255,255,.3)' }}>
-        Солих →
-      </Text>
-    </TouchableOpacity>
-  )
-}
 import { Skeleton } from '../../src/shared/ui/Skeleton'
 import { LiveCarousel } from '../components/LiveCarousel'
 import { StoriesRow } from '../components/home/StoriesRow'
@@ -306,7 +264,6 @@ function BuyerHome() {
           <Text style={{ fontSize: 22, fontWeight: '900', color: C.text, letterSpacing: -0.5 }}>
             eseller<Text style={{ color: C.brand }}>.mn</Text>
           </Text>
-          <RoleBadge />
           <View style={{ flex: 1 }} />
           <TouchableOpacity
             onPress={() => router.push('/cart' as any)}
@@ -871,7 +828,6 @@ function BuyerHome() {
 
       </ScrollView>
 
-      {/* RoleBadge is now inline in header */}
     </View>
   )
 }
