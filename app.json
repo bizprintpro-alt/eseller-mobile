@@ -47,7 +47,7 @@
         "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION"
       ],
-      "versionCode": 3
+      "versionCode": 4
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -78,7 +78,9 @@
     ],
     "scheme": "eseller",
     "extra": {
-      "router": { "origin": "https://eseller.mn" },
+      "router": {
+        "origin": "https://eseller.mn"
+      },
       "eas": {
         "projectId": "7dbfaf45-621d-4c06-b64d-383a47504030"
       }
@@ -95,4 +97,3 @@
     }
   }
 }
-
