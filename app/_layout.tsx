@@ -111,7 +111,7 @@ function AppContent() {
     if (hasAutoRouted.current) return
 
     const role = (user.role ?? '').toLowerCase()
-    if (['delivery', 'driver', 'affiliate', 'seller', 'store', 'owner'].includes(role)) {
+    if (['delivery', 'driver', 'affiliate'].includes(role)) {
       hasAutoRouted.current = true
       routeByRole(role)
     }
@@ -221,3 +221,4 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
