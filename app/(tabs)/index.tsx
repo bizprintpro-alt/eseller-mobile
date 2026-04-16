@@ -66,6 +66,37 @@ import { HerderRow } from '../components/home/HerderRow'
 const { width } = Dimensions.get('window')
 const CARD_W = 156
 
+const SERVICE_ITEMS = [
+  {
+    icon: 'radio-button-on' as const,
+    color: '#EF4444',
+    name: 'Live',
+    sub: 'Шууд дамжуулалт',
+    route: '/(customer)/live',
+  },
+  {
+    icon: 'card' as const,
+    color: '#2563EB',
+    name: 'Төлбөр',
+    sub: 'QPay, SocialPay',
+    route: '/(customer)/wallet',
+  },
+  {
+    icon: 'leaf' as const,
+    color: '#059669',
+    name: 'Малчны',
+    sub: 'Шинэ бараа',
+    route: '/(customer)/herder',
+  },
+  {
+    icon: 'people' as const,
+    color: '#7C3AED',
+    name: 'Referral',
+    sub: 'Найзаа урих',
+    route: '/(customer)/become-seller',
+  },
+]
+
 const ENTITY_TYPES = [
   { type: 'STORE',        icon: 'storefront', name: 'Дэлгүүр',   color: '#E8242C' },
   { type: 'REAL_ESTATE',  icon: 'home',       name: 'Үл хөдлөх', color: '#2563EB' },
@@ -356,6 +387,88 @@ function BuyerHome() {
 
         {/* ═══ AI SHOPPER ═══ */}
         <AiShopperCard />
+
+        {/* ═══ SERVICE GRID ═══ */}
+        <View style={{
+          marginHorizontal: 16,
+          marginBottom: 12,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 8,
+        }}>
+          {SERVICE_ITEMS.map(svc => (
+            <TouchableOpacity
+              key={svc.route}
+              onPress={() => router.push(svc.route as any)}
+              style={{
+                width: '48%',
+                backgroundColor: '#FFFFFF',
+                borderRadius: 16,
+                padding: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                borderWidth: 0.5,
+                borderColor: 'rgba(0,0,0,0.06)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
+              }}
+            >
+              <View style={{
+                width: 38, height: 38,
+                borderRadius: 10,
+                backgroundColor: svc.color + '18',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Ionicons name={svc.icon} size={20} color={svc.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{
+                  fontSize: 13,
+                  fontWeight: '700',
+                  color: '#111111',
+                }}>
+                  {svc.name}
+                </Text>
+                <Text style={{
+                  fontSize: 10,
+                  color: '#9CA3AF',
+                  marginTop: 1,
+                }}>
+                  {svc.sub}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ═══ БҮХ ҮЙЛЧИЛГЭЭ ═══ */}
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/store' as any)}
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 14,
+            backgroundColor: '#FFFFFF',
+            borderRadius: 14,
+            paddingVertical: 14,
+            alignItems: 'center',
+            borderWidth: 0.5,
+            borderColor: 'rgba(0,0,0,0.06)',
+          }}
+        >
+          <Text style={{
+            fontSize: 14,
+            fontWeight: '600',
+            color: '#374151',
+          }}>
+            Бүх үйлчилгээ
+          </Text>
+        </TouchableOpacity>
 
         {/* ═══ ENTITY TYPES ═══ */}
         <View style={{ marginBottom: 24 }}>
