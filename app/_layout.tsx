@@ -108,13 +108,8 @@ function AppContent() {
   useEffect(() => {
     if (showSplash || showOnboarding) return
     if (!user) return
-    if (hasAutoRouted.current) return
-
     const role = (user.role ?? '').toLowerCase()
-    if (['delivery', 'driver', 'affiliate'].includes(role)) {
-      hasAutoRouted.current = true
-      routeByRole(role)
-    }
+    routeByRole(role)
   }, [user, showSplash, showOnboarding])
 
   const finishOnboarding = async () => {
@@ -221,4 +216,5 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
 
