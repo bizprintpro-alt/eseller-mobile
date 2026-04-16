@@ -13,7 +13,6 @@ import { GestureHandlerRootView }
 import AsyncStorage
   from '@react-native-async-storage/async-storage'
 import * as Notifications from 'expo-notifications'
-import * as ScreenOrientation from 'expo-screen-orientation'
 import { useAuth }  from '../src/store/auth'
 import { routeByRole } from '../src/shared/routing'
 import {
@@ -55,11 +54,6 @@ function AppContent() {
     useState(false)
   const { user } = useAuth()
   const hasAutoRouted = useRef(false)
-
-  // Portrait orientation lock — POS-ийн landscape lock-г override хийх
-  useEffect(() => {
-    ScreenOrientation.lockAsync(ScreenOrientation.OrientationLock.PORTRAIT_UP).catch(() => {})
-  }, [])
 
   // OTA update шалгах
   useEffect(() => {
