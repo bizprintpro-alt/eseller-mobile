@@ -2,14 +2,16 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   Image, Dimensions, FlatList, RefreshControl,
+  Animated, Easing,
 } from 'react-native'
 import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
 import { useAuth } from '../../src/store/auth'
 import { useCart } from '../../src/store/cart'
-import { get } from '../../src/services/api'
+import { get, SocialAPI, LiveAPI } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
 
 import { Skeleton } from '../../src/shared/ui/Skeleton'
@@ -190,6 +192,55 @@ export default function HomeScreen() {
   return <BuyerHome />
 }
 
+function PulseDot({ color = '#EF4444', size = 8 }: { color?: string; size?: number }) {
+  const anim = React.useRef(new Animated.Value(1)).current
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 0.2, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    ).start()
+  }, [])
+  return (
+    <Animated.View style={{
+      width: size, height: size, borderRadius: size / 2,
+      backgroundColor: color, opacity: anim,
+    }} />
+  )
+}
+
+function CountdownTimer({ endsAt }: { endsAt?: string }) {
+  const [label, setLabel] = React.useState('')
+  React.useEffect(() => {
+    if (!endsAt) return
+    const tick = () => {
+      const diff = new Date(endsAt).getTime() - Date.now()
+      if (diff <= 0) { setLabel('Дууслаа'); return }
+      const h = Math.floor(diff / 3_600_000)
+      const m = Math.floor((diff % 3_600_000) / 60_000)
+      const s = Math.floor((diff % 60_000) / 1_000)
+      setLabel(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
+    }
+    tick()
+    const id = setInterval(tick, 1_000)
+    return () => clearInterval(id)
+  }, [endsAt])
+  if (!label) return null
+  return (
+    <View style={{
+      backgroundColor: '#FEE2E2', borderRadius: 99,
+      paddingHorizontal: 8, paddingVertical: 2,
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+    }}>
+      <PulseDot color="#EF4444" size={6} />
+      <Text style={{ fontSize: 10, fontWeight: '800', color: '#B91C1C', fontVariant: ['tabular-nums'] }}>
+        {label}
+      </Text>
+    </View>
+  )
+}
+
 function BuyerHome() {
   const { user, role } = useAuth()
   const { count } = useCart()
@@ -217,21 +268,51 @@ function BuyerHome() {
     queryFn: () => get('/feed?limit=6'),
   })
 
+  const { data: liveData } = useQuery({
+    queryKey: ['live-active'],
+    queryFn: LiveAPI.getActive,
+    staleTime: 30_000,
+    retry: false,
+  })
+  const activeLive = (liveData as any)?.streams?.[0] ?? null
+
+  const { data: socialData } = useQuery({
+    queryKey: ['social-feed-home'],
+    queryFn: () => SocialAPI.feed({ limit: 6 }),
+    staleTime: 60_000,
+    retry: false,
+  })
+  const socialPosts = (socialData as any)?.posts ?? (Array.isArray(socialData) ? socialData : [])
+
   const featuredProducts = (featuredData as any)?.products || []
   const newProducts = (newData as any)?.products || []
   const stores = (storesData as any)?.entities || (Array.isArray(storesData) ? storesData : [])
   const feedPosts = (feedData as any)?.posts ?? (Array.isArray(feedData) ? feedData : [])
 
   const displayBanners = [
-    { id: '1', title: 'Монголын нэгдсэн платформ',
-      subtitle: '10,000+ бараа, 500+ дэлгүүр', color: '#1A0000',
-      gradient: ['#2D0000', '#1A0000'] as const },
-    { id: '2', title: 'Дэлгүүрээ онцлоорой',
-      subtitle: 'Онцгой байршилд гарч борлуулалтаа нэмэгдүүлээрэй', color: '#001A2D',
-      gradient: ['#002D4A', '#001A2D'] as const },
-    { id: '3', title: 'Gold гишүүн болох',
-      subtitle: 'Онцгой эрх, хямдрал, урамшуулал', color: '#1A1400',
-      gradient: ['#2D1F00', '#1A1100'] as const },
+    {
+      id: '1', type: 'static' as const,
+      title: 'Монголын нэгдсэн платформ',
+      subtitle: '10,000+ бараа · 500+ дэлгүүр',
+      gradient: ['#2D0000', '#1A0000'] as const,
+      tag: 'ОНЦГОЙ САНАЛ',
+    },
+    {
+      id: '2', type: 'live' as const,
+      title: activeLive?.title ?? 'Live commerce',
+      subtitle: activeLive ? `👁 ${activeLive.viewerCount ?? 0} үзэгч` : 'Шууд дамжуулалт',
+      streamId: activeLive?.id,
+      gradient: ['#0D1B2A', '#0A0A1A'] as const,
+      tag: 'LIVE',
+    },
+    {
+      id: '3', type: 'promo' as const,
+      title: 'Дэлхий даяар захиал',
+      subtitle: 'Stock хэрэггүй · 1688 · Aliexpress',
+      gradient: ['#0A1A0A', '#0D2D1A'] as const,
+      tag: 'DROPSHIP — ШИНЭ',
+      emoji: '🌏',
+    },
   ]
 
   useEffect(() => {
@@ -298,17 +379,51 @@ function BuyerHome() {
             }
           >
             {displayBanners.map((b) => (
-              <View key={b.id} style={{
-                width: width - 24, height: 170, justifyContent: 'flex-end',
-              }}>
+              <View key={b.id} style={{ width: width - 24, height: 170 }}>
                 <LinearGradient
                   colors={[...b.gradient]}
                   style={{ flex: 1, justifyContent: 'flex-end', padding: 20 }}
                 >
-                  <Text style={{ color: C.white, fontSize: 20, fontWeight: '800' }}>
+                  {b.type === 'promo' && b.emoji && (
+                    <Text style={{
+                      position: 'absolute', right: 14, top: 40,
+                      fontSize: 52, opacity: 0.7,
+                    }}>
+                      {b.emoji}
+                    </Text>
+                  )}
+                  {b.type === 'live' && (
+                    <TouchableOpacity
+                      onPress={() => b.streamId &&
+                        router.push(`/(customer)/live/${b.streamId}` as any)}
+                      style={{
+                        position: 'absolute', top: 50, alignSelf: 'center',
+                        width: 44, height: 44, borderRadius: 22,
+                        backgroundColor: 'rgba(255,255,255,.2)',
+                        borderWidth: 2, borderColor: 'rgba(255,255,255,.5)',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="play" size={18} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                  <View style={{
+                    backgroundColor: b.type === 'live' ? '#EF4444' : 'rgba(255,255,255,.15)',
+                    borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2,
+                    alignSelf: 'flex-start', marginBottom: 6,
+                    flexDirection: 'row', alignItems: 'center', gap: 4,
+                    borderWidth: b.type === 'live' ? 0 : 0.5,
+                    borderColor: 'rgba(255,255,255,.2)',
+                  }}>
+                    {b.type === 'live' && <PulseDot color="#fff" size={6} />}
+                    <Text style={{ color: '#fff', fontSize: 8, fontWeight: '800' }}>
+                      {b.tag}
+                    </Text>
+                  </View>
+                  <Text style={{ color: C.white, fontSize: 19, fontWeight: '800' }}>
                     {b.title}
                   </Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 }}>
+                  <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4 }}>
                     {b.subtitle}
                   </Text>
                 </LinearGradient>
@@ -341,6 +456,9 @@ function BuyerHome() {
           </Text>
         </TouchableOpacity>
 
+        {/* ═══ STORIES (24h) ═══ */}
+        <StoriesRow />
+
         {/* ═══ QUICK ACTION GRID — Toki style ═══ */}
         <View style={{
           marginHorizontal: 16,
@@ -363,7 +481,10 @@ function BuyerHome() {
             {QA_ITEMS.map(item => (
               <TouchableOpacity
                 key={item.route}
-                onPress={() => router.push(item.route as any)}
+                onPress={() => {
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) } catch {}
+                  router.push(item.route as any)
+                }}
                 style={{
                   width: '25%',
                   alignItems: 'center',
@@ -394,21 +515,6 @@ function BuyerHome() {
             ))}
           </View>
         </View>
-
-        {/* ═══ STORIES (24h) ═══ */}
-        <StoriesRow />
-
-        {/* ═══ FLASH SALE ═══ */}
-        <FlashSaleRow />
-
-        {/* ═══ LIVE CAROUSEL ═══ */}
-        <LiveCarousel />
-
-        {/* ═══ GOLD CTA ═══ */}
-        <GoldCta />
-
-        {/* ═══ AI SHOPPER ═══ */}
-        <AiShopperCard />
 
         {/* ═══ SERVICE GRID ═══ */}
         <View style={{
@@ -491,6 +597,91 @@ function BuyerHome() {
             Бүх үйлчилгээ
           </Text>
         </TouchableOpacity>
+
+        {/* ═══ НИЙГМИЙН ЗАР ═══ */}
+        {socialPosts.length > 0 && (
+          <View style={{ marginBottom: 20 }}>
+            <View style={{
+              flexDirection: 'row', justifyContent: 'space-between',
+              alignItems: 'center', paddingHorizontal: 16, marginBottom: 10,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <PulseDot color="#EF4444" size={8} />
+                <Text style={{ fontSize: 14, fontWeight: '800', color: C.text }}>
+                  Нийгмийн зар
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/social' as any)}>
+                <Text style={{ color: C.primary, fontSize: 12, fontWeight: '600' }}>
+                  Бүгд →
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal showsHorizontalScrollIndicator={false}
+              data={socialPosts.slice(0, 6)}
+              keyExtractor={(p: any) => p.id}
+              contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
+              renderItem={({ item: p }: any) => (
+                <TouchableOpacity
+                  onPress={() => router.push(`/feed/${p.id}` as any)}
+                  style={{
+                    width: 140, backgroundColor: C.bgCard, borderRadius: R.lg,
+                    overflow: 'hidden', borderWidth: 1, borderColor: C.border, ...S.card,
+                  }}
+                >
+                  <View style={{
+                    height: 90, backgroundColor: C.bgSection,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {p.images?.[0] ? (
+                      <Image
+                        source={{ uri: p.images[0] }}
+                        style={{ width: '100%', height: 90 }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Ionicons name="image-outline" size={28} color={C.textMuted} />
+                    )}
+                    {p.isLive && (
+                      <View style={{
+                        position: 'absolute', top: 5, left: 5,
+                        backgroundColor: '#EF4444', borderRadius: 3,
+                        paddingHorizontal: 5, paddingVertical: 1,
+                        flexDirection: 'row', alignItems: 'center', gap: 3,
+                      }}>
+                        <PulseDot color="#fff" size={4} />
+                        <Text style={{ color: '#fff', fontSize: 7, fontWeight: '800' }}>LIVE</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={{ padding: 8 }}>
+                    <Text numberOfLines={1} style={{ color: C.text, fontSize: 11, fontWeight: '600' }}>
+                      {p.title ?? p.content?.slice(0, 30)}
+                    </Text>
+                    {p.price && (
+                      <Text style={{ color: C.brand, fontSize: 12, fontWeight: '800', marginTop: 3 }}>
+                        {p.price.toLocaleString()}₮
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
+        {/* ═══ FLASH SALE ═══ */}
+        <FlashSaleRow />
+
+        {/* ═══ LIVE CAROUSEL ═══ */}
+        <LiveCarousel />
+
+        {/* ═══ GOLD CTA ═══ */}
+        <GoldCta />
+
+        {/* ═══ AI SHOPPER ═══ */}
+        <AiShopperCard />
 
         {/* ═══ ENTITY TYPES ═══ */}
         <View style={{ marginBottom: 24 }}>
@@ -688,8 +879,30 @@ function BuyerHome() {
           )}
         </View>
 
-        {/* ═══ ХЕРДЭР БУЛАН ═══ */}
-        <HerderRow />
+        {/* ═══ МАЛЧНЫ БУЛАН ═══ */}
+        <View style={{ marginBottom: 4 }}>
+          <View style={{
+            flexDirection: 'row', justifyContent: 'space-between',
+            alignItems: 'center', paddingHorizontal: 16, marginBottom: 10,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 18 }}>🐄</Text>
+              <Text style={{ fontSize: 14, fontWeight: '800', color: C.text }}>
+                Малчны булан
+              </Text>
+              <View style={{
+                backgroundColor: '#D1FAE5', borderRadius: 99,
+                paddingHorizontal: 7, paddingVertical: 2,
+              }}>
+                <Text style={{ fontSize: 9, fontWeight: '800', color: '#065F46' }}>Шинэ</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/(customer)/herder' as any)}>
+              <Text style={{ color: '#059669', fontSize: 12, fontWeight: '600' }}>Бүгд →</Text>
+            </TouchableOpacity>
+          </View>
+          <HerderRow />
+        </View>
 
         {/* ═══ ШИНЭ БАРАА ═══ */}
         <View style={{ marginBottom: 24 }}>
