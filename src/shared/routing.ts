@@ -17,7 +17,7 @@ import { router } from 'expo-router';
 export function routeByRole(role: string | null | undefined): void {
   const r = (role ?? '').toLowerCase();
 
-  if (r === 'store' || r === 'owner') {
+  if (r === 'seller' || r === 'store' || r === 'owner') {
     router.replace('/(owner)/dashboard' as never);
     return;
   }
