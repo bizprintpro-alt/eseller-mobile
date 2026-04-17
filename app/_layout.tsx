@@ -106,10 +106,15 @@ function AppContent() {
   // BUYER + STORE keep the default (tabs) entry so role-branching / legacy
   // screens continue to work for them.
   useEffect(() => {
+    if (showSplash || showOnboarding) return
     if (!user) return
-    const role = (user.role ?? '').toLowerCase()
-    routeByRole(role)
-  }, [user])
+    // Stack navigator mount болсны дараа route хийх
+    const timer = setTimeout(() => {
+      const role = (user.role ?? '').toLowerCase()
+      routeByRole(role)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [user, showSplash, showOnboarding])
 
   const finishOnboarding = async () => {
     try {
