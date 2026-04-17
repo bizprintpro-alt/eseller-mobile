@@ -150,7 +150,7 @@ function AppContent() {
     >
       <Stack.Screen name="(tabs)" />
       <Stack.Screen name="(auth)" />
-      <Stack.Screen name="(pos)" options={{ headerShown: false, animation: 'fade' }} />
+      <Stack.Screen name="(pos)" options={{ headerShown: false, animation: 'fade', presentation: 'fullScreenModal' }} />
       <Stack.Screen
         name="product/[id]"
         options={{
@@ -216,5 +216,6 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
 
 
