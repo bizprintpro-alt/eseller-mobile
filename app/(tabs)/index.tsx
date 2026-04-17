@@ -33,7 +33,7 @@ const QA_ITEMS = [
   { icon: 'star-outline' as const, label: 'Gold', color: '#CA8A04', bg: '#FEF9C3', route: '/(customer)/tier-details' },
   { icon: 'heart-outline' as const, label: 'Wishlist', color: '#E11D48', bg: '#FFF1F2', route: '/(customer)/wishlist' },
   { icon: 'chatbubble-outline' as const, label: 'Чат', color: '#2563EB', bg: '#EFF6FF', route: '/chat/list' },
-  { icon: 'globe-outline' as const, label: 'Dropship', color: '#16A34A', bg: '#F0FDF4', route: '/(customer)/herder' },
+  { icon: 'globe-outline' as const, label: 'Dropship', color: '#16A34A', bg: '#F0FDF4', route: '/(customer)/become-seller' },
   { icon: 'lock-closed-outline' as const, label: 'BNPL', color: '#7C3AED', bg: '#FAF5FF', route: '/(customer)/bnpl' },
 ]
 
@@ -1044,4 +1044,5 @@ function BuyerHome() {
     </View>
   )
 }
+
 
