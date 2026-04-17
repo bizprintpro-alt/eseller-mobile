@@ -17,7 +17,7 @@ const ACTIONS: Record<string, ActionItem[]> = {
     { icon: 'add-circle-outline', label: 'Бараа нэмэх', route: '/(owner)/products', desc: 'Шинэ бараа' },
     { icon: 'receipt-outline', label: 'Захиалгууд', route: '/(owner)/orders', desc: 'Шинэ захиалга' },
     { icon: 'tv-outline', label: 'Live эхлүүлэх', route: '/(owner)/live/create', desc: 'Шууд дамжуулалт' },
-    { icon: 'desktop-outline', label: 'POS терминал', route: '/(pos)/', desc: 'Кассын систем' },
+    { icon: 'desktop-outline', label: 'POS терминал', route: '/(owner)/pos', desc: 'Кассын систем' },
   ],
   SELLER: [
     { icon: 'link-outline', label: 'Линк үүсгэх', route: '/(seller)/catalog', desc: 'Referral' },

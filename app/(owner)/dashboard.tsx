@@ -25,7 +25,7 @@ export default function OwnerDashboard() {
     { icon: 'add-circle' as const, label: 'Бараа нэмэх', color: C.brand, route: '/(owner)/products' },
     { icon: 'receipt' as const, label: 'Захиалгууд', color: '#1A73E8', route: '/(owner)/orders' },
     { icon: 'bar-chart' as const, label: 'Тайлан', color: '#7C3AED', route: '/(owner)/analytics' },
-    { icon: 'desktop' as const, label: 'POS терминал', color: '#E67E22', route: '/(pos)/' },
+    { icon: 'desktop' as const, label: 'POS терминал', color: '#E67E22', route: '/(owner)/pos' },
     { icon: 'settings' as const, label: 'Тохиргоо', color: '#34A853', route: '/(owner)/settings' },
   ]
 

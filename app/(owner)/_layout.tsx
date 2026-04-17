@@ -62,6 +62,14 @@ export default function OwnerLayout() {
         name="settings"
         options={{ href: null }}
       />
+      <Tabs.Screen
+        name="pos"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="pos-history"
+        options={{ href: null }}
+      />
     </Tabs>
   )
 }

@@ -104,7 +104,7 @@ export default function OwnerProfile() {
             <MenuRow
               icon="🖥️"
               label="POS терминал"
-              onPress={() => router.push('/(pos)/' as never)}
+              onPress={() => router.push('/(owner)/pos' as never)}
             />
             <MenuRow
               icon="📊"

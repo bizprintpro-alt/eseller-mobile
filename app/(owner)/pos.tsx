@@ -260,7 +260,7 @@ export default function POSTerminal() {
           }}
         >
           <TouchableOpacity
-            onPress={() => router.replace('/(owner)/dashboard' as any)}
+            onPress={() => router.back()}
             style={{ padding: 6 }}
           >
             <Ionicons name="arrow-back" size={20} color="#94A3B8" />
@@ -269,7 +269,7 @@ export default function POSTerminal() {
             eSeller POS
           </Text>
           <TouchableOpacity
-            onPress={() => router.push('/(pos)/history' as any)}
+            onPress={() => router.push('/(owner)/pos-history' as any)}
             style={{
               backgroundColor: '#334155',
               borderRadius: 8,
