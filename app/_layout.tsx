@@ -106,11 +106,10 @@ function AppContent() {
   // BUYER + STORE keep the default (tabs) entry so role-branching / legacy
   // screens continue to work for them.
   useEffect(() => {
-    if (showSplash || showOnboarding) return
     if (!user) return
     const role = (user.role ?? '').toLowerCase()
     routeByRole(role)
-  }, [user, showSplash, showOnboarding])
+  }, [user])
 
   const finishOnboarding = async () => {
     try {
