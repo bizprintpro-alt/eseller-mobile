@@ -89,3 +89,90 @@ export interface HerderRegisterResponse {
   message?: string;
   applicationId?: string;
 }
+
+/**
+ * Herder's own products (seller view) — backend returns the raw Mongoose
+ * document so it includes `isActive` and denormalized `province` that the
+ * public list strips away.
+ */
+export interface MyHerderProduct extends HerderProduct {
+  isActive: boolean;
+  province: string;
+  soldCount?: number;
+  createdAt?: string;
+  updatedAt?: string;
+}
+
+export interface MyProductsResponse {
+  products: MyHerderProduct[];
+  total:    number;
+  page:     number;
+  pages:    number;
+}
+
+export interface ProductWritable {
+  name:              string;
+  description?:      string;
+  price:             number;
+  salePrice?:        number | null;
+  category:          string;
+  images?:           string[];
+  stock?:            number;
+  requiresColdChain?: boolean;
+}
+
+export type HerderOrderStatus =
+  | 'pending' | 'confirmed' | 'preparing'
+  | 'shipped' | 'delivered' | 'cancelled';
+
+export interface MyHerderOrder {
+  _id:           string;
+  orderNumber:   string;
+  buyer?:        { _id: string; name: string; phone?: string } | null;
+  items: Array<{
+    product:  string;
+    name:     string;
+    price:    number;
+    quantity: number;
+    subtotal: number;
+  }>;
+  subtotal:    number;
+  deliveryFee: number;
+  total:       number;
+  status:      HerderOrderStatus;
+  payment: {
+    method: string;
+    status: 'pending' | 'paid' | 'failed' | 'refunded';
+    paidAt?: string;
+  };
+  delivery: {
+    address?: { province?: string; district?: string; street?: string; note?: string };
+    phone?: string;
+    receiver?: string;
+    requiresColdChain?: boolean;
+    shippedAt?: string;
+    deliveredAt?: string;
+  };
+  createdAt:   string;
+  updatedAt:   string;
+}
+
+export interface MyOrdersResponse {
+  orders: MyHerderOrder[];
+  total:  number;
+  page:   number;
+  pages:  number;
+}
+
+export interface EarningsSummary {
+  released:      { total: number; count: number };  // хүлээн авсан
+  held:          { total: number; count: number };  // escrow-д
+  pending:       { total: number; count: number };  // pay-аагүй
+  recentPayouts: Array<{
+    _id:         string;
+    orderNumber: string;
+    total:       number;
+    escrow:      { holdAmount: number; releasedAt: string };
+  }>;
+  commissionRate: number;
+}
