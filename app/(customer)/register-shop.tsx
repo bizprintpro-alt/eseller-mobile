@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { post } from '../../src/services/api';
 import { C, R, F } from '../../src/shared/design';
+import { MALCHNAAS_ENABLED } from '../../src/config/flags';
 
 const TYPES = [
   { key: 'GENERAL', icon: 'storefront-outline', label: 'Ерөнхий' },
@@ -14,6 +15,7 @@ const TYPES = [
   { key: 'AUTO', icon: 'car-outline', label: 'Авто' },
   { key: 'SERVICE', icon: 'briefcase-outline', label: 'Үйлчилгээ' },
   { key: 'DIGITAL', icon: 'cloud-outline', label: 'Дижитал' },
+  ...(MALCHNAAS_ENABLED ? [{ key: 'HERDER', icon: 'leaf-outline', label: 'Малчин' }] : []),
 ];
 const BANKS = ['Хаан банк', 'Голомт банк', 'ХХБ', 'Төрийн банк', 'Богд банк', 'Капитрон банк'];
 
