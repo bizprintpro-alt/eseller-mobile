@@ -8,15 +8,22 @@
  * cached — callers handle retry semantics.
  */
 
-import { get, post } from '../../services/api';
+import { get, post, put, del } from '../../services/api';
 import { withCache } from './cache';
 import type {
+  EarningsSummary,
   HerderListParams,
   HerderListResponse,
+  HerderOrderStatus,
   HerderProduct,
   HerderProfile,
   HerderRegisterPayload,
   HerderRegisterResponse,
+  MyHerderOrder,
+  MyHerderProduct,
+  MyOrdersResponse,
+  MyProductsResponse,
+  ProductWritable,
 } from './types';
 
 function unwrap<T>(res: any): T {
@@ -71,5 +78,65 @@ export const HerderAPI = {
     const res = await post('/herder/register', payload);
     const data = unwrap<HerderRegisterResponse>(res);
     return data ?? { success: false, message: 'Хариу боловсруулж чадсангүй' };
+  },
+
+  /**
+   * Seller-side endpoints. All require an authenticated `herder` role whose
+   * profile has `status === 'approved'` — 403 {status} is returned otherwise.
+   * These are NOT cache-wrapped — writes must be authoritative, and seller
+   * reads are small and personal enough that stale data would be misleading.
+   */
+  my: {
+    products: {
+      list: async (params: { status?: 'active' | 'all'; page?: number; limit?: number } = {}): Promise<MyProductsResponse> => {
+        const res = await get('/herder/my/products', params);
+        const data = unwrap<Partial<MyProductsResponse>>(res);
+        return {
+          products: data.products ?? [],
+          total:    data.total    ?? 0,
+          page:     data.page     ?? 1,
+          pages:    data.pages    ?? 0,
+        };
+      },
+
+      create: async (payload: ProductWritable): Promise<MyHerderProduct> => {
+        const res = await post('/herder/my/products', payload);
+        return unwrap<MyHerderProduct>(res);
+      },
+
+      update: async (id: string, payload: Partial<ProductWritable> & { isActive?: boolean }): Promise<MyHerderProduct> => {
+        const res = await put(`/herder/my/products/${id}`, payload);
+        return unwrap<MyHerderProduct>(res);
+      },
+
+      remove: async (id: string): Promise<{ success: boolean }> => {
+        const res = await del(`/herder/my/products/${id}`);
+        const data = unwrap<{ success?: boolean }>(res);
+        return { success: data?.success ?? true };
+      },
+    },
+
+    orders: {
+      list: async (params: { status?: HerderOrderStatus; page?: number; limit?: number } = {}): Promise<MyOrdersResponse> => {
+        const res = await get('/herder/my/orders', params);
+        const data = unwrap<Partial<MyOrdersResponse>>(res);
+        return {
+          orders: data.orders ?? [],
+          total:  data.total  ?? 0,
+          page:   data.page   ?? 1,
+          pages:  data.pages  ?? 0,
+        };
+      },
+
+      updateStatus: async (id: string, status: HerderOrderStatus, note?: string): Promise<MyHerderOrder> => {
+        const res = await put(`/herder/my/orders/${id}/status`, { status, note });
+        return unwrap<MyHerderOrder>(res);
+      },
+    },
+
+    earnings: async (): Promise<EarningsSummary> => {
+      const res = await get('/herder/my/earnings');
+      return unwrap<EarningsSummary>(res);
+    },
   },
 };

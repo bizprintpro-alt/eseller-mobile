@@ -3,24 +3,41 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../store/auth';
+import { MALCHNAAS_ENABLED } from '../../config/flags';
 import { C, R } from '../design';
 
-const ROLES = [
+type RolePill = {
+  key:   string;
+  icon:  string;
+  label: string;
+  color: string;
+  route: string;
+};
+
+const BASE_ROLES: readonly RolePill[] = [
   { key: 'BUYER',  icon: '🛍️', label: 'Авагч',      color: C.buyer,  route: '/(tabs)'              },
   { key: 'STORE',  icon: '🏪', label: 'Дэлгүүр',    color: C.store,  route: '/(owner)/dashboard'   },
   { key: 'SELLER', icon: '📢', label: 'Борлуулагч', color: C.seller, route: '/(seller)/dashboard'  },
   { key: 'DRIVER', icon: '🚚', label: 'Жолооч',     color: C.driver, route: '/(driver)/deliveries' },
-] as const;
+];
+
+const HERDER_PILL: RolePill = {
+  key: 'HERDER', icon: '🐑', label: 'Малчин', color: C.herder, route: '/(herder)/dashboard',
+};
 
 /**
- * Horizontal 4-pill role switcher shown at the top of each role's home
- * screen. Tap → setRole + router.replace to that group's root.
+ * Horizontal role switcher shown at the top of each role's home screen.
+ * Adds HERDER pill only when the flag is on and the user's backend role
+ * is 'herder' — non-herders can't use those routes anyway (requireHerder).
  */
 export function RoleSwitcherBar() {
   const { role, setRole, user } = useAuth();
   if (!user) return null;
 
-  function handleSelect(r: (typeof ROLES)[number]) {
+  const showHerder = MALCHNAAS_ENABLED && user.role === 'herder';
+  const ROLES: readonly RolePill[] = showHerder ? [...BASE_ROLES, HERDER_PILL] : BASE_ROLES;
+
+  function handleSelect(r: RolePill) {
     if (role === r.key) return;
     Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
     setRole(r.key);
