@@ -24,6 +24,7 @@ export const C = {
   store:    '#0D652D',
   seller:   '#E37400',
   driver:   '#C62828',
+  herder:   '#059669',  // Малчнаас шууд vertical — matches HERDER_BRAND
 
   // Dark mode background
   bg:       '#F0F2F8',
@@ -155,5 +156,9 @@ export const ROLE_ACCENT: Record<string, string> = {
   STORE:     C.store,
   SELLER:    C.seller,
   DRIVER:    C.driver,
+  herder:      C.herder,
+  coordinator: C.herder,
+  HERDER:      C.herder,
+  COORDINATOR: C.herder,
 };
 
