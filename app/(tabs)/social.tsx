@@ -45,6 +45,7 @@ export default function SocialScreen() {
   const [refreshing, setRefreshing] = useState(false);
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
+  const [feedError, setFeedError] = useState<string | null>(null);
   const { user } = useAuth();
 
   // Tabs: feed | trending | live
@@ -124,8 +125,12 @@ export default function SocialScreen() {
       }));
       setPosts((prev) => (replace ? mapped : [...prev, ...mapped]));
       setHasMore(meta.hasMore ?? false);
-    } catch (e) {
+      setFeedError(null);
+    } catch (e: any) {
       console.error('[social]', e);
+      // Replace-mode (хамгийн анхны ачаалал / refresh) үед л error UI үзүүлнэ.
+      // Pagination алдаа үед огт хуучин posts-ыг устгахгүй.
+      if (replace) setFeedError(e?.message || 'Постыг татаж чадсангүй');
     }
     setLoading(false);
     setRefreshing(false);
@@ -150,6 +155,29 @@ export default function SocialScreen() {
     return (
       <View style={s.center}>
         <ActivityIndicator size="large" color="#1B3A5C" />
+      </View>
+    );
+  }
+
+  if (feedError && posts.length === 0) {
+    return (
+      <View style={s.screen}>
+        <View style={s.header}>
+          <Text style={s.headerTitle}>Нийгмийн худалдаа</Text>
+        </View>
+        <View style={[s.center, { padding: 24 }]}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={s.emptyTitle}>Feed татахад алдаа гарлаа</Text>
+          <Text style={{ color: '#888', fontSize: 13, textAlign: 'center', marginVertical: 10 }}>
+            {feedError}
+          </Text>
+          <TouchableOpacity
+            onPress={() => { setLoading(true); setFeedError(null); fetchPosts(1, true); }}
+            style={{ backgroundColor: '#1B3A5C', borderRadius: 10, paddingHorizontal: 24, paddingVertical: 12, marginTop: 8 }}
+          >
+            <Text style={{ color: '#fff', fontWeight: '600' }}>Дахин оролдох</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }

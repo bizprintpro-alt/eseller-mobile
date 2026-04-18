@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { View, Text, ScrollView, TextInput, TouchableOpacity, Alert, ActivityIndicator, Linking, Image } from 'react-native'
 import { router } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
@@ -28,6 +28,31 @@ export default function CheckoutScreen() {
   const [loading, setLoading] = useState(false)
   const [qpayData, setQpayData] = useState<any>(null)
   const [countdown, setCountdown] = useState(300)
+  const countdownRef = useRef<ReturnType<typeof setInterval> | null>(null)
+
+  // Нэг л удаа setInterval зохицуулна — qpayData set болох бүрд reset
+  // хийгдээд шинэчлэгдэнэ. Unmount-д interval-г заавал цэвэрлэнэ.
+  useEffect(() => {
+    if (!qpayData) return
+    setCountdown(300)
+    if (countdownRef.current) clearInterval(countdownRef.current)
+    countdownRef.current = setInterval(() => {
+      setCountdown((t) => {
+        if (t <= 1) {
+          if (countdownRef.current) clearInterval(countdownRef.current)
+          countdownRef.current = null
+          return 0
+        }
+        return t - 1
+      })
+    }, 1000)
+    return () => {
+      if (countdownRef.current) {
+        clearInterval(countdownRef.current)
+        countdownRef.current = null
+      }
+    }
+  }, [qpayData])
 
   const createOrder = async () => {
     if (!address || !phone) {
@@ -64,8 +89,6 @@ export default function CheckoutScreen() {
 
       setQpayData(res)
       clear()
-      let t = 300
-      const interval = setInterval(() => { t--; setCountdown(t); if (t <= 0) clearInterval(interval) }, 1000)
     } catch (e: any) {
       console.error('[checkout error]', e)
       Alert.alert('Алдаа', e.message || 'Захиалга үүсгэхэд алдаа гарлаа')

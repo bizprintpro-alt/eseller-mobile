@@ -15,7 +15,7 @@ const STATUS: Record<string, { label: string; color: string; bg: string }> = {
 };
 
 export default function OrdersScreen() {
-  const { data, isLoading, refetch, isRefetching } = useQuery<any>({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery<any>({
     queryKey: ['buyer-orders'],
     queryFn: () => get('/buyer/orders'),
   });
@@ -27,6 +27,32 @@ export default function OrdersScreen() {
     return (
       <View style={s.center}>
         <ActivityIndicator size="large" color="#1B3A5C" />
+      </View>
+    );
+  }
+
+  // Сүлжээ / 500 алдаа. Хоосон жагсаалттай адил харуулахгүй —
+  // retry товч заавал өгнө.
+  if (isError) {
+    return (
+      <View style={s.screen}>
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={{ fontSize: 22, color: '#fff' }}>←</Text>
+          </TouchableOpacity>
+          <Text style={s.headerTitle}>Миний захиалгууд</Text>
+          <View style={{ width: 22 }} />
+        </View>
+        <View style={[s.center, { padding: 24 }]}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={s.emptyTitle}>Захиалга татахад алдаа гарлаа</Text>
+          <Text style={{ color: '#888', fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
+            Сүлжээгээ шалгаад дахин оролдоно уу
+          </Text>
+          <TouchableOpacity onPress={() => refetch()} style={s.shopBtn}>
+            <Text style={s.shopBtnText}>Дахин оролдох</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
