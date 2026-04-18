@@ -1,4 +1,4 @@
-import React, { useState, useCallback, useEffect } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
   Image, RefreshControl,
@@ -19,18 +19,22 @@ import { useCart } from '../../src/store/cart';
 
 function fmt(n: number) { return n.toLocaleString() + '₮'; }
 
+const FILTER_DEBOUNCE_MS = 300;
+
 export default function HerderScreen() {
   const [province, setProvince]         = useState<string | null>(null);
   const [category, setCategory]         = useState<string | null>(null);
   const [products, setProducts]         = useState<HerderProduct[]>([]);
   const [loading, setLoading]           = useState(false);
   const [refreshing, setRefreshing]     = useState(false);
+  const [error, setError]               = useState<string | null>(null);
   const [showProvinces, setShowProvinces] = useState(true);
 
   const addToCart = useCart((s) => s.add);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
+    setError(null);
     try {
       const data = await HerderAPI.list({
         limit:    20,
@@ -38,14 +42,20 @@ export default function HerderScreen() {
         category: category ?? undefined,
       });
       setProducts(data.products);
-    } catch {
-      // Silent — list stays as-is; pull-to-refresh retries.
+    } catch (e: any) {
+      setError(e?.message || 'Сүлжээний алдаа');
     }
     setLoading(false);
     setRefreshing(false);
   }, [province, category]);
 
-  useEffect(() => { load(); }, [load]);
+  // Debounce filter-triggered refetches so rapid chip taps don't spam the API.
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; load(); return; }
+    const t = setTimeout(() => load(), FILTER_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [load]);
 
   const selectedProvince = PROVINCES.find((p) => p.code === province);
 
@@ -137,10 +147,26 @@ export default function HerderScreen() {
         </ScrollView>
       </View>
 
+      {error && products.length > 0 && (
+        <View style={s.offlineBanner}>
+          <Ionicons name="cloud-offline-outline" size={14} color="#92400E" />
+          <Text style={s.offlineText}>Сүлжээгүй — хадгалсан мэдээлэл харуулж байна</Text>
+        </View>
+      )}
+
       <View style={s.section}>
         <Text style={s.sectionTitle}>Бүтээгдэхүүн</Text>
         {loading ? (
           <ProductListSkeleton count={3} />
+        ) : error && products.length === 0 ? (
+          <View style={s.empty}>
+            <Ionicons name="cloud-offline-outline" size={48} color="#ccc" />
+            <Text style={s.emptyText}>{error}</Text>
+            <TouchableOpacity style={s.retryBtn} onPress={() => load()} activeOpacity={0.85}>
+              <Ionicons name="refresh" size={16} color="#fff" />
+              <Text style={s.retryText}>Дахин оролдох</Text>
+            </TouchableOpacity>
+          </View>
         ) : products.length === 0 ? (
           <View style={s.empty}>
             <Ionicons name="leaf-outline" size={48} color="#ccc" />
@@ -237,7 +263,11 @@ const s = StyleSheet.create({
   chipText: { fontSize: 14, fontWeight: '600', color: '#57534e' },
   chipTextActive: { color: '#fff' },
   empty: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { fontSize: 15, color: '#a8a29e', marginTop: 12 },
+  emptyText: { fontSize: 15, color: '#a8a29e', marginTop: 12, textAlign: 'center', paddingHorizontal: 24 },
+  retryBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: BRAND, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, marginTop: 16 },
+  retryText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  offlineBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FEF3C7', paddingHorizontal: 16, paddingVertical: 8, marginTop: 12, marginHorizontal: 16, borderRadius: 8 },
+  offlineText: { fontSize: 12, color: '#92400E', fontWeight: '600' },
   productGrid: { gap: 12 },
   productCard: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#e7e5e4' },
   productImage: { height: 180, backgroundColor: '#f5f5f4', position: 'relative' },
