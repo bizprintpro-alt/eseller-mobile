@@ -36,13 +36,13 @@ export default function OwnerOrdersScreen() {
 
   const { data, isRefetching, refetch } = useQuery<any>({
     queryKey: ['seller-orders', tab],
-    queryFn: () => get(`/seller/orders${tab ? `?status=${tab}` : ''}`),
+    queryFn: () => get(`/orders${tab ? `?status=${tab}` : ''}`),
     refetchInterval: isFocused ? 15000 : false,
   });
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      put(`/seller/orders/${id}/status`, { status }),
+      put(`/orders/${id}/status`, { status }),
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       qc.invalidateQueries({ queryKey: ['seller-orders'] });

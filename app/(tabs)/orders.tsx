@@ -17,11 +17,20 @@ const STATUS: Record<string, { label: string; color: string; bg: string }> = {
 export default function OrdersScreen() {
   const { data, isLoading, isError, refetch, isRefetching } = useQuery<any>({
     queryKey: ['buyer-orders'],
-    queryFn: () => get('/buyer/orders'),
+    queryFn: () => get('/orders'),
   });
 
-  // Response: { success, data: [...] } — interceptor returns res.data
-  const orders: any[] = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+  // Response shapes we accept:
+  //   { orders: [...] }  — eseller.mn backend (role-aware /orders route)
+  //   { success, data: [...] } — legacy wrapper
+  //   [...] — plain array (dev stubs)
+  const orders: any[] = Array.isArray(data?.orders)
+    ? data.orders
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+        ? data
+        : [];
 
   if (isLoading) {
     return (

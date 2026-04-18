@@ -137,7 +137,7 @@ export const WalletAPI = {
     amount: number;
     bankName: string;
     bankAccount: string;
-  }) => post('/wallet/payout', data),
+  }) => post('/wallet/withdraw', data),
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -227,9 +227,9 @@ export const POSAPI = {
       description: description || 'POS захиалга',
     }),
 
-  /** Poll payment status — POST body `{invoiceId}`; response `{paid, paidDate?}` */
+  /** Poll payment status — GET /payment/qpay/check/:invoiceId; response `{paid, paidDate?}` */
   checkPayment: (invoiceId: string) =>
-    post('/payment/qpay/check', { invoiceId }),
+    get(`/payment/qpay/check/${invoiceId}`),
 
   /** POST /api/orders/pos — create completed POS sale */
   createOrder: (data: POSOrderInput) => post('/orders/pos', data),
@@ -272,15 +272,18 @@ export const LiveAPI = {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export const OrderAPI = {
+  // Backend `/orders` is role-aware (filters by JWT role: buyer / seller / delivery).
+  // See Sarana backend routes/orders.js.
+
   // Buyer
-  myOrders: () => get('/buyer/orders'),
-  detail: (id: string) => get(`/buyer/orders/${id}`),
+  myOrders: () => get('/orders'),
+  detail: (id: string) => get(`/orders/${id}`),
 
   // Seller
   sellerOrders: (status?: string) =>
-    get('/seller/orders', status ? { status } : undefined),
+    get('/orders', status ? { status } : undefined),
   updateStatus: (id: string, status: string) =>
-    put(`/seller/orders/${id}/status`, { status }),
+    put(`/orders/${id}/status`, { status }),
 
   // Driver
   availableOrders: () => get('/driver/orders', { type: 'available' }),
