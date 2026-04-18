@@ -135,6 +135,8 @@ export default function ProductDetailScreen() {
           {/* Back */}
           <TouchableOpacity
             onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Буцах"
             style={{
               position: 'absolute', top: 48, left: 16,
               backgroundColor: 'rgba(0,0,0,0.5)',
@@ -151,6 +153,9 @@ export default function ProductDetailScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
               setSaved(!saved)
             }}
+            accessibilityRole="button"
+            accessibilityLabel={saved ? 'Хадгалснаас хасах' : 'Хадгалах'}
+            accessibilityState={{ selected: saved }}
             style={{
               position: 'absolute', top: 48, right: 16,
               backgroundColor: 'rgba(0,0,0,0.5)',
@@ -323,6 +328,8 @@ export default function ProductDetailScreen() {
       }}>
         <TouchableOpacity
           onPress={handleAddToCart}
+          accessibilityRole="button"
+          accessibilityLabel={`Сагсанд нэмэх, ${qty} ширхэг`}
           style={{
             flex: 1, backgroundColor: C.bgSection, borderRadius: R.lg,
             padding: 16, alignItems: 'center', borderWidth: 1.5,
@@ -347,6 +354,8 @@ export default function ProductDetailScreen() {
               params: { productId: id as string, qty: qty.toString() }
             })
           }}
+          accessibilityRole="button"
+          accessibilityLabel={`Шууд захиалах, ${qty} ширхэг`}
           style={{
             flex: 2, backgroundColor: C.brand, borderRadius: R.lg,
             padding: 16, alignItems: 'center', flexDirection: 'row',

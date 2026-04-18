@@ -45,9 +45,9 @@ export default function OwnerDashboard() {
 
       {/* Stats cards */}
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 10 }}>
-        {CARDS.map((c, i) => (
+        {CARDS.map((c) => (
           <View
-            key={i}
+            key={c.label}
             style={{
               width: '47%',
               backgroundColor: C.bgCard,
@@ -70,9 +70,9 @@ export default function OwnerDashboard() {
       <View style={{ margin: 12 }}>
         <Text style={{ color: C.text, fontWeight: '700', fontSize: 16, marginBottom: 12 }}>Хурдан үйлдэл</Text>
         <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-          {ACTIONS.map((a, i) => (
+          {ACTIONS.map((a) => (
             <TouchableOpacity
-              key={i}
+              key={a.route}
               onPress={() => router.push(a.route as any)}
               style={{
                 width: '47%',
@@ -103,7 +103,7 @@ export default function OwnerDashboard() {
         ) : (
           ((data as any)?.recentOrders || []).map((o: any, i: number) => (
             <TouchableOpacity
-              key={i}
+              key={o.id || o._id || o.trackingCode || `order-${i}`}
               onPress={() => router.push(`/orders` as any)}
               style={{
                 flexDirection: 'row',
@@ -121,7 +121,7 @@ export default function OwnerDashboard() {
                 <Text style={{ color: C.text, fontWeight: '600' }}>#{o.trackingCode}</Text>
                 <Text style={{ color: C.textSub, fontSize: 12, marginTop: 2 }}>{o.user?.name}</Text>
               </View>
-              <Text style={{ color: C.brand, fontWeight: '800', fontSize: 16 }}>{o.totalAmount?.toLocaleString()}₮</Text>
+              <Text style={{ color: C.brand, fontWeight: '800', fontSize: 16 }}>{(o.totalAmount || 0).toLocaleString()}₮</Text>
             </TouchableOpacity>
           ))
         )}

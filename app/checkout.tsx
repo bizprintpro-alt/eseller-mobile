@@ -68,11 +68,13 @@ export default function CheckoutScreen() {
         totalAmount: total(),
         paymentMethod: method,
       })
-      console.log('[checkout response]', JSON.stringify({
-        orderId: res?.orderId, invoiceId: res?.invoiceId,
-        isDemoMode: res?.isDemoMode,
-        hasQrDataUrl: !!res?.qrDataUrl, hasQrImage: !!res?.qrImage,
-      }))
+      if (__DEV__) {
+        console.log('[checkout response]', JSON.stringify({
+          orderId: res?.orderId, invoiceId: res?.invoiceId,
+          isDemoMode: res?.isDemoMode,
+          hasQrDataUrl: !!res?.qrDataUrl, hasQrImage: !!res?.qrImage,
+        }))
+      }
 
       // Demo mode — QPay credentials байхгүй, бодит төлбөр хийх шаардлагагүй
       if (res?.isDemoMode) {
@@ -90,7 +92,7 @@ export default function CheckoutScreen() {
       setQpayData(res)
       clear()
     } catch (e: any) {
-      console.error('[checkout error]', e)
+      if (__DEV__) console.error('[checkout error]', e)
       Alert.alert('Алдаа', e.message || 'Захиалга үүсгэхэд алдаа гарлаа')
     } finally {
       setLoading(false)
@@ -133,7 +135,21 @@ export default function CheckoutScreen() {
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10, justifyContent: 'center', width: '100%' }}>
         {BANKS.map(b => (
           <TouchableOpacity key={b.name}
-            onPress={() => Linking.openURL(b.url).catch(() => Alert.alert('Апп олдсонгүй', `${b.name} апп суулгаагүй байна`))}
+            onPress={async () => {
+              // canOpenURL зарим Android-д `queries` manifest байхгүй үед false
+              // буцаах боловч openURL ч бас throw хийдэг — хамгийн найдвартай
+              // нь hasResolver-оос зарим нь үр дүн өгөхгүй бол шууд Alert.
+              try {
+                const canOpen = await Linking.canOpenURL(b.url);
+                if (!canOpen) {
+                  Alert.alert('Апп олдсонгүй', `${b.name} апп суулгаагүй байна`);
+                  return;
+                }
+                await Linking.openURL(b.url);
+              } catch {
+                Alert.alert('Апп олдсонгүй', `${b.name} апп суулгаагүй байна`);
+              }
+            }}
             style={{ backgroundColor: b.color + '15', borderRadius: R.md, padding: 12, minWidth: '44%', alignItems: 'center', borderWidth: 1, borderColor: b.color + '40' }}>
             <Text style={{ color: b.color, fontSize: 13, fontWeight: '700' }}>{b.name}</Text>
           </TouchableOpacity>
@@ -209,7 +225,12 @@ export default function CheckoutScreen() {
           keyboardType="phone-pad" style={{ backgroundColor: C.bgCard, borderRadius: R.lg, padding: 14, color: C.text, fontSize: 16, borderWidth: 1, borderColor: C.border }} />
       </View>
 
-      <TouchableOpacity onPress={createOrder} disabled={loading}
+      <TouchableOpacity
+        onPress={createOrder}
+        disabled={loading}
+        accessibilityRole="button"
+        accessibilityLabel={`${method === 'qpay' ? 'QPay-ээр' : method === 'socialpay' ? 'SocialPay-ээр' : 'Картаар'} төлөх`}
+        accessibilityState={{ disabled: loading, busy: loading }}
         style={{ margin: 12, backgroundColor: loading ? C.textMuted : C.brand, borderRadius: R.lg, padding: 18, alignItems: 'center' }}>
         {loading
           ? <ActivityIndicator color="#fff" />

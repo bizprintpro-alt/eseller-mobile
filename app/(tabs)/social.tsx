@@ -58,14 +58,19 @@ export default function SocialScreen() {
 
   // Fetch stories + group buys on mount
   useEffect(() => {
+    // Unmount үед stale setState хийхгүй — async response буцаж ирэх үед
+    // component аль хэдийн destroy болсон бол "can't setState on unmounted"
+    // warning гарна.
+    let mounted = true;
     fetch(`${API}/api/stories`)
       .then((r) => r.json())
-      .then((d) => setStories(d?.data?.stories || []))
-      .catch(() => {});
+      .then((d) => { if (mounted) setStories(d?.data?.stories || []); })
+      .catch((e) => { if (__DEV__) console.warn('[stories]', e); });
     fetch(`${API}/api/group-buy`)
       .then((r) => r.json())
-      .then((d) => setGroupBuys(d?.data?.groupBuys || []))
-      .catch(() => {});
+      .then((d) => { if (mounted) setGroupBuys(d?.data?.groupBuys || []); })
+      .catch((e) => { if (__DEV__) console.warn('[group-buy]', e); });
+    return () => { mounted = false; };
   }, []);
 
   // Trending fetch
@@ -127,7 +132,7 @@ export default function SocialScreen() {
       setHasMore(meta.hasMore ?? false);
       setFeedError(null);
     } catch (e: any) {
-      console.error('[social]', e);
+      if (__DEV__) console.error('[social]', e);
       // Replace-mode (хамгийн анхны ачаалал / refresh) үед л error UI үзүүлнэ.
       // Pagination алдаа үед огт хуучин posts-ыг устгахгүй.
       if (replace) setFeedError(e?.message || 'Постыг татаж чадсангүй');

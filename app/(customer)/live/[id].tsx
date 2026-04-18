@@ -61,7 +61,9 @@ export default function LiveDetailScreen() {
         setStream(data);
         setMessages((data.messages || []).slice().reverse());
       }
-    } catch {}
+    } catch (e) {
+      if (__DEV__) console.warn('[live fetchStream]', e);
+    }
   }, [id]);
 
   useEffect(() => {
@@ -87,7 +89,9 @@ export default function LiveDetailScreen() {
         setMessages((prev) => [...prev, msg]);
         setChatInput('');
       }
-    } catch {}
+    } catch (e) {
+      if (__DEV__) console.warn('[live sendMessage]', e);
+    }
     setSending(false);
   };
 

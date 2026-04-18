@@ -69,7 +69,17 @@ export default function OrdersScreen() {
 
       <FlatList
         data={orders}
-        keyExtractor={(o) => o._id || o.id}
+        // Мongol захиалга obj зарим response-д `_id` (mongo), зарим ын-д
+        // `id` (sql) өгнө. Хоёулан нь undefined бол index-д fallback хийнэ,
+        // гэхдээ warning log-лоход туслахаар __DEV__-д мэдээлнэ.
+        keyExtractor={(o, i) => {
+          const key = o?._id || o?.id;
+          if (!key) {
+            if (__DEV__) console.warn('[orders] item missing id/_id, falling back to index', o);
+            return `fallback-${i}`;
+          }
+          return String(key);
+        }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
         contentContainerStyle={
           orders.length === 0
