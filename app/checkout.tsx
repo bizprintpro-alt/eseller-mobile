@@ -43,16 +43,42 @@ export default function CheckoutScreen() {
         totalAmount: total(),
         paymentMethod: method,
       })
+      console.log('[checkout response]', JSON.stringify({
+        orderId: res?.orderId, invoiceId: res?.invoiceId,
+        isDemoMode: res?.isDemoMode,
+        hasQrDataUrl: !!res?.qrDataUrl, hasQrImage: !!res?.qrImage,
+      }))
+
+      // Demo mode — QPay credentials байхгүй, бодит төлбөр хийх шаардлагагүй
+      if (res?.isDemoMode) {
+        clear()
+        Alert.alert(
+          '✅ Захиалга үүслээ',
+          `Захиалга #${String(res.orderId).slice(-6).toUpperCase()}\n` +
+          `Нийт: ${Number(res.amount ?? 0).toLocaleString()}₮\n\n` +
+          `(Demo горим — QPay тохируулаагүй)`,
+          [{ text: 'OK', onPress: () => router.replace('/orders' as any) }],
+        )
+        return
+      }
+
       setQpayData(res)
       clear()
       let t = 300
       const interval = setInterval(() => { t--; setCountdown(t); if (t <= 0) clearInterval(interval) }, 1000)
     } catch (e: any) {
+      console.error('[checkout error]', e)
       Alert.alert('Алдаа', e.message || 'Захиалга үүсгэхэд алдаа гарлаа')
     } finally {
       setLoading(false)
     }
   }
+
+  // qrDataUrl нь аль хэдийн `data:image/png;base64,...` бүрэн URL,
+  // харин qrImage нь зөвхөн base64 string — хоёуланг handle хийнэ
+  const qrUri =
+    qpayData?.qrDataUrl ||
+    (qpayData?.qrImage ? `data:image/png;base64,${qpayData.qrImage}` : null)
 
   // ═══ QPay QR Screen ═══
   if (qpayData) return (
@@ -69,9 +95,9 @@ export default function CheckoutScreen() {
       <Text style={{ color: C.text, fontSize: 22, fontWeight: '800', marginBottom: 8 }}>QPay төлбөр</Text>
       <Text style={{ color: C.textSub, marginBottom: 24, textAlign: 'center' }}>QR кодыг банкны аппаар скан хийнэ үү</Text>
 
-      {qpayData.qrImage && (
+      {qrUri && (
         <View style={{ backgroundColor: '#fff', borderRadius: R.lg, padding: 12 }}>
-          <Image source={{ uri: `data:image/png;base64,${qpayData.qrImage}` }} style={{ width: 200, height: 200 }} />
+          <Image source={{ uri: qrUri }} style={{ width: 200, height: 200 }} />
         </View>
       )}
 

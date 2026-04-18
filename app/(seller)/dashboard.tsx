@@ -4,6 +4,8 @@ import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { get } from '../../src/services/api'
 import { C, R, F } from '../../src/shared/design'
+import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
+import { LogoutButton } from '../components/LogoutButton'
 
 export default function SellerDashboard() {
   const { data, refetch, isRefetching } = useQuery({
@@ -30,14 +32,17 @@ export default function SellerDashboard() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.brand} />}>
-      <View style={{ padding: 16, paddingTop: 60 }}>
+      <View style={{ paddingTop: 52 }}>
+        <RoleSwitcherBar />
+      </View>
+      <View style={{ padding: 16 }}>
         <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>Самбар</Text>
         <Text style={{ color: C.textSub, fontSize: 13, marginTop: 4 }}>Борлуулагчийн хяналтын самбар</Text>
       </View>
 
       {/* Stock alert */}
       {lowStock.length > 0 && (
-        <TouchableOpacity onPress={() => router.push('/seller/products' as any)}
+        <TouchableOpacity onPress={() => router.push('/(seller)/products' as any)}
           style={{ marginHorizontal: 12, marginBottom: 8, flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', backgroundColor: '#EA433515', borderRadius: R.lg, padding: 14, borderWidth: 0.5, borderColor: '#EA433533' }}>
           <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
             <Ionicons name="warning" size={20} color="#EA4335" />
@@ -61,8 +66,8 @@ export default function SellerDashboard() {
         <Text style={{ ...F.h4, color: C.text, marginBottom: 12 }}>Хурдан үйлдэл</Text>
         <View style={{ flexDirection: 'row', gap: 10 }}>
           {[
-            { icon: 'link' as const, label: 'Линк үүсгэх', route: '/seller/products' },
-            { icon: 'stats-chart' as const, label: 'Орлого харах', route: '/seller/earnings' },
+            { icon: 'link' as const, label: 'Линк үүсгэх', route: '/(seller)/products' },
+            { icon: 'stats-chart' as const, label: 'Орлого харах', route: '/(seller)/earnings' },
           ].map((a, i) => (
             <TouchableOpacity key={i} onPress={() => router.push(a.route as any)}
               style={{ flex: 1, backgroundColor: C.bgSection, borderRadius: R.lg, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: C.border }}>
@@ -92,6 +97,7 @@ export default function SellerDashboard() {
         )}
       </View>
 
+      <LogoutButton />
       <View style={{ height: 40 }} />
     </ScrollView>
   )

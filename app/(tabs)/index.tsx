@@ -2,20 +2,71 @@ import React, { useState, useRef, useEffect } from 'react'
 import {
   View, Text, ScrollView, TouchableOpacity,
   Image, Dimensions, FlatList, RefreshControl,
+  Animated, Easing,
 } from 'react-native'
 import { router } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { LinearGradient } from 'expo-linear-gradient'
+import * as Haptics from 'expo-haptics'
 import { useAuth } from '../../src/store/auth'
 import { useCart } from '../../src/store/cart'
-import { get } from '../../src/services/api'
+import { get, SocialAPI, LiveAPI } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
-import { RoleBadge } from '../../src/shared/ui/RoleSwitcher'
+
 import { Skeleton } from '../../src/shared/ui/Skeleton'
+import { LiveCarousel } from '../components/LiveCarousel'
+import { StoriesRow } from '../components/home/StoriesRow'
+import { FlashSaleRow } from '../components/home/FlashSaleRow'
+import { GoldCta } from '../components/home/GoldCta'
+import { AiShopperCard } from '../components/home/AiShopperCard'
+import { BnplBanner } from '../components/home/BnplBanner'
+import { HerderRow } from '../components/home/HerderRow'
 
 const { width } = Dimensions.get('window')
 const CARD_W = 156
+
+const QA_ITEMS = [
+  { icon: 'bag-outline' as const, label: 'Захиалах', color: '#4338CA', bg: '#EEF2FF', route: '/orders' },
+  { icon: 'car-outline' as const, label: 'Хүргэлт', color: '#EA580C', bg: '#FFF7ED', route: '/track/search' },
+  { icon: 'cash-outline' as const, label: 'Хэтэвч', color: '#059669', bg: '#ECFDF5', route: '/(customer)/wallet' },
+  { icon: 'star-outline' as const, label: 'Gold', color: '#CA8A04', bg: '#FEF9C3', route: '/(customer)/tier-details' },
+  { icon: 'heart-outline' as const, label: 'Wishlist', color: '#E11D48', bg: '#FFF1F2', route: '/(customer)/wishlist' },
+  { icon: 'chatbubble-outline' as const, label: 'Чат', color: '#2563EB', bg: '#EFF6FF', route: '/chat/list' },
+  { icon: 'globe-outline' as const, label: 'Dropship', color: '#16A34A', bg: '#F0FDF4', route: '/(customer)/dropship' },
+  { icon: 'lock-closed-outline' as const, label: 'BNPL', color: '#7C3AED', bg: '#FAF5FF', route: '/(customer)/bnpl' },
+]
+
+const SERVICE_ITEMS = [
+  {
+    icon: 'radio-button-on' as const,
+    color: '#EF4444',
+    name: 'Live',
+    sub: 'Шууд дамжуулалт',
+    route: '/(customer)/live',
+  },
+  {
+    icon: 'card' as const,
+    color: '#2563EB',
+    name: 'Төлбөр',
+    sub: 'QPay, SocialPay',
+    route: '/(customer)/wallet',
+  },
+  {
+    icon: 'leaf' as const,
+    color: '#059669',
+    name: 'Малчны',
+    sub: 'Шинэ бараа',
+    route: '/(customer)/herder',
+  },
+  {
+    icon: 'people' as const,
+    color: '#7C3AED',
+    name: 'Referral',
+    sub: 'Найзаа урих',
+    route: '/(customer)/become-seller',
+  },
+]
 
 const ENTITY_TYPES = [
   { type: 'STORE',        icon: 'storefront', name: 'Дэлгүүр',   color: '#E8242C' },
@@ -109,8 +160,8 @@ function StoreDashboard() {
           {[
             { icon: 'add-circle' as const, label: 'Бараа нэмэх', color: C.store, route: '/(tabs)/store' },
             { icon: 'receipt' as const, label: 'Захиалгууд', color: '#1A73E8', route: '/orders' },
-            { icon: 'people' as const, label: 'Борлуулагчид', color: '#7C3AED', route: '/seller/products' },
-            { icon: 'bar-chart' as const, label: 'Тайлан', color: '#F9A825', route: '/seller/earnings' },
+            { icon: 'people' as const, label: 'Борлуулагчид', color: '#7C3AED', route: '/(seller)/products' },
+            { icon: 'bar-chart' as const, label: 'Тайлан', color: '#F9A825', route: '/(seller)/earnings' },
           ].map((a, i) => (
             <TouchableOpacity key={i} onPress={() => router.push(a.route as any)}
               style={{ width: '47%', backgroundColor: a.color + '15', borderRadius: R.lg, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: a.color + '30' }}>
@@ -127,39 +178,67 @@ function StoreDashboard() {
 }
 
 // ═══════════════════════════════════
-// ROUTER — Role-аар ялгах
+// ROUTER — Role-аар ялгах (STORE-only legacy;
+// DRIVER/SELLER now route to their own groups)
 // ═══════════════════════════════════
 
-// Lazy import role-specific home screens
-const LazyDriverHome = React.lazy(() => import('../../src/screens/driver/DriverHomeScreen'))
-const LazyAffiliateHome = React.lazy(() => import('../../src/screens/affiliate/AffiliateHomeScreen'))
-
 export default function HomeScreen() {
-  const { user, role } = useAuth()
+  const { role } = useAuth()
 
-  // SELLER (affiliate) → affiliate dashboard
-  if (role === 'SELLER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyAffiliateHome />
-      </React.Suspense>
-    )
-  }
-
-  // DRIVER → driver deliveries
-  if (role === 'DRIVER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverHome />
-      </React.Suspense>
-    )
-  }
-
-  // STORE → store dashboard
+  // STORE → store dashboard (legacy; STORE usually routes to /(owner))
   if (role === 'STORE') return <StoreDashboard />
 
-  // BUYER → home feed
+  // BUYER / default → home feed
   return <BuyerHome />
+}
+
+function PulseDot({ color = '#EF4444', size = 8 }: { color?: string; size?: number }) {
+  const anim = React.useRef(new Animated.Value(1)).current
+  React.useEffect(() => {
+    Animated.loop(
+      Animated.sequence([
+        Animated.timing(anim, { toValue: 0.2, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+        Animated.timing(anim, { toValue: 1, duration: 600, easing: Easing.inOut(Easing.ease), useNativeDriver: true }),
+      ])
+    ).start()
+  }, [])
+  return (
+    <Animated.View style={{
+      width: size, height: size, borderRadius: size / 2,
+      backgroundColor: color, opacity: anim,
+    }} />
+  )
+}
+
+function CountdownTimer({ endsAt }: { endsAt?: string }) {
+  const [label, setLabel] = React.useState('')
+  React.useEffect(() => {
+    if (!endsAt) return
+    const tick = () => {
+      const diff = new Date(endsAt).getTime() - Date.now()
+      if (diff <= 0) { setLabel('Дууслаа'); return }
+      const h = Math.floor(diff / 3_600_000)
+      const m = Math.floor((diff % 3_600_000) / 60_000)
+      const s = Math.floor((diff % 60_000) / 1_000)
+      setLabel(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
+    }
+    tick()
+    const id = setInterval(tick, 1_000)
+    return () => clearInterval(id)
+  }, [endsAt])
+  if (!label) return null
+  return (
+    <View style={{
+      backgroundColor: '#FEE2E2', borderRadius: 99,
+      paddingHorizontal: 8, paddingVertical: 2,
+      flexDirection: 'row', alignItems: 'center', gap: 4,
+    }}>
+      <PulseDot color="#EF4444" size={6} />
+      <Text style={{ fontSize: 10, fontWeight: '800', color: '#B91C1C', fontVariant: ['tabular-nums'] }}>
+        {label}
+      </Text>
+    </View>
+  )
 }
 
 function BuyerHome() {
@@ -189,21 +268,51 @@ function BuyerHome() {
     queryFn: () => get('/feed?limit=6'),
   })
 
+  const { data: liveData } = useQuery({
+    queryKey: ['live-active'],
+    queryFn: LiveAPI.getActive,
+    staleTime: 30_000,
+    retry: false,
+  })
+  const activeLive = (liveData as any)?.streams?.[0] ?? null
+
+  const { data: socialData } = useQuery({
+    queryKey: ['social-feed-home'],
+    queryFn: () => SocialAPI.feed({ limit: 6 }),
+    staleTime: 60_000,
+    retry: false,
+  })
+  const socialPosts = (socialData as any)?.posts ?? (Array.isArray(socialData) ? socialData : [])
+
   const featuredProducts = (featuredData as any)?.products || []
   const newProducts = (newData as any)?.products || []
   const stores = (storesData as any)?.entities || (Array.isArray(storesData) ? storesData : [])
   const feedPosts = (feedData as any)?.posts ?? (Array.isArray(feedData) ? feedData : [])
 
   const displayBanners = [
-    { id: '1', title: 'Монголын нэгдсэн платформ',
-      subtitle: '10,000+ бараа, 500+ дэлгүүр', color: '#1A0000',
-      gradient: ['#2D0000', '#1A0000'] as const },
-    { id: '2', title: 'Дэлгүүрээ онцлоорой',
-      subtitle: 'Онцгой байршилд гарч борлуулалтаа нэмэгдүүлээрэй', color: '#001A2D',
-      gradient: ['#002D4A', '#001A2D'] as const },
-    { id: '3', title: 'Gold гишүүн болох',
-      subtitle: 'Онцгой эрх, хямдрал, урамшуулал', color: '#1A1400',
-      gradient: ['#2D1F00', '#1A1100'] as const },
+    {
+      id: '1', type: 'static' as const,
+      title: 'Монголын нэгдсэн платформ',
+      subtitle: '10,000+ бараа · 500+ дэлгүүр',
+      gradient: ['#2D0000', '#1A0000'] as const,
+      tag: 'ОНЦГОЙ САНАЛ',
+    },
+    {
+      id: '2', type: 'live' as const,
+      title: activeLive?.title ?? 'Live commerce',
+      subtitle: activeLive ? `👁 ${activeLive.viewerCount ?? 0} үзэгч` : 'Шууд дамжуулалт',
+      streamId: activeLive?.id,
+      gradient: ['#0D1B2A', '#0A0A1A'] as const,
+      tag: 'LIVE',
+    },
+    {
+      id: '3', type: 'promo' as const,
+      title: 'Дэлхий даяар захиал',
+      subtitle: 'Stock хэрэггүй · 1688 · Aliexpress',
+      gradient: ['#0A1A0A', '#0D2D1A'] as const,
+      tag: 'DROPSHIP — ШИНЭ',
+      emoji: '🌏',
+    },
   ]
 
   useEffect(() => {
@@ -236,7 +345,6 @@ function BuyerHome() {
           <Text style={{ fontSize: 22, fontWeight: '900', color: C.text, letterSpacing: -0.5 }}>
             eseller<Text style={{ color: C.brand }}>.mn</Text>
           </Text>
-          <RoleBadge />
           <View style={{ flex: 1 }} />
           <TouchableOpacity
             onPress={() => router.push('/cart' as any)}
@@ -271,17 +379,51 @@ function BuyerHome() {
             }
           >
             {displayBanners.map((b) => (
-              <View key={b.id} style={{
-                width: width - 24, height: 170, justifyContent: 'flex-end',
-              }}>
+              <View key={b.id} style={{ width: width - 24, height: 170 }}>
                 <LinearGradient
                   colors={[...b.gradient]}
                   style={{ flex: 1, justifyContent: 'flex-end', padding: 20 }}
                 >
-                  <Text style={{ color: C.white, fontSize: 20, fontWeight: '800' }}>
+                  {b.type === 'promo' && b.emoji && (
+                    <Text style={{
+                      position: 'absolute', right: 14, top: 40,
+                      fontSize: 52, opacity: 0.7,
+                    }}>
+                      {b.emoji}
+                    </Text>
+                  )}
+                  {b.type === 'live' && (
+                    <TouchableOpacity
+                      onPress={() => b.streamId &&
+                        router.push(`/(customer)/live/${b.streamId}` as any)}
+                      style={{
+                        position: 'absolute', top: 50, alignSelf: 'center',
+                        width: 44, height: 44, borderRadius: 22,
+                        backgroundColor: 'rgba(255,255,255,.2)',
+                        borderWidth: 2, borderColor: 'rgba(255,255,255,.5)',
+                        alignItems: 'center', justifyContent: 'center',
+                      }}
+                    >
+                      <Ionicons name="play" size={18} color="#fff" />
+                    </TouchableOpacity>
+                  )}
+                  <View style={{
+                    backgroundColor: b.type === 'live' ? '#EF4444' : 'rgba(255,255,255,.15)',
+                    borderRadius: 4, paddingHorizontal: 8, paddingVertical: 2,
+                    alignSelf: 'flex-start', marginBottom: 6,
+                    flexDirection: 'row', alignItems: 'center', gap: 4,
+                    borderWidth: b.type === 'live' ? 0 : 0.5,
+                    borderColor: 'rgba(255,255,255,.2)',
+                  }}>
+                    {b.type === 'live' && <PulseDot color="#fff" size={6} />}
+                    <Text style={{ color: '#fff', fontSize: 8, fontWeight: '800' }}>
+                      {b.tag}
+                    </Text>
+                  </View>
+                  <Text style={{ color: C.white, fontSize: 19, fontWeight: '800' }}>
                     {b.title}
                   </Text>
-                  <Text style={{ color: 'rgba(255,255,255,0.7)', fontSize: 13, marginTop: 4 }}>
+                  <Text style={{ color: 'rgba(255,255,255,0.6)', fontSize: 12, marginTop: 4 }}>
                     {b.subtitle}
                   </Text>
                 </LinearGradient>
@@ -313,6 +455,233 @@ function BuyerHome() {
             Бараа, дэлгүүр хайх...
           </Text>
         </TouchableOpacity>
+
+        {/* ═══ STORIES (24h) ═══ */}
+        <StoriesRow />
+
+        {/* ═══ QUICK ACTION GRID — Toki style ═══ */}
+        <View style={{
+          marginHorizontal: 16,
+          marginBottom: 14,
+          backgroundColor: '#FFFFFF',
+          borderRadius: 20,
+          padding: 12,
+          borderWidth: 0.5,
+          borderColor: 'rgba(0,0,0,0.06)',
+          shadowColor: '#000',
+          shadowOffset: { width: 0, height: 2 },
+          shadowOpacity: 0.06,
+          shadowRadius: 6,
+          elevation: 2,
+        }}>
+          <View style={{
+            flexDirection: 'row',
+            flexWrap: 'wrap',
+          }}>
+            {QA_ITEMS.map(item => (
+              <TouchableOpacity
+                key={item.route}
+                onPress={() => {
+                  try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light) } catch {}
+                  router.push(item.route as any)
+                }}
+                style={{
+                  width: '25%',
+                  alignItems: 'center',
+                  paddingVertical: 10,
+                  paddingHorizontal: 4,
+                }}
+              >
+                <View style={{
+                  width: 48,
+                  height: 48,
+                  borderRadius: 14,
+                  backgroundColor: item.bg,
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  marginBottom: 5,
+                }}>
+                  <Ionicons name={item.icon} size={22} color={item.color} />
+                </View>
+                <Text style={{
+                  fontSize: 11,
+                  fontWeight: '600',
+                  color: '#374151',
+                  textAlign: 'center',
+                }}>
+                  {item.label}
+                </Text>
+              </TouchableOpacity>
+            ))}
+          </View>
+        </View>
+
+        {/* ═══ SERVICE GRID ═══ */}
+        <View style={{
+          marginHorizontal: 16,
+          marginBottom: 12,
+          flexDirection: 'row',
+          flexWrap: 'wrap',
+          gap: 8,
+        }}>
+          {SERVICE_ITEMS.map(svc => (
+            <TouchableOpacity
+              key={svc.route}
+              onPress={() => router.push(svc.route as any)}
+              style={{
+                width: '48%',
+                backgroundColor: '#FFFFFF',
+                borderRadius: 16,
+                padding: 14,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 10,
+                borderWidth: 0.5,
+                borderColor: 'rgba(0,0,0,0.06)',
+                shadowColor: '#000',
+                shadowOffset: { width: 0, height: 1 },
+                shadowOpacity: 0.05,
+                shadowRadius: 4,
+                elevation: 1,
+              }}
+            >
+              <View style={{
+                width: 38, height: 38,
+                borderRadius: 10,
+                backgroundColor: svc.color + '18',
+                alignItems: 'center',
+                justifyContent: 'center',
+                flexShrink: 0,
+              }}>
+                <Ionicons name={svc.icon} size={20} color={svc.color} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{
+                  fontSize: 13,
+                  fontWeight: '700',
+                  color: '#111111',
+                }}>
+                  {svc.name}
+                </Text>
+                <Text style={{
+                  fontSize: 10,
+                  color: '#9CA3AF',
+                  marginTop: 1,
+                }}>
+                  {svc.sub}
+                </Text>
+              </View>
+            </TouchableOpacity>
+          ))}
+        </View>
+
+        {/* ═══ БҮХ ҮЙЛЧИЛГЭЭ ═══ */}
+        <TouchableOpacity
+          onPress={() => router.push('/(tabs)/store' as any)}
+          style={{
+            marginHorizontal: 16,
+            marginBottom: 14,
+            backgroundColor: '#FFFFFF',
+            borderRadius: 14,
+            paddingVertical: 14,
+            alignItems: 'center',
+            borderWidth: 0.5,
+            borderColor: 'rgba(0,0,0,0.06)',
+          }}
+        >
+          <Text style={{
+            fontSize: 14,
+            fontWeight: '600',
+            color: '#374151',
+          }}>
+            Бүх үйлчилгээ
+          </Text>
+        </TouchableOpacity>
+
+        {/* ═══ НИЙГМИЙН ЗАР ═══ */}
+        {socialPosts.length > 0 && (
+          <View style={{ marginBottom: 20 }}>
+            <View style={{
+              flexDirection: 'row', justifyContent: 'space-between',
+              alignItems: 'center', paddingHorizontal: 16, marginBottom: 10,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <PulseDot color="#EF4444" size={8} />
+                <Text style={{ fontSize: 14, fontWeight: '800', color: C.text }}>
+                  Нийгмийн зар
+                </Text>
+              </View>
+              <TouchableOpacity onPress={() => router.push('/(tabs)/social' as any)}>
+                <Text style={{ color: C.primary, fontSize: 12, fontWeight: '600' }}>
+                  Бүгд →
+                </Text>
+              </TouchableOpacity>
+            </View>
+            <FlatList
+              horizontal showsHorizontalScrollIndicator={false}
+              data={socialPosts.slice(0, 6)}
+              keyExtractor={(p: any) => p.id}
+              contentContainerStyle={{ paddingHorizontal: 12, gap: 10 }}
+              renderItem={({ item: p }: any) => (
+                <TouchableOpacity
+                  onPress={() => router.push(`/feed/${p.id}` as any)}
+                  style={{
+                    width: 140, backgroundColor: C.bgCard, borderRadius: R.lg,
+                    overflow: 'hidden', borderWidth: 1, borderColor: C.border, ...S.card,
+                  }}
+                >
+                  <View style={{
+                    height: 90, backgroundColor: C.bgSection,
+                    alignItems: 'center', justifyContent: 'center',
+                  }}>
+                    {p.images?.[0] ? (
+                      <Image
+                        source={{ uri: p.images[0] }}
+                        style={{ width: '100%', height: 90 }}
+                        resizeMode="cover"
+                      />
+                    ) : (
+                      <Ionicons name="image-outline" size={28} color={C.textMuted} />
+                    )}
+                    {p.isLive && (
+                      <View style={{
+                        position: 'absolute', top: 5, left: 5,
+                        backgroundColor: '#EF4444', borderRadius: 3,
+                        paddingHorizontal: 5, paddingVertical: 1,
+                        flexDirection: 'row', alignItems: 'center', gap: 3,
+                      }}>
+                        <PulseDot color="#fff" size={4} />
+                        <Text style={{ color: '#fff', fontSize: 7, fontWeight: '800' }}>LIVE</Text>
+                      </View>
+                    )}
+                  </View>
+                  <View style={{ padding: 8 }}>
+                    <Text numberOfLines={1} style={{ color: C.text, fontSize: 11, fontWeight: '600' }}>
+                      {p.title ?? p.content?.slice(0, 30)}
+                    </Text>
+                    {p.price && (
+                      <Text style={{ color: C.brand, fontSize: 12, fontWeight: '800', marginTop: 3 }}>
+                        {p.price.toLocaleString()}₮
+                      </Text>
+                    )}
+                  </View>
+                </TouchableOpacity>
+              )}
+            />
+          </View>
+        )}
+
+        {/* ═══ FLASH SALE ═══ */}
+        <FlashSaleRow />
+
+        {/* ═══ LIVE CAROUSEL ═══ */}
+        <LiveCarousel />
+
+        {/* ═══ GOLD CTA ═══ */}
+        <GoldCta />
+
+        {/* ═══ AI SHOPPER ═══ */}
+        <AiShopperCard />
 
         {/* ═══ ENTITY TYPES ═══ */}
         <View style={{ marginBottom: 24 }}>
@@ -404,6 +773,9 @@ function BuyerHome() {
             />
           </View>
         )}
+
+        {/* ═══ BNPL BANNER ═══ */}
+        <BnplBanner />
 
         {/* ═══ ОНЦГОЙ ДЭЛГҮҮРҮҮД (PROMOTED - ТӨЛБӨРТЭЙ) ═══ */}
         <View style={{ marginBottom: 24 }}>
@@ -505,6 +877,31 @@ function BuyerHome() {
               }
             />
           )}
+        </View>
+
+        {/* ═══ МАЛЧНЫ БУЛАН ═══ */}
+        <View style={{ marginBottom: 4 }}>
+          <View style={{
+            flexDirection: 'row', justifyContent: 'space-between',
+            alignItems: 'center', paddingHorizontal: 16, marginBottom: 10,
+          }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+              <Text style={{ fontSize: 18 }}>🐄</Text>
+              <Text style={{ fontSize: 14, fontWeight: '800', color: C.text }}>
+                Малчны булан
+              </Text>
+              <View style={{
+                backgroundColor: '#D1FAE5', borderRadius: 99,
+                paddingHorizontal: 7, paddingVertical: 2,
+              }}>
+                <Text style={{ fontSize: 9, fontWeight: '800', color: '#065F46' }}>Шинэ</Text>
+              </View>
+            </View>
+            <TouchableOpacity onPress={() => router.push('/(customer)/herder' as any)}>
+              <Text style={{ color: '#059669', fontSize: 12, fontWeight: '600' }}>Бүгд →</Text>
+            </TouchableOpacity>
+          </View>
+          <HerderRow />
         </View>
 
         {/* ═══ ШИНЭ БАРАА ═══ */}
@@ -644,7 +1041,8 @@ function BuyerHome() {
 
       </ScrollView>
 
-      {/* RoleBadge is now inline in header */}
     </View>
   )
 }
+
+

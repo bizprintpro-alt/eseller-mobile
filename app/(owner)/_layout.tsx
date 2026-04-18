@@ -1,18 +1,21 @@
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
+import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { C } from '../../src/shared/design'
 
 export default function OwnerLayout() {
+  const insets = useSafeAreaInsets()
+
   return (
     <Tabs
       screenOptions={{
         headerShown: false,
         tabBarStyle: {
-          backgroundColor: C.bg,
+          backgroundColor: C.bgCard,
           borderTopColor: C.border,
-          borderTopWidth: 1,
-          height: 60,
-          paddingBottom: 8,
+          borderTopWidth: 0.5,
+          height: 58 + insets.bottom,
+          paddingBottom: insets.bottom + 6,
           paddingTop: 6,
         },
         tabBarActiveTintColor: C.store,
@@ -49,11 +52,23 @@ export default function OwnerLayout() {
         }}
       />
       <Tabs.Screen
-        name="settings"
+        name="profile"
         options={{
-          title: 'Тохиргоо',
-          tabBarIcon: ({ color }) => <Ionicons name="settings" size={22} color={color} />,
+          title: 'Профайл',
+          tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} />,
         }}
+      />
+      <Tabs.Screen
+        name="settings"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="pos"
+        options={{ href: null }}
+      />
+      <Tabs.Screen
+        name="pos-history"
+        options={{ href: null }}
       />
     </Tabs>
   )

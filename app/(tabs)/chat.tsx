@@ -1,4 +1,3 @@
-import React from 'react'
 import {
   View, Text, FlatList,
   TouchableOpacity, RefreshControl,
@@ -10,28 +9,8 @@ import { get }      from '../../src/services/api'
 import { useAuth }  from '../../src/store/auth'
 import { C, R }     from '../../src/shared/design'
 
-// Role-specific screens shown in "chat" tab slot
-const LazyDriverEarnings = React.lazy(() => import('../../src/screens/driver/EarningsScreen'))
-const LazyAffiliateEarnings = React.lazy(() => import('../../src/screens/affiliate/EarningsScreen'))
-
 export default function ChatScreen() {
-  const { user, role } = useAuth()
-
-  if (role === 'DRIVER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverEarnings />
-      </React.Suspense>
-    )
-  }
-  if (role === 'SELLER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyAffiliateEarnings />
-      </React.Suspense>
-    )
-  }
-
+  const { user } = useAuth()
   return <BuyerChatList user={user} />
 }
 

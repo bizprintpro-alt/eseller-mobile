@@ -76,6 +76,175 @@ export const CartAPI = {
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Wallet API — eseller.mn wallet + escrow
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+// Backend wraps JSON with { success, data, error }. Mobile axios interceptor
+// already unwraps axios `response.data`, so the raw body is returned here.
+// Callers should accept `res?.data ?? res` to handle both wrapped and raw shapes.
+
+export interface WalletHistoryEntry {
+  type?: string;
+  amount?: number;
+  description?: string;
+  status?: string;
+  orderId?: string;
+  reference?: string;
+  createdAt?: string;
+  date?: string; // legacy entries
+  method?: string;
+}
+
+export const WalletAPI = {
+  getWallet: () => get('/wallet'),
+
+  getTransactions: (page = 1, type?: string) => {
+    const params: Record<string, string | number> = { page };
+    if (type) params.type = type;
+    return get('/wallet/transactions', params);
+  },
+
+  topUp: (data: {
+    amount: number;
+    method: 'qpay' | 'socialpay' | 'card';
+    reference: string;
+  }) => post('/wallet/topup', data),
+
+  requestPayout: (data: {
+    amount: number;
+    bankName: string;
+    bankAccount: string;
+  }) => post('/wallet/payout', data),
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Loyalty API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export const LoyaltyAPI = {
+  get: () => get('/loyalty'),
+  redeemForCash: (points: number) => post('/loyalty/redeem-cash', { points }),
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Live Commerce API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export interface LiveStreamItem {
+  id: string;
+  title: string;
+  description?: string | null;
+  thumbnailUrl?: string | null;
+  viewerCount?: number;
+  startedAt?: string | null;
+  shop?: { id: string; name: string; logo?: string | null } | null;
+  products?: unknown[];
+}
+
+export interface LiveProductItem {
+  id: string;
+  productId: string;
+  flashPrice?: number | null;
+  flashStock?: number | null;
+  soldCount: number;
+  isPinned: boolean;
+  product: { id: string; name: string; price: number; images?: string[] };
+}
+
+export interface LiveMessageItem {
+  id: string;
+  content: string;
+  type: 'TEXT' | 'PURCHASE' | 'LIKE' | 'JOIN' | string;
+  createdAt: string;
+  user: { id: string; name: string };
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// POS Terminal API
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export interface POSProduct {
+  id: string;
+  name: string;
+  price: number;
+  images?: string[];
+  barcode?: string;
+  stock: number;
+  category?: string;
+}
+
+export interface POSCartItem {
+  product: POSProduct;
+  qty: number;
+  subtotal: number;
+}
+
+export interface POSOrderInput {
+  items: { productId: string; qty: number; price: number }[];
+  paymentMethod: 'cash' | 'qpay' | 'card';
+  cashReceived?: number;
+  total: number;
+  vatIncluded: boolean;
+}
+
+export const POSAPI = {
+  /** Product search for terminal (name / barcode) */
+  searchProducts: (query: string) =>
+    get('/products', { search: query, limit: 20 }),
+
+  /**
+   * Create QPay invoice — backend route requires `orderId`.
+   * POS generates a synthetic `POS-<timestamp>` id so the invoice
+   * can be looked up later when the POS order route lands.
+   */
+  createQPayInvoice: (orderId: string, amount: number, description?: string) =>
+    post('/payment/qpay/create', {
+      orderId,
+      amount,
+      description: description || 'POS захиалга',
+    }),
+
+  /** Poll payment status — POST body `{invoiceId}`; response `{paid, paidDate?}` */
+  checkPayment: (invoiceId: string) =>
+    post('/payment/qpay/check', { invoiceId }),
+
+  /** POST /api/orders/pos — create completed POS sale */
+  createOrder: (data: POSOrderInput) => post('/orders/pos', data),
+
+  /** GET /api/orders/pos/history?date=YYYY-MM-DD — daily sales list */
+  getSalesHistory: (date?: string) =>
+    get('/orders/pos/history', {
+      date: date ?? new Date().toISOString().split('T')[0],
+    }),
+
+  /** POST /api/orders/pos/refund — reverse a completed POS sale */
+  refundOrder: (orderId: string, reason?: string) =>
+    post('/orders/pos/refund', { orderId, reason }),
+
+  /** POST /api/orders/pos/void — cancel within 5-minute window */
+  voidOrder: (orderId: string) => post('/orders/pos/void', { orderId }),
+};
+
+export const LiveAPI = {
+  /** GET /api/live?status=LIVE — currently broadcasting streams */
+  getActive: () => get('/live', { status: 'LIVE' }),
+
+  /** GET /api/live?status=SCHEDULED — upcoming streams */
+  getScheduled: () => get('/live', { status: 'SCHEDULED' }),
+
+  /** GET /api/live/[id] — stream detail + products + recent messages */
+  getById: (id: string) => get(`/live/${id}`),
+
+  /** POST /api/live/[id]/messages — send chat message (type TEXT default) */
+  sendMessage: (id: string, content: string, type: string = 'TEXT') =>
+    post(`/live/${id}/messages`, { content, type }),
+
+  /** POST /api/live/[id]/purchase — buy a live product */
+  purchase: (id: string, productId: string) =>
+    post(`/live/${id}/purchase`, { productId }),
+};
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 // Orders API — buyer/seller/driver
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 

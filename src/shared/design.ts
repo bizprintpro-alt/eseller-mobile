@@ -26,19 +26,19 @@ export const C = {
   driver:   '#C62828',
 
   // Dark mode background
-  bg:       '#121212',
-  bgCard:   '#1E1E1E',
-  bgSection:'#242424',
-  bgInput:  '#2A2A2A',
+  bg:       '#F0F2F8',
+  bgCard:   '#FFFFFF',
+  bgSection:'#EAECF2',
+  bgInput:  '#FFFFFF',
 
   // Border
-  border:   '#2A2A2A',
-  border2:  '#333333',
+  border:   '#E5E7EB',
+  border2:  '#D1D5DB',
 
   // Text
-  text:     '#E0E0E0',
-  textSub:  '#9E9E9E',
-  textMuted:'#616161',
+  text:     '#111111',
+  textSub:  '#6B7280',
+  textMuted:'#9CA3AF',
 
   // Status
   success:  '#34A853',
@@ -131,15 +131,15 @@ export const LIGHT = {
 } as const;
 
 export const DARK = {
-  bg:            '#121212',
-  bgCard:        '#1E1E1E',
-  bgSection:     '#242424',
-  bgInput:       '#2A2A2A',
-  border:        '#2A2A2A',
-  border2:       '#333333',
-  text:          '#E0E0E0',
-  textSub:       '#9E9E9E',
-  textMuted:     '#616161',
+  bg:       '#F0F2F8',
+  bgCard:   '#FFFFFF',
+  bgSection:'#EAECF2',
+  bgInput:  '#FFFFFF',
+  border:   '#E5E7EB',
+  border2:  '#D1D5DB',
+  text:     '#111111',
+  textSub:  '#6B7280',
+  textMuted:'#9CA3AF',
 } as const;
 
 // Role color map (lowercase role → hex)
@@ -156,3 +156,4 @@ export const ROLE_ACCENT: Record<string, string> = {
   SELLER:    C.seller,
   DRIVER:    C.driver,
 };
+

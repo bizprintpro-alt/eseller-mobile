@@ -2,10 +2,16 @@ import React, { useState } from 'react';
 import {
   View, Text, TouchableOpacity, Modal,
 } from 'react-native';
+import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../store/auth';
 import { C, R, roleColor } from '../design';
+
+// Test account phone numbers — role switcher is only visible for these
+const TEST_PHONES = ['99000001', '99000002', '99000003', '99000004'];
+const isTestUser = (phone?: string | null) =>
+  !!phone && TEST_PHONES.includes(phone);
 
 const ROLES = [
   { key: 'BUYER',  icon: 'cart',       label: 'Худалдан авагч', desc: 'Бараа авах, захиалах',     color: C.buyer },
@@ -20,6 +26,8 @@ export function RoleBadge() {
   const [open, setOpen] = useState(false);
 
   if (!user) return null;
+  // Show only for test accounts or in dev builds — avoid confusing real users
+  if (!__DEV__ && !isTestUser(user.phone)) return null;
 
   const current = ROLES.find((r) => r.key === role);
   const color = roleColor(role);
@@ -56,6 +64,7 @@ export function RoleSwitcher() {
   const [open, setOpen] = useState(false);
 
   if (!user) return null;
+  if (!__DEV__ && !isTestUser(user.phone)) return null;
 
   const current = ROLES.find((r) => r.key === role);
   const color = roleColor(role);
@@ -95,6 +104,15 @@ function RoleModal({ open, onClose }: { open: boolean; onClose: () => void }) {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setRole(key);
     onClose();
+
+    // Cross-group navigation: STORE owners live in /(owner),
+    // everyone else (BUYER/SELLER/DRIVER) renders inside /(tabs)
+    // where the role-based tab bar + lazy-loaded screens do the work.
+    if (key === 'STORE') {
+      router.replace('/(owner)/dashboard' as never);
+    } else {
+      router.replace('/(tabs)' as never);
+    }
   };
 
   return (

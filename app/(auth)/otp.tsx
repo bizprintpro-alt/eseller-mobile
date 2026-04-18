@@ -5,6 +5,7 @@ import {
 } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../src/store/auth';
+import { routeByRole } from '../../src/shared/routing';
 import { post } from '../../src/services/api';
 import { C, R } from '../../src/shared/design';
 
@@ -47,7 +48,8 @@ export default function OtpScreen() {
     setLoading(true);
     try {
       await loginWithOTP(phone, otp);
-      router.replace('/(tabs)');
+      const currentUser = useAuth.getState().user;
+      routeByRole(currentUser?.role || 'buyer');
     } catch (e: any) {
       Alert.alert('Алдаа', e.message || 'OTP код буруу байна');
     } finally {

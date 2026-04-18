@@ -6,6 +6,8 @@ import {
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { get, post } from '../../src/services/api';
+import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
+import { LogoutButton } from '../components/LogoutButton';
 
 export default function DriverDeliveriesScreen() {
   const [tab, setTab] = useState<'available' | 'mine'>('available');
@@ -42,8 +44,12 @@ export default function DriverDeliveriesScreen() {
 
   return (
     <View style={s.screen}>
-      <View style={s.header}>
+      <View style={{ paddingTop: 44 }}>
+        <RoleSwitcherBar />
+      </View>
+      <View style={[s.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
         <Text style={s.headerTitle}>🚚 Хүргэлтийн самбар</Text>
+        <LogoutButton variant="icon" />
       </View>
 
       <View style={s.tabs}>

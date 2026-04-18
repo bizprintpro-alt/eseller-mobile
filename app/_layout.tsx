@@ -1,7 +1,7 @@
 import React, {
-  useState, useEffect
+  useState, useEffect, useRef
 } from 'react'
-import { Stack }     from 'expo-router'
+import { Stack, router }     from 'expo-router'
 import { StatusBar } from 'expo-status-bar'
 import * as Updates  from 'expo-updates'
 import { SafeAreaProvider }
@@ -14,7 +14,11 @@ import AsyncStorage
   from '@react-native-async-storage/async-storage'
 import * as Notifications from 'expo-notifications'
 import { useAuth }  from '../src/store/auth'
-import { registerPushToken } from '../src/lib/notifications'
+import { routeByRole } from '../src/shared/routing'
+import {
+  registerPushToken,
+  resolveNotificationRoute,
+} from '../src/lib/notifications'
 import { C }        from '../src/shared/design'
 import SplashScreen
   from '../src/shared/ui/SplashScreen'
@@ -49,6 +53,7 @@ function AppContent() {
   const [showOnboarding, setOnboarding]  =
     useState(false)
   const { user } = useAuth()
+  const hasAutoRouted = useRef(false)
 
   // OTA update шалгах
   useEffect(() => {
@@ -73,12 +78,43 @@ function AppContent() {
       .catch(() => {})
   }, [])
 
-  // Push token бүртгэх (нэвтэрсэн үед)
+  // Push token бүртгэх + foreground/tap listeners (нэвтэрсэн үед)
   useEffect(() => {
-    if (user) {
-      registerPushToken()
+    if (!user) return
+
+    registerPushToken()
+
+    const receivedSub = Notifications.addNotificationReceivedListener((n) => {
+      console.log('[Push]', n.request.content.title, n.request.content.body)
+    })
+    const responseSub = Notifications.addNotificationResponseReceivedListener((r) => {
+      const route = resolveNotificationRoute(r)
+      try {
+        router.push(route as never)
+      } catch (e) {
+        console.warn('[Push] route error:', e)
+      }
+    })
+
+    return () => {
+      receivedSub.remove()
+      responseSub.remove()
     }
   }, [user])
+
+  // Auto-route DRIVER/SELLER to their own navigation group on cold start.
+  // BUYER + STORE keep the default (tabs) entry so role-branching / legacy
+  // screens continue to work for them.
+  useEffect(() => {
+    if (showSplash || showOnboarding) return
+    if (!user) return
+    // Stack navigator mount болсны дараа route хийх
+    const timer = setTimeout(() => {
+      const role = (user.role ?? '').toLowerCase()
+      routeByRole(role)
+    }, 100)
+    return () => clearTimeout(timer)
+  }, [user, showSplash, showOnboarding])
 
   const finishOnboarding = async () => {
     try {
@@ -151,10 +187,17 @@ function AppContent() {
       <Stack.Screen name="(customer)/register-shop" options={{ headerShown: true, title: 'Дэлгүүр нээх' }} />
       <Stack.Screen name="(customer)/tier-details" options={{ headerShown: true, title: 'Түвшин' }} />
       <Stack.Screen name="(customer)/security" options={{ headerShown: true, title: 'Аюулгүй байдал' }} />
-      {/* Seller screens */}
-      <Stack.Screen name="seller/catalog" options={{ headerShown: true, title: 'Каталог' }} />
-      <Stack.Screen name="seller/leaderboard" options={{ headerShown: true, title: 'Рейтинг' }} />
-      <Stack.Screen name="seller/influencer" options={{ headerShown: true, title: 'Инфлюэнсер' }} />
+      <Stack.Screen name="(customer)/about" options={{ headerShown: true, title: 'Тухай' }} />
+      <Stack.Screen name="(customer)/contact" options={{ headerShown: true, title: 'Холбоо барих' }} />
+      <Stack.Screen name="(customer)/legal/privacy" options={{ headerShown: true, title: 'Нууцлалын бодлого' }} />
+      <Stack.Screen name="(customer)/legal/terms" options={{ headerShown: true, title: 'Үйлчилгээний нөхцөл' }} />
+      <Stack.Screen name="receipt/[id]" options={{ headerShown: false }} />
+      <Stack.Screen name="review/[orderId]" options={{ headerShown: false }} />
+      {/* Seller + Driver groups now have their own Tabs layout */}
+      <Stack.Screen name="(owner)" options={{ headerShown: false }} />
+      <Stack.Screen name="(seller)" options={{ headerShown: false }} />
+      <Stack.Screen name="(driver)" options={{ headerShown: false }} />
+      <Stack.Screen name="(seller)/influencer" options={{ headerShown: true, title: 'Инфлюэнсер' }} />
       <Stack.Screen name="feed/[id]" options={{ headerShown: true, title: 'Зарын дэлгэрэнгүй' }} />
       <Stack.Screen name="(customer)/wishlist" options={{ headerShown: true, title: 'Хадгалсан' }} />
       <Stack.Screen name="chat/ai-support" options={{ headerShown: true, title: 'AI Туслах' }} />
@@ -176,3 +219,7 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
+
+
+

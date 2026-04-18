@@ -14,10 +14,8 @@ import { useAuth }  from '../../src/store/auth'
 import { C, R, F, S } from '../../src/shared/design'
 import { FeedItemSkeleton } from '../../src/shared/ui/Skeleton'
 
-// Lazy imports for STORE/SELLER/DRIVER variants
+// Lazy import for STORE variant — DRIVER/SELLER now live in their own groups
 const LazyStoreOrders = React.lazy(() => import('../(owner)/orders'))
-const LazyAffiliateLink = React.lazy(() => import('../../src/screens/affiliate/LinkScreen'))
-const LazyDriverProof = React.lazy(() => import('../../src/screens/driver/ProofScreen'))
 
 const FEED_CATS = [
   { slug:'',                  name:'Бүгд',       icon:'grid' },
@@ -33,7 +31,6 @@ const FEED_CATS = [
 export default function FeedScreen() {
   const { role } = useAuth()
 
-  // Role-based routing
   if (role === 'STORE') {
     return (
       <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
@@ -42,22 +39,7 @@ export default function FeedScreen() {
     )
   }
 
-  if (role === 'SELLER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyAffiliateLink />
-      </React.Suspense>
-    )
-  }
-
-  if (role === 'DRIVER') {
-    return (
-      <React.Suspense fallback={<View style={{ flex: 1, backgroundColor: C.bg }} />}>
-        <LazyDriverProof />
-      </React.Suspense>
-    )
-  }
-
+  // BUYER / default — DRIVER/SELLER now have their own groups
   return <BuyerFeedScreen />
 }
 

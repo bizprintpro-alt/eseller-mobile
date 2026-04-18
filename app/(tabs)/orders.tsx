@@ -1,7 +1,7 @@
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, ActivityIndicator, StyleSheet, Image } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
-import { get } from '../src/services/api';
+import { get } from '../../src/services/api';
 
 const STATUS: Record<string, { label: string; color: string; bg: string }> = {
   pending: { label: 'Хүлээгдэж байна', color: '#854F0B', bg: '#FAEEDA' },

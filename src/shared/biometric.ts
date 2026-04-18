@@ -3,7 +3,9 @@ import * as SecureStore from 'expo-secure-store';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 
 const BIO_FLAG_KEY = 'bio_enabled';
-const BIO_CREDS_KEY = 'eseller_biometric_creds';
+const BIO_PHONE_KEY = 'eseller_biometric_phone';
+// Legacy key — used to hold plaintext credentials; deleted on migration.
+const LEGACY_BIO_CREDS_KEY = 'eseller_biometric_creds';
 
 export async function isBiometricAvailable(): Promise<{
   available: boolean;
@@ -40,30 +42,34 @@ export async function authenticateWithBiometric(
   }
 }
 
-export async function saveCredentials(
-  phone: string,
-  password: string,
-): Promise<void> {
-  await SecureStore.setItemAsync(
-    BIO_CREDS_KEY,
-    JSON.stringify({ phone, password }),
-  );
+/**
+ * Enable biometric unlock for the current session. We only persist the phone
+ * (as a UI hint); the actual session JWT is already kept in SecureStore under
+ * the 'token' key by the auth store. Biometric auth gates access to that JWT
+ * — we never persist the user's plaintext password.
+ */
+export async function enableBiometric(phone: string): Promise<void> {
+  await SecureStore.setItemAsync(BIO_PHONE_KEY, phone);
   await AsyncStorage.setItem(BIO_FLAG_KEY, 'true');
+  // Clean up any legacy plaintext credentials from older builds
+  try { await SecureStore.deleteItemAsync(LEGACY_BIO_CREDS_KEY); } catch {}
 }
 
-export async function getSavedCredentials(): Promise<{
+/**
+ * After a successful biometric prompt, return the still-valid session token
+ * (issued at original password login) plus the stored phone hint.
+ * Returns null if biometric isn't enabled or the JWT has been cleared.
+ */
+export async function getBiometricSession(): Promise<{
   phone: string;
-  password: string;
+  token: string;
 } | null> {
   const enabled = await AsyncStorage.getItem(BIO_FLAG_KEY);
   if (enabled !== 'true') return null;
-  const raw = await SecureStore.getItemAsync(BIO_CREDS_KEY);
-  if (!raw) return null;
-  try {
-    return JSON.parse(raw);
-  } catch {
-    return null;
-  }
+  const phone = await SecureStore.getItemAsync(BIO_PHONE_KEY);
+  const token = await SecureStore.getItemAsync('token');
+  if (!phone || !token) return null;
+  return { phone, token };
 }
 
 export async function isBiometricEnabled(): Promise<boolean> {
@@ -73,5 +79,6 @@ export async function isBiometricEnabled(): Promise<boolean> {
 
 export async function disableBiometric(): Promise<void> {
   await AsyncStorage.removeItem(BIO_FLAG_KEY);
-  await SecureStore.deleteItemAsync(BIO_CREDS_KEY);
+  await SecureStore.deleteItemAsync(BIO_PHONE_KEY);
+  try { await SecureStore.deleteItemAsync(LEGACY_BIO_CREDS_KEY); } catch {}
 }

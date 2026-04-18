@@ -19,7 +19,8 @@
         "NSLocationWhenInUseUsageDescription": "Хүргэлтийн байршил тодорхойлоход",
         "NSCameraUsageDescription": "Бараа зураг авахад",
         "NSPhotoLibraryUsageDescription": "Зураг оруулахад",
-        "NSFaceIDUsageDescription": "Аюулгүй нэвтрэхэд"
+        "NSFaceIDUsageDescription": "Аюулгүй нэвтрэхэд",
+        "ITSAppUsesNonExemptEncryption": false
       }
     },
     "android": {
@@ -44,24 +45,9 @@
         "android.permission.ACCESS_FINE_LOCATION",
         "android.permission.ACCESS_BACKGROUND_LOCATION",
         "android.permission.FOREGROUND_SERVICE",
-        "android.permission.FOREGROUND_SERVICE_LOCATION",
-        "ACCESS_FINE_LOCATION",
-        "ACCESS_COARSE_LOCATION",
-        "ACCESS_BACKGROUND_LOCATION",
-        "FOREGROUND_SERVICE",
-        "CAMERA",
-        "READ_EXTERNAL_STORAGE",
-        "WRITE_EXTERNAL_STORAGE",
-        "USE_BIOMETRIC",
-        "USE_FINGERPRINT",
-        "android.permission.USE_BIOMETRIC",
-        "android.permission.USE_FINGERPRINT",
-        "android.permission.ACCESS_COARSE_LOCATION",
-        "android.permission.ACCESS_FINE_LOCATION",
-        "android.permission.ACCESS_BACKGROUND_LOCATION",
-        "android.permission.FOREGROUND_SERVICE",
         "android.permission.FOREGROUND_SERVICE_LOCATION"
-      ]
+      ],
+      "versionCode": 6
     },
     "web": {
       "favicon": "./assets/favicon.png"
@@ -92,7 +78,9 @@
     ],
     "scheme": "eseller",
     "extra": {
-      "router": {},
+      "router": {
+        "origin": "https://eseller.mn"
+      },
       "eas": {
         "projectId": "7dbfaf45-621d-4c06-b64d-383a47504030"
       }

@@ -9,13 +9,14 @@ import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
 import { useAuth } from '../../src/store/auth';
+import { routeByRole } from '../../src/shared/routing';
 import { C, R } from '../../src/shared/design';
 import {
   isBiometricAvailable,
   isBiometricEnabled,
   authenticateWithBiometric,
-  getSavedCredentials,
-  saveCredentials,
+  getBiometricSession,
+  enableBiometric,
 } from '../../src/shared/biometric';
 
 const TEST_USERS = [
@@ -25,21 +26,6 @@ const TEST_USERS = [
   { label: '📢 Борлуулагч',      phone: '99000004', color: '#E37400' },
 ];
 const TEST_PASSWORD = 'test1234';
-
-function routeByRole(role: string) {
-  const r = role?.toLowerCase();
-  // Store owner gets separate (owner) tab layout with dashboard/products/orders/...
-  if (r === 'seller' || r === 'store' || r === 'owner') {
-    router.replace('/(owner)/dashboard' as any);
-    return;
-  }
-  // Everyone else → main (tabs) layout — it auto-configures per role:
-  //   BUYER    → home feed
-  //   SELLER   → seller dashboard (affiliate commission)
-  //   DRIVER   → driver deliveries
-  // via (tabs)/index.tsx + (tabs)/_layout.tsx
-  router.replace('/(tabs)');
-}
 
 export default function LoginScreen() {
   const { login, loading } = useAuth();
@@ -64,6 +50,8 @@ export default function LoginScreen() {
   }, []);
 
   async function quickLogin(testPhone: string) {
+    // Dev-only helper — disabled in release builds
+    if (!__DEV__) return;
     try {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
       await login(testPhone, TEST_PASSWORD);
@@ -76,7 +64,7 @@ export default function LoginScreen() {
 
   const finishLogin = (role: string) => routeByRole(role);
 
-  const offerBioSave = (phone: string, password: string, role: string) => {
+  const offerBioSave = (phone: string, _password: string, role: string) => {
     if (!bioAvailable || bioEnabled) {
       finishLogin(role);
       return;
@@ -89,7 +77,7 @@ export default function LoginScreen() {
         {
           text: 'Идэвхжүүлэх',
           onPress: async () => {
-            try { await saveCredentials(phone, password); } catch {}
+            try { await enableBiometric(phone); } catch {}
             finishLogin(role);
           },
         },
@@ -118,13 +106,13 @@ export default function LoginScreen() {
       `${bioType || 'Биометр'}-ээр нэвтрэх`,
     );
     if (!ok) return;
-    const creds = await getSavedCredentials();
-    if (!creds) {
-      Alert.alert('Анхаар', 'Хадгалсан нэвтрэлт олдсонгүй. Нууц үгээр нэвтэрнэ үү');
+    const session = await getBiometricSession();
+    if (!session) {
+      Alert.alert('Анхаар', 'Сесс дуусжээ. Нууц үгээр дахин нэвтэрнэ үү');
       return;
     }
     try {
-      await login(creds.phone, creds.password);
+      await useAuth.getState().restoreSession(session.token);
       const currentUser = useAuth.getState().user;
       routeByRole(currentUser?.role || 'buyer');
     } catch (e: any) {
@@ -154,40 +142,42 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* Quick Login — 4 test roles */}
-        <View style={{
-          backgroundColor: C.bgCard, borderRadius: R.lg,
-          padding: 14, marginBottom: 18,
-          borderWidth: 1, borderColor: C.border,
-        }}>
-          <Text style={{
-            color: C.textSub, fontSize: 12, fontWeight: '600',
-            marginBottom: 10, textAlign: 'center',
+        {/* Quick Login — dev-only helper with hardcoded test creds */}
+        {__DEV__ && (
+          <View style={{
+            backgroundColor: C.bgCard, borderRadius: R.lg,
+            padding: 14, marginBottom: 18,
+            borderWidth: 1, borderColor: C.border,
           }}>
-            ⚡ Хурдан нэвтрэх (тест)
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {TEST_USERS.map((u) => (
-              <TouchableOpacity
-                key={u.phone}
-                onPress={() => quickLogin(u.phone)}
-                disabled={loading}
-                style={{
-                  flexBasis: '47%', backgroundColor: C.bgSection,
-                  borderRadius: R.md, padding: 10, alignItems: 'center',
-                  borderWidth: 1.5, borderColor: u.color,
-                }}
-              >
-                <Text style={{ color: u.color, fontSize: 12, fontWeight: '600' }}>
-                  {u.label}
-                </Text>
-                <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>
-                  {u.phone}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <Text style={{
+              color: C.textSub, fontSize: 12, fontWeight: '600',
+              marginBottom: 10, textAlign: 'center',
+            }}>
+              ⚡ Хурдан нэвтрэх (тест)
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {TEST_USERS.map((u) => (
+                <TouchableOpacity
+                  key={u.phone}
+                  onPress={() => quickLogin(u.phone)}
+                  disabled={loading}
+                  style={{
+                    flexBasis: '47%', backgroundColor: C.bgSection,
+                    borderRadius: R.md, padding: 10, alignItems: 'center',
+                    borderWidth: 1.5, borderColor: u.color,
+                  }}
+                >
+                  <Text style={{ color: u.color, fontSize: 12, fontWeight: '600' }}>
+                    {u.label}
+                  </Text>
+                  <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>
+                    {u.phone}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Email / Phone */}
         <Text style={{ color: C.textSub, fontSize: 13, marginBottom: 6, fontWeight: '600' }}>
@@ -298,6 +288,14 @@ export default function LoginScreen() {
         >
           <Ionicons name="phone-portrait" size={18} color={C.text} />
           <Text style={{ color: C.text, fontSize: 15, fontWeight: '600' }}>Утсаар нэвтрэх</Text>
+        </TouchableOpacity>
+
+        {/* Forgot password */}
+        <TouchableOpacity
+          onPress={() => router.push('/(auth)/forgot-password' as never)}
+          style={{ alignItems: 'center', marginBottom: 12 }}
+        >
+          <Text style={{ color: C.textSub, fontSize: 13 }}>Нууц үгээ мартсан уу?</Text>
         </TouchableOpacity>
 
         {/* Register */}

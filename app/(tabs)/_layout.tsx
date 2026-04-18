@@ -1,21 +1,20 @@
 import React from 'react'
-import { View } from 'react-native'
+import { View, Text } from 'react-native'
 import { Tabs } from 'expo-router'
 import { Ionicons } from '@expo/vector-icons'
 import { useSafeAreaInsets } from 'react-native-safe-area-context'
 import { useAuth } from '../../src/store/auth'
 import { C, roleColor } from '../../src/shared/design'
 
-// Role бүрт tab title + icon тохиргоо
-const TAB_CONFIG: Record<string, Record<string, { title: string; icon: string; iconActive: string }>> = {
+type TabItem = { title: string; icon: string; iconActive: string }
+
+const TAB_CONFIG: Record<string, Record<string, TabItem>> = {
   BUYER: {
-    index:   { title: 'Нүүр',    icon: 'home-outline',       iconActive: 'home' },
-    store:   { title: 'Дэлгүүр', icon: 'storefront-outline', iconActive: 'storefront' },
-    feed:    { title: 'Зар',     icon: 'pricetag-outline',   iconActive: 'pricetag' },
-    social:  { title: 'Найзууд', icon: 'people-outline',     iconActive: 'people' },
-    chat:    { title: 'Чат',     icon: 'chatbubble-outline', iconActive: 'chatbubble' },
-    profile: { title: 'Профайл', icon: 'person-outline',     iconActive: 'person' },
-    gold:    { title: 'Gold',    icon: 'star-outline',       iconActive: 'star' },
+    index:   { title: 'Нүүр',    icon: 'home-outline',   iconActive: 'home' },
+    orders:  { title: 'Захиалга', icon: 'bag-outline',    iconActive: 'bag' },
+    action:  { title: 'Нэмэх',   icon: 'add',            iconActive: 'add' },
+    search:  { title: 'Хайлт',   icon: 'search-outline', iconActive: 'search' },
+    profile: { title: 'Би',      icon: 'person-outline', iconActive: 'person' },
   },
   STORE: {
     index:   { title: 'Самбар',    icon: 'grid-outline',       iconActive: 'grid' },
@@ -24,24 +23,13 @@ const TAB_CONFIG: Record<string, Record<string, { title: string; icon: string; i
     chat:    { title: 'Чат',       icon: 'chatbubble-outline', iconActive: 'chatbubble' },
     profile: { title: 'Профайл',   icon: 'person-outline',     iconActive: 'person' },
   },
-  SELLER: {
-    index:   { title: 'Бараа',   icon: 'bag-outline',         iconActive: 'bag' },
-    store:   { title: 'Комисс',  icon: 'trending-up-outline', iconActive: 'trending-up' },
-    feed:    { title: 'Линк',    icon: 'link-outline',        iconActive: 'link' },
-    chat:    { title: 'Таталт',  icon: 'wallet-outline',      iconActive: 'wallet' },
-    profile: { title: 'Профайл', icon: 'person-outline',      iconActive: 'person' },
-  },
-  DRIVER: {
-    index:   { title: 'Хүргэлт',  icon: 'car-outline',       iconActive: 'car' },
-    store:   { title: 'Маршрут',   icon: 'navigate-outline',  iconActive: 'navigate' },
-    feed:    { title: 'Баталгаа',  icon: 'camera-outline',    iconActive: 'camera' },
-    chat:    { title: 'Орлого',    icon: 'cash-outline',      iconActive: 'cash' },
-    profile: { title: 'Профайл',   icon: 'person-outline',    iconActive: 'person' },
-  },
 }
 
-// Бүх tab screen-ийн нэр (static)
-const ALL_TABS = ['index', 'store', 'feed', 'social', 'chat', 'profile', 'gold'] as const
+// Every screen file under app/(tabs)/ must be registered here
+const ALL_TABS = [
+  'index', 'orders', 'action', 'search', 'profile',
+  'store', 'feed', 'social', 'chat', 'gold',
+] as const
 
 export default function TabsLayout() {
   const { role } = useAuth()
@@ -85,32 +73,46 @@ export default function TabsLayout() {
           )
         }
 
-        // Gold tab-д тусгай icon
-        if (name === 'gold') {
+        // Center [+] CTA (action tab in BUYER)
+        if (name === 'action') {
           return (
             <Tabs.Screen
               key={name}
               name={name}
               options={{
-                title: 'Gold',
-                tabBarActiveTintColor: '#F9A825',
-                tabBarIcon: ({ focused }: { focused: boolean }) => (
+                title: tabConfig.title,
+                tabBarIcon: () => (
                   <View style={{
-                    width: 28, height: 28, borderRadius: 14,
-                    backgroundColor: focused ? '#F9A825' : 'transparent',
-                    borderWidth: focused ? 0 : 1.5,
-                    borderColor: '#F9A825',
+                    width: 54, height: 54, borderRadius: 27,
+                    backgroundColor: color,
                     alignItems: 'center', justifyContent: 'center',
+                    marginTop: -16,
+                    shadowColor: color,
+                    shadowOffset: { width: 0, height: 4 },
+                    shadowOpacity: 0.35,
+                    shadowRadius: 8,
+                    elevation: 8,
                   }}>
-                    <Ionicons
-                      name={focused ? 'star' : 'star-outline'}
-                      size={14}
-                      color={focused ? '#000' : '#F9A825'}
-                    />
+                    <Ionicons name="add" size={26} color="#fff" />
                   </View>
+                ),
+                tabBarLabel: () => (
+                  <Text style={{
+                    fontSize: 10, color,
+                    fontWeight: '700', marginTop: 2,
+                  }}>
+                    {tabConfig.title}
+                  </Text>
                 ),
               }}
             />
+          )
+        }
+
+        // Gold tab (legacy BUYER — no longer in config but keep handler)
+        if (name === 'gold') {
+          return (
+            <Tabs.Screen key={name} name={name} options={{ href: null }} />
           )
         }
 

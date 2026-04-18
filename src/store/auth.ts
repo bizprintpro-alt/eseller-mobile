@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuth from 'expo-local-authentication';
-import { post } from '../services/api';
+import { post, get } from '../services/api';
 
 interface User {
   _id?:    string;
@@ -21,12 +21,13 @@ interface AuthStore {
   role:      string;
   loading:   boolean;
 
-  login:        (identifier: string, pass: string) => Promise<void>;
-  loginWithOTP: (phone: string, otp: string) => Promise<void>;
-  logout:       () => Promise<void>;
-  setRole:      (role: string) => void;
-  checkBio:     () => Promise<boolean>;
-  loginWithBio: () => Promise<boolean>;
+  login:          (identifier: string, pass: string) => Promise<void>;
+  loginWithOTP:   (phone: string, otp: string) => Promise<void>;
+  restoreSession: (token: string) => Promise<void>;
+  logout:         () => Promise<void>;
+  setRole:        (role: string) => void;
+  checkBio:       () => Promise<boolean>;
+  loginWithBio:   () => Promise<boolean>;
 }
 
 // Backend role → app role mapping
@@ -96,6 +97,28 @@ export const useAuth = create<AuthStore>()(
       sendOTP: async (phone: string) => {
         const res: any = await post('/auth/otp/send', { phone });
         return res;
+      },
+
+      // Restore a session using a previously issued JWT (e.g. after biometric unlock).
+      // Verifies the token with the backend before marking the user as logged in.
+      restoreSession: async (token: string) => {
+        set({ loading: true });
+        try {
+          await SecureStore.setItemAsync('token', token);
+          const res: any = await get('/auth/me');
+          const user = res?.user || res;
+          if (!user || !user.email) throw new Error('Сесс хүчингүй');
+          set({
+            user,
+            token,
+            role: mapRole(user?.role),
+            loading: false,
+          });
+        } catch (e: any) {
+          await SecureStore.deleteItemAsync('token');
+          set({ user: null, token: null, role: 'BUYER', loading: false });
+          throw new Error(e?.message || 'Сесс сэргээх амжилтгүй');
+        }
       },
 
       logout: async () => {
