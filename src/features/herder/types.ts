@@ -125,6 +125,13 @@ export type HerderOrderStatus =
   | 'pending' | 'confirmed' | 'preparing'
   | 'shipped' | 'delivered' | 'cancelled';
 
+export interface HerderOrderStatusEvent {
+  status: HerderOrderStatus;
+  at:     string;        // ISO date
+  byRole?: 'buyer' | 'herder' | 'admin' | 'system';
+  note?:  string;
+}
+
 export interface MyHerderOrder {
   _id:           string;
   orderNumber:   string;
@@ -140,6 +147,7 @@ export interface MyHerderOrder {
   deliveryFee: number;
   total:       number;
   status:      HerderOrderStatus;
+  statusHistory?: HerderOrderStatusEvent[];
   payment: {
     method: string;
     status: 'pending' | 'paid' | 'failed' | 'refunded';
@@ -152,6 +160,7 @@ export interface MyHerderOrder {
     requiresColdChain?: boolean;
     shippedAt?: string;
     deliveredAt?: string;
+    trackingCode?: string;
   };
   createdAt:   string;
   updatedAt:   string;

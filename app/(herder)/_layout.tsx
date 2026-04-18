@@ -55,6 +55,10 @@ export default function HerderLayout() {
         name="listing-form"
         options={{ href: null }}
       />
+      <Tabs.Screen
+        name="order/[id]"
+        options={{ href: null }}
+      />
     </Tabs>
   );
 }
