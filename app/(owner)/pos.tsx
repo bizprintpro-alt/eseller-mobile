@@ -44,10 +44,8 @@ export default function POSTerminal() {
   const [qpayModal, setQpayModal] = useState(false);
   const [qrData, setQrData] = useState<{ invoiceId: string; qrImage: string } | null>(null);
   const [polling, setPolling] = useState(false);
-  // polling-г зогсоох ref — closure-ын дотор stale state-аас зайлсхийнэ
   const pollingRef = useRef(false);
 
-  // Component unmount болоход polling-г заавал зогсоох
   useEffect(() => () => { pollingRef.current = false; }, []);
 
   // ── Barcode scanner ──
@@ -202,7 +200,6 @@ export default function POSTerminal() {
     const maxAttempts = 60; // 5 минут (5 сек interval)
     for (let i = 0; i < maxAttempts; i++) {
       if (!pollingRef.current) {
-        // Modal хаагдсан эсвэл component unmount болсон — зогсох
         setPolling(false);
         return;
       }
@@ -242,7 +239,6 @@ export default function POSTerminal() {
     }
     pollingRef.current = false;
     setPolling(false);
-    // Modal хаагдсан бол alert гаргахгүй
     if (qpayModal) {
       Alert.alert('Хугацаа дууслаа', 'QPay төлбөр 5 минутад ирсэнгүй');
     }

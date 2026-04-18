@@ -52,7 +52,6 @@ export default function LoginScreen() {
   async function quickLogin(testPhone: string) {
     // Dev-only helper — disabled in release builds
     if (!__DEV__) return;
-    // Дараалан дарагдахаас хамгаална — `loading` state store-оос ирнэ
     if (useAuth.getState().loading) return;
     try {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}

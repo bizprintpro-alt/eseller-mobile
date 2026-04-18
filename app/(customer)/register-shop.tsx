@@ -5,6 +5,7 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { post } from '../../src/services/api';
 import { C, R, F } from '../../src/shared/design';
+import { MALCHNAAS_ENABLED } from '../../src/config/flags';
 
 const TYPES = [
   { key: 'GENERAL', icon: 'storefront-outline', label: 'Ерөнхий' },
@@ -14,6 +15,7 @@ const TYPES = [
   { key: 'AUTO', icon: 'car-outline', label: 'Авто' },
   { key: 'SERVICE', icon: 'briefcase-outline', label: 'Үйлчилгээ' },
   { key: 'DIGITAL', icon: 'cloud-outline', label: 'Дижитал' },
+  ...(MALCHNAAS_ENABLED ? [{ key: 'HERDER', icon: 'leaf-outline', label: 'Малчин' }] : []),
 ];
 const BANKS = ['Хаан банк', 'Голомт банк', 'ХХБ', 'Төрийн банк', 'Богд банк', 'Капитрон банк'];
 
@@ -40,6 +42,15 @@ export default function RegisterShopScreen() {
     if (step === 3) return true;
     if (step === 4) return !!bankName && !!bankAccount;
     return false;
+  };
+
+  const handleNext = () => {
+    // Herders need livestock/vet/GPS data — branch to dedicated wizard.
+    if (step === 1 && shopType === 'HERDER') {
+      router.replace('/(customer)/register-herder' as never);
+      return;
+    }
+    setStep(step + 1);
   };
 
   const handleSubmit = async () => {
@@ -113,7 +124,7 @@ export default function RegisterShopScreen() {
       <View style={{ flexDirection: 'row', gap: 10, marginTop: R.xxl }}>
         {step > 1 && <TouchableOpacity style={[st.navBtn, { backgroundColor: C.bgSection }]} onPress={() => setStep(step - 1)}><Text style={{ ...F.body, color: C.text, fontWeight: '700' }}>Буцах</Text></TouchableOpacity>}
         <TouchableOpacity style={[st.navBtn, { flex: 1, backgroundColor: C.primary }, !canNext() && { opacity: 0.4 }]}
-          onPress={step === 4 ? handleSubmit : () => setStep(step + 1)} disabled={!canNext() || submitting}>
+          onPress={step === 4 ? handleSubmit : handleNext} disabled={!canNext() || submitting}>
           {submitting ? <ActivityIndicator color={C.white} /> : <Text style={{ ...F.body, color: C.white, fontWeight: '800' }}>{step === 4 ? 'Дэлгүүр нээх 🎉' : 'Дараах'}</Text>}
         </TouchableOpacity>
       </View>

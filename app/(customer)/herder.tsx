@@ -1,94 +1,83 @@
-import React, { useState, useEffect, useCallback } from 'react';
+import React, { useState, useCallback, useEffect, useRef } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, RefreshControl, ActivityIndicator,
+  Image, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
-const BRAND = '#059669';
-const API = process.env.EXPO_PUBLIC_API_URL || 'https://eseller.mn';
-
-const PROVINCES = [
-  { code: 'AKH', name: 'Архангай', days: '7-10' },
-  { code: 'BKH', name: 'Баянхонгор', days: '7-10' },
-  { code: 'BUL', name: 'Булган', days: '5-7' },
-  { code: 'DOR', name: 'Дорнод', days: '10-14' },
-  { code: 'DUN', name: 'Дундговь', days: '7-10' },
-  { code: 'GOA', name: 'Говь-Алтай', days: '10-14' },
-  { code: 'GOS', name: 'Говьсүмбэр', days: '5-7' },
-  { code: 'KHE', name: 'Хэнтий', days: '7-10' },
-  { code: 'KHO', name: 'Ховд', days: '10-14' },
-  { code: 'KHV', name: 'Хөвсгөл', days: '10-14' },
-  { code: 'OMN', name: 'Өмнөговь', days: '7-10' },
-  { code: 'OVR', name: 'Өвөрхангай', days: '7-10' },
-  { code: 'SEL', name: 'Сэлэнгэ', days: '5-7' },
-  { code: 'SUK', name: 'Сүхбаатар', days: '7-10' },
-  { code: 'TOV', name: 'Төв', days: '3-5' },
-  { code: 'UVS', name: 'Увс', days: '10-14' },
-  { code: 'ZAV', name: 'Завхан', days: '10-14' },
-  { code: 'DAR', name: 'Дархан-Уул', days: '3-5' },
-  { code: 'ORK', name: 'Орхон', days: '3-5' },
-];
-
-const CATEGORIES = ['мах', 'ноос', 'арьс', 'сүү', 'бяслаг', 'дэгэл', 'аарц', 'тараг'];
-
-interface HerderProduct {
-  id: string;
-  name: string;
-  price: number;
-  salePrice?: number | null;
-  images: string[];
-  category?: string | null;
-  herder?: {
-    herderName: string;
-    province: string;
-    provinceName: string;
-    district: string;
-    isVerified: boolean;
-  } | null;
-}
+import {
+  HERDER_BRAND as BRAND,
+  PROVINCES,
+  CATEGORIES,
+  HerderAPI,
+  ProductListSkeleton,
+  type HerderProduct,
+} from '../../src/features/herder';
+import { useCart } from '../../src/store/cart';
 
 function fmt(n: number) { return n.toLocaleString() + '₮'; }
 
-async function fetchHerderProducts(params: Record<string, string>): Promise<{ products: HerderProduct[]; pages: number }> {
-  const token = await SecureStore.getItemAsync('token');
-  const qs = new URLSearchParams(params).toString();
-  const res = await fetch(`${API}/api/herder/products?${qs}`, {
-    headers: token ? { Authorization: `Bearer ${token}` } : {},
-  });
-  const json = await res.json();
-  if (json.success && json.data) {
-    return { products: json.data.products || [], pages: json.data.pages || 0 };
-  }
-  return { products: [], pages: 0 };
-}
+const FILTER_DEBOUNCE_MS = 300;
 
 export default function HerderScreen() {
-  const [province, setProvince] = useState<string | null>(null);
-  const [category, setCategory] = useState<string | null>(null);
-  const [products, setProducts] = useState<HerderProduct[]>([]);
-  const [loading, setLoading] = useState(false);
-  const [refreshing, setRefreshing] = useState(false);
+  const [province, setProvince]         = useState<string | null>(null);
+  const [category, setCategory]         = useState<string | null>(null);
+  const [products, setProducts]         = useState<HerderProduct[]>([]);
+  const [loading, setLoading]           = useState(false);
+  const [refreshing, setRefreshing]     = useState(false);
+  const [error, setError]               = useState<string | null>(null);
   const [showProvinces, setShowProvinces] = useState(true);
+
+  const addToCart = useCart((s) => s.add);
 
   const load = useCallback(async (isRefresh = false) => {
     if (isRefresh) setRefreshing(true); else setLoading(true);
-    const params: Record<string, string> = { limit: '20' };
-    if (province) params.province = province;
-    if (category) params.category = category;
+    setError(null);
     try {
-      const data = await fetchHerderProducts(params);
+      const data = await HerderAPI.list({
+        limit:    20,
+        province: province ?? undefined,
+        category: category ?? undefined,
+      });
       setProducts(data.products);
-    } catch {}
+    } catch (e: any) {
+      setError(e?.message || 'Сүлжээний алдаа');
+    }
     setLoading(false);
     setRefreshing(false);
   }, [province, category]);
 
-  useEffect(() => { load(); }, [load]);
+  // Debounce filter-triggered refetches so rapid chip taps don't spam the API.
+  const firstRun = useRef(true);
+  useEffect(() => {
+    if (firstRun.current) { firstRun.current = false; load(); return; }
+    const t = setTimeout(() => load(), FILTER_DEBOUNCE_MS);
+    return () => clearTimeout(t);
+  }, [load]);
 
-  const selectedProvince = PROVINCES.find(p => p.code === province);
+  const selectedProvince = PROVINCES.find((p) => p.code === province);
+
+  const buyNow = (product: HerderProduct) => {
+    const unit = product.salePrice ?? product.price;
+    if (!unit || unit <= 0) return;
+    addToCart({
+      id:         product.id,
+      name:       product.name,
+      price:      unit,
+      image:      product.images?.[0] ?? null,
+      entityId:   product.herder?.province ?? 'herder',
+      entityName: product.herder?.herderName ?? 'Малчнаас шууд',
+    }, 1);
+    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium);
+    router.push('/cart' as never);
+  };
+
+  const openDetail = (product: HerderProduct) => {
+    Haptics.selectionAsync();
+    router.push(`/(customer)/herder-product/${product.id}` as never);
+  };
 
   return (
     <ScrollView style={s.root} refreshControl={<RefreshControl refreshing={refreshing} onRefresh={() => load(true)} tintColor={BRAND} />}>
@@ -115,7 +104,7 @@ export default function HerderScreen() {
             >
               <Text style={[s.provinceText, !province && s.provinceTextActive]}>Бүгд</Text>
             </TouchableOpacity>
-            {PROVINCES.map(p => (
+            {PROVINCES.map((p) => (
               <TouchableOpacity
                 key={p.code}
                 style={[s.provinceChip, province === p.code && s.provinceChipActive]}
@@ -143,7 +132,7 @@ export default function HerderScreen() {
           >
             <Text style={[s.chipText, !category && s.chipTextActive]}>Бүгд</Text>
           </TouchableOpacity>
-          {CATEGORIES.map(cat => (
+          {CATEGORIES.map((cat) => (
             <TouchableOpacity
               key={cat}
               style={[s.chip, category === cat && s.chipActive]}
@@ -158,10 +147,26 @@ export default function HerderScreen() {
         </ScrollView>
       </View>
 
+      {error && products.length > 0 && (
+        <View style={s.offlineBanner}>
+          <Ionicons name="cloud-offline-outline" size={14} color="#92400E" />
+          <Text style={s.offlineText}>Сүлжээгүй — хадгалсан мэдээлэл харуулж байна</Text>
+        </View>
+      )}
+
       <View style={s.section}>
         <Text style={s.sectionTitle}>Бүтээгдэхүүн</Text>
         {loading ? (
-          <ActivityIndicator size="large" color={BRAND} style={{ marginVertical: 40 }} />
+          <ProductListSkeleton count={3} />
+        ) : error && products.length === 0 ? (
+          <View style={s.empty}>
+            <Ionicons name="cloud-offline-outline" size={48} color="#ccc" />
+            <Text style={s.emptyText}>{error}</Text>
+            <TouchableOpacity style={s.retryBtn} onPress={() => load()} activeOpacity={0.85}>
+              <Ionicons name="refresh" size={16} color="#fff" />
+              <Text style={s.retryText}>Дахин оролдох</Text>
+            </TouchableOpacity>
+          </View>
         ) : products.length === 0 ? (
           <View style={s.empty}>
             <Ionicons name="leaf-outline" size={48} color="#ccc" />
@@ -169,8 +174,13 @@ export default function HerderScreen() {
           </View>
         ) : (
           <View style={s.productGrid}>
-            {products.map(product => (
-              <View key={product.id} style={s.productCard}>
+            {products.map((product) => (
+              <TouchableOpacity
+                key={product.id}
+                style={s.productCard}
+                onPress={() => openDetail(product)}
+                activeOpacity={0.85}
+              >
                 <View style={s.productImage}>
                   {product.images?.[0] ? (
                     <Image source={{ uri: product.images[0] }} style={s.productImg} resizeMode="cover" />
@@ -214,13 +224,13 @@ export default function HerderScreen() {
                   )}
                   <TouchableOpacity
                     style={s.orderBtn}
-                    onPress={() => Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Medium)}
+                    onPress={(e) => { e.stopPropagation?.(); buyNow(product); }}
                     activeOpacity={0.8}
                   >
                     <Text style={s.orderBtnText}>Шууд захиалах</Text>
                   </TouchableOpacity>
                 </View>
-              </View>
+              </TouchableOpacity>
             ))}
           </View>
         )}
@@ -253,7 +263,11 @@ const s = StyleSheet.create({
   chipText: { fontSize: 14, fontWeight: '600', color: '#57534e' },
   chipTextActive: { color: '#fff' },
   empty: { alignItems: 'center', paddingVertical: 60 },
-  emptyText: { fontSize: 15, color: '#a8a29e', marginTop: 12 },
+  emptyText: { fontSize: 15, color: '#a8a29e', marginTop: 12, textAlign: 'center', paddingHorizontal: 24 },
+  retryBtn: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: BRAND, paddingHorizontal: 16, paddingVertical: 10, borderRadius: 10, marginTop: 16 },
+  retryText: { color: '#fff', fontSize: 14, fontWeight: '700' },
+  offlineBanner: { flexDirection: 'row', alignItems: 'center', gap: 6, backgroundColor: '#FEF3C7', paddingHorizontal: 16, paddingVertical: 8, marginTop: 12, marginHorizontal: 16, borderRadius: 8 },
+  offlineText: { fontSize: 12, color: '#92400E', fontWeight: '600' },
   productGrid: { gap: 12 },
   productCard: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#e7e5e4' },
   productImage: { height: 180, backgroundColor: '#f5f5f4', position: 'relative' },

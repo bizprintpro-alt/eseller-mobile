@@ -53,6 +53,7 @@ export default function LiveListScreen() {
     (tab === 'active' && activeQ.isRefetching) ||
     (tab === 'scheduled' && scheduledQ.isRefetching);
 
+
   const onRefresh = () => {
     if (tab === 'active') activeQ.refetch();
     else scheduledQ.refetch();
