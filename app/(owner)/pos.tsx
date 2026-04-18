@@ -1,4 +1,4 @@
-import React, { useRef, useState } from 'react';
+import React, { useRef, useState, useEffect } from 'react';
 import {
   View, Text, TextInput, TouchableOpacity, FlatList, ScrollView,
   Alert, ActivityIndicator, Image,
@@ -44,6 +44,11 @@ export default function POSTerminal() {
   const [qpayModal, setQpayModal] = useState(false);
   const [qrData, setQrData] = useState<{ invoiceId: string; qrImage: string } | null>(null);
   const [polling, setPolling] = useState(false);
+  // polling-г зогсоох ref — closure-ын дотор stale state-аас зайлсхийнэ
+  const pollingRef = useRef(false);
+
+  // Component unmount болоход polling-г заавал зогсоох
+  useEffect(() => () => { pollingRef.current = false; }, []);
 
   // ── Barcode scanner ──
   const [scannerOpen, setScannerOpen] = useState(false);
@@ -179,26 +184,38 @@ export default function POSTerminal() {
       }
       setQrData({ invoiceId, qrImage });
       setQpayModal(true);
+      pollingRef.current = true;
       pollPayment(invoiceId);
     } catch (e: any) {
       Alert.alert('QPay алдаа', e?.message || 'Холболтын алдаа');
     }
   }
 
+  function cancelQPay() {
+    pollingRef.current = false;
+    setQpayModal(false);
+    setPolling(false);
+  }
+
   async function pollPayment(invoiceId: string) {
     setPolling(true);
     const maxAttempts = 60; // 5 минут (5 сек interval)
     for (let i = 0; i < maxAttempts; i++) {
-      if (!qpayModal && i > 0) {
-        // User cancelled — stop
+      if (!pollingRef.current) {
+        // Modal хаагдсан эсвэл component unmount болсон — зогсох
         setPolling(false);
         return;
       }
       await new Promise((r) => setTimeout(r, 5000));
+      if (!pollingRef.current) {
+        setPolling(false);
+        return;
+      }
       try {
         const res = await POSAPI.checkPayment(invoiceId);
         const body = unwrap<any>(res);
         if (body?.paid === true) {
+          pollingRef.current = false;
           setPolling(false);
           setQpayModal(false);
           Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success).catch(() => {});
@@ -223,8 +240,12 @@ export default function POSTerminal() {
         /* continue polling */
       }
     }
+    pollingRef.current = false;
     setPolling(false);
-    Alert.alert('Хугацаа дууслаа', 'QPay төлбөр 5 минутад ирсэнгүй');
+    // Modal хаагдсан бол alert гаргахгүй
+    if (qpayModal) {
+      Alert.alert('Хугацаа дууслаа', 'QPay төлбөр 5 минутад ирсэнгүй');
+    }
   }
 
   function handleCheckout() {
@@ -704,10 +725,7 @@ export default function POSTerminal() {
             )}
 
             <TouchableOpacity
-              onPress={() => {
-                setQpayModal(false);
-                setPolling(false);
-              }}
+              onPress={cancelQPay}
               style={{
                 backgroundColor: '#334155',
                 borderRadius: 8,

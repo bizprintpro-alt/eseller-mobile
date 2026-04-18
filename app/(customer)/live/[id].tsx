@@ -66,9 +66,12 @@ export default function LiveDetailScreen() {
 
   useEffect(() => {
     fetchStream();
+    // Stream дууссан бол polling эхлүүлэхгүй — үүнгүйгээр секунд тутамд
+    // ENDED stream-д шаардлагагүй network storm үүсэх болно
+    if (stream?.status === 'ENDED') return;
     const interval = setInterval(fetchStream, 5000);
     return () => clearInterval(interval);
-  }, [fetchStream]);
+  }, [fetchStream, stream?.status]);
 
   useEffect(() => {
     setTimeout(() => chatRef.current?.scrollToEnd({ animated: true }), 100);

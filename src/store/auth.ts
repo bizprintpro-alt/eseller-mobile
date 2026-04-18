@@ -3,7 +3,7 @@ import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
 import * as LocalAuth from 'expo-local-authentication';
-import { post, get } from '../services/api';
+import { post, get, setOnUnauthorized } from '../services/api';
 
 interface User {
   _id?:    string;
@@ -161,3 +161,11 @@ export const useAuth = create<AuthStore>()(
     },
   ),
 );
+
+// axios 401 алдаа дээр auth state-г цэвэрлэх.
+// api.ts-аас auth.ts руу шууд импорт хийвэл circular dep болно,
+// тиймээс callback registration-ээр холбоно.
+setOnUnauthorized(() => {
+  SecureStore.deleteItemAsync('token').catch(() => {});
+  useAuth.setState({ user: null, token: null, role: 'BUYER' });
+});

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
 const BASE = __DEV__
   ? 'http://192.168.1.9:3000/api'   // local dev
@@ -22,12 +23,34 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// 401 дээр дуудагдах. auth store-г api модулиас шууд импортлохоос
+// (circular dep) зайлсхийхийн тулд auth.ts инициализаци болох үедээ
+// энд register хийдэг.
+let onUnauthorized: (() => void) | null = null;
+export function setOnUnauthorized(fn: () => void) {
+  onUnauthorized = fn;
+}
+
+// 401 дахин дахин гарахад router.replace-ийг spam хийхгүй болгох
+let unauthorizedHandling = false;
+
 // Response interceptor — алдаа боловсруулах
 api.interceptors.response.use(
   (res) => res.data,
   async (err) => {
     if (err.response?.status === 401) {
       await SecureStore.deleteItemAsync('token');
+      if (!unauthorizedHandling) {
+        unauthorizedHandling = true;
+        try {
+          onUnauthorized?.();
+          // Auth screen руу чиглүүлэх — router mount болсон үед л ажиллана
+          try { router.replace('/(auth)/login' as never); } catch {}
+        } finally {
+          // Дараагийн 401-ийг хүлээж авахын тулд жаахан хугацааны дараа дахин тэнцүүлнэ
+          setTimeout(() => { unauthorizedHandling = false; }, 1000);
+        }
+      }
     }
     const data = err.response?.data;
     const message = data?.message || data?.error || 'Сервертэй холбогдож чадсангүй';
