@@ -8,6 +8,7 @@ import type {
   HerderListParams,
   HerderListResponse,
   HerderProduct,
+  HerderProfile,
   HerderRegisterPayload,
   HerderRegisterResponse,
 } from './types';
@@ -34,6 +35,17 @@ export const HerderAPI = {
   detail: async (id: string): Promise<HerderProduct | null> => {
     const res = await get(`/herder/products/${id}`);
     const data = unwrap<HerderProduct | null>(res);
+    return data ?? null;
+  },
+
+  /**
+   * Public herder profile. Backend endpoint contract:
+   *   GET /api/herder/profile/:herderId
+   *   → 200 HerderProfile | 404
+   */
+  profile: async (herderId: string): Promise<HerderProfile | null> => {
+    const res = await get(`/herder/profile/${herderId}`);
+    const data = unwrap<HerderProfile | null>(res);
     return data ?? null;
   },
 

@@ -172,7 +172,14 @@ export default function HerderProductDetailScreen() {
         {p.herder && (
           <View style={s.sectionPadded}>
             <Text style={s.sectionTitle}>Малчин</Text>
-            <View style={s.herderCard}>
+            <TouchableOpacity
+              style={s.herderCard}
+              activeOpacity={0.8}
+              disabled={!p.herder.id}
+              onPress={() => {
+                if (p.herder?.id) router.push(`/(customer)/herder-profile/${p.herder.id}` as never);
+              }}
+            >
               <View style={s.herderAvatar}>
                 <Ionicons name="person" size={22} color={BRAND} />
               </View>
@@ -194,7 +201,10 @@ export default function HerderProductDetailScreen() {
                   </View>
                 )}
               </View>
-            </View>
+              {p.herder.id && (
+                <Ionicons name="chevron-forward" size={18} color="#a8a29e" />
+              )}
+            </TouchableOpacity>
           </View>
         )}
 

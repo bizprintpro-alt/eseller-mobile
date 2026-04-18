@@ -5,6 +5,7 @@
  */
 
 export interface HerderSummary {
+  id?:          string;      // herder user / shop id — enables profile link
   herderName:   string;
   province:     string;      // code — e.g. "TOV"
   provinceName: string;      // localized — e.g. "Төв"
@@ -36,8 +37,27 @@ export interface HerderListResponse {
 export interface HerderListParams {
   province?: string;
   category?: string;
+  herderId?: string;
   limit?:    number;
   page?:     number;
+}
+
+/**
+ * Public herder profile — what a buyer sees when they tap through from a
+ * product. Fields beyond HerderSummary are optional until backend ships them.
+ */
+export interface HerderProfile extends HerderSummary {
+  id:             string;
+  bio?:           string;
+  joinedAt?:      string;           // ISO date
+  livestock?:     LivestockCounts;
+  coverImage?:    string;
+  avatar?:        string;
+  stats?: {
+    deliverySuccessRate?: number;   // 0-1
+    onTimeRate?:          number;   // 0-1
+    productCount?:        number;
+  };
 }
 
 export interface LivestockCounts {
