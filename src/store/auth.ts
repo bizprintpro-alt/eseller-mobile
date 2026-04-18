@@ -32,11 +32,13 @@ interface AuthStore {
 // Backend role → app role mapping
 function mapRole(backendRole?: string): string {
   const map: Record<string, string> = {
-    buyer:     'BUYER',
-    seller:    'STORE',
-    affiliate: 'SELLER',
-    delivery:  'DRIVER',
-    admin:     'BUYER',
+    buyer:       'BUYER',
+    seller:      'STORE',
+    affiliate:   'SELLER',
+    delivery:    'DRIVER',
+    admin:       'BUYER',
+    herder:      'HERDER',      // Малчнаас шууд — direct-from-herder seller
+    coordinator: 'COORDINATOR', // local sum coordinator helping herders onboard
   };
   return map[backendRole || 'buyer'] || 'BUYER';
 }

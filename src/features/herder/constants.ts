@@ -48,5 +48,6 @@ export const CATEGORIES = [
 
 export type Category = (typeof CATEGORIES)[number];
 
-/** Brand accent for the herder vertical — distinct from the primary orange. */
-export const HERDER_BRAND = '#059669';
+/** Brand accent for the herder vertical — re-exports `C.herder` design token. */
+import { C } from '../../shared/design';
+export const HERDER_BRAND = C.herder;

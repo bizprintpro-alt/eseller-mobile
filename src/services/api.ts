@@ -66,6 +66,10 @@ export const SocialAPI = {
     post('/social/posts', data),
 };
 
+// Herder / Малчнаас шууд endpoints live in src/features/herder/api.ts — keeps
+// the vertical self-contained and makes it easy to remove if the flag is
+// retired. Import `HerderAPI` from there, not from this file.
+
 // Cart is local (zustand + AsyncStorage). Use `useCart` from src/store/cart.
 // This CartAPI is kept as a noop stub for legacy callers. Prefer useCart().add().
 export const CartAPI = {
