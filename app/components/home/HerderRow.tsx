@@ -3,6 +3,7 @@ import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { get } from '../../../src/services/api';
+import { MALCHNAAS_ENABLED } from '../../../src/config/flags';
 import { H } from './tokens';
 import { SectionHeader } from './SectionHeader';
 
@@ -29,7 +30,10 @@ export function HerderRow() {
     },
     staleTime: 120_000,
     retry: false,
+    enabled: MALCHNAAS_ENABLED,
   });
+
+  if (!MALCHNAAS_ENABLED) return null;
 
   const products: HerderProduct[] =
     data?.products ?? (Array.isArray(data) ? data : []);

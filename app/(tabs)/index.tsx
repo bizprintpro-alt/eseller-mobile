@@ -13,6 +13,7 @@ import { useAuth } from '../../src/store/auth'
 import { useCart } from '../../src/store/cart'
 import { get, SocialAPI, LiveAPI } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
+import { MALCHNAAS_ENABLED } from '../../src/config/flags'
 
 import { Skeleton } from '../../src/shared/ui/Skeleton'
 import { LiveCarousel } from '../components/LiveCarousel'
@@ -52,13 +53,13 @@ const SERVICE_ITEMS = [
     sub: 'QPay, SocialPay',
     route: '/(customer)/wallet',
   },
-  {
+  ...(MALCHNAAS_ENABLED ? [{
     icon: 'leaf' as const,
     color: '#059669',
     name: 'Малчны',
     sub: 'Шинэ бараа',
     route: '/(customer)/herder',
-  },
+  }] : []),
   {
     icon: 'people' as const,
     color: '#7C3AED',
@@ -880,29 +881,31 @@ function BuyerHome() {
         </View>
 
         {/* ═══ МАЛЧНЫ БУЛАН ═══ */}
-        <View style={{ marginBottom: 4 }}>
-          <View style={{
-            flexDirection: 'row', justifyContent: 'space-between',
-            alignItems: 'center', paddingHorizontal: 16, marginBottom: 10,
-          }}>
-            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
-              <Text style={{ fontSize: 18 }}>🐄</Text>
-              <Text style={{ fontSize: 14, fontWeight: '800', color: C.text }}>
-                Малчны булан
-              </Text>
-              <View style={{
-                backgroundColor: '#D1FAE5', borderRadius: 99,
-                paddingHorizontal: 7, paddingVertical: 2,
-              }}>
-                <Text style={{ fontSize: 9, fontWeight: '800', color: '#065F46' }}>Шинэ</Text>
+        {MALCHNAAS_ENABLED && (
+          <View style={{ marginBottom: 4 }}>
+            <View style={{
+              flexDirection: 'row', justifyContent: 'space-between',
+              alignItems: 'center', paddingHorizontal: 16, marginBottom: 10,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ fontSize: 18 }}>🐄</Text>
+                <Text style={{ fontSize: 14, fontWeight: '800', color: C.text }}>
+                  Малчны булан
+                </Text>
+                <View style={{
+                  backgroundColor: '#D1FAE5', borderRadius: 99,
+                  paddingHorizontal: 7, paddingVertical: 2,
+                }}>
+                  <Text style={{ fontSize: 9, fontWeight: '800', color: '#065F46' }}>Шинэ</Text>
+                </View>
               </View>
+              <TouchableOpacity onPress={() => router.push('/(customer)/herder' as any)}>
+                <Text style={{ color: '#059669', fontSize: 12, fontWeight: '600' }}>Бүгд →</Text>
+              </TouchableOpacity>
             </View>
-            <TouchableOpacity onPress={() => router.push('/(customer)/herder' as any)}>
-              <Text style={{ color: '#059669', fontSize: 12, fontWeight: '600' }}>Бүгд →</Text>
-            </TouchableOpacity>
+            <HerderRow />
           </View>
-          <HerderRow />
-        </View>
+        )}
 
         {/* ═══ ШИНЭ БАРАА ═══ */}
         <View style={{ marginBottom: 24 }}>
