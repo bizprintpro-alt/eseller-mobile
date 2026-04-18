@@ -39,3 +39,33 @@ export interface HerderListParams {
   limit?:    number;
   page?:     number;
 }
+
+export interface LivestockCounts {
+  horse?:  number;
+  cow?:    number;
+  sheep?:  number;
+  goat?:   number;
+  camel?:  number;
+}
+
+export interface HerderRegisterPayload {
+  firstName:       string;
+  lastName:        string;
+  registerNumber:  string;        // Mongolian national ID, 10 chars
+  phone:           string;
+  province:        string;        // aimag code
+  district:        string;        // sum / bag name
+  livestock:       LivestockCounts;
+  aDansNumber?:    string;        // livestock registry id (А данс)
+  vetCertUri?:     string;        // local file uri of uploaded vet cert image
+  bankName:        string;
+  bankAccount:     string;
+  gps?:            { latitude: number; longitude: number };
+  notes?:          string;
+}
+
+export interface HerderRegisterResponse {
+  success: boolean;
+  message?: string;
+  applicationId?: string;
+}

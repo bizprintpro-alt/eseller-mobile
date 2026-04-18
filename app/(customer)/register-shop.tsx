@@ -44,6 +44,15 @@ export default function RegisterShopScreen() {
     return false;
   };
 
+  const handleNext = () => {
+    // Herders need livestock/vet/GPS data — branch to dedicated wizard.
+    if (step === 1 && shopType === 'HERDER') {
+      router.replace('/(customer)/register-herder' as never);
+      return;
+    }
+    setStep(step + 1);
+  };
+
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
@@ -115,7 +124,7 @@ export default function RegisterShopScreen() {
       <View style={{ flexDirection: 'row', gap: 10, marginTop: R.xxl }}>
         {step > 1 && <TouchableOpacity style={[st.navBtn, { backgroundColor: C.bgSection }]} onPress={() => setStep(step - 1)}><Text style={{ ...F.body, color: C.text, fontWeight: '700' }}>Буцах</Text></TouchableOpacity>}
         <TouchableOpacity style={[st.navBtn, { flex: 1, backgroundColor: C.primary }, !canNext() && { opacity: 0.4 }]}
-          onPress={step === 4 ? handleSubmit : () => setStep(step + 1)} disabled={!canNext() || submitting}>
+          onPress={step === 4 ? handleSubmit : handleNext} disabled={!canNext() || submitting}>
           {submitting ? <ActivityIndicator color={C.white} /> : <Text style={{ ...F.body, color: C.white, fontWeight: '800' }}>{step === 4 ? 'Дэлгүүр нээх 🎉' : 'Дараах'}</Text>}
         </TouchableOpacity>
       </View>

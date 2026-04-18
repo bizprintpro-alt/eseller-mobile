@@ -21,7 +21,7 @@ const CONFIG: OnboardingConfig = {
     { label: 'Аймаг',    value: '21' },
   ],
   cta:      'Малчин болох',
-  ctaRoute: '/(customer)/register-shop',
+  ctaRoute: '/(customer)/register-herder',
 };
 
 export default function BecomeHerder() {
