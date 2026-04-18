@@ -1,7 +1,7 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, Image,
-  StyleSheet, ActivityIndicator,
+  StyleSheet, ActivityIndicator, RefreshControl,
 } from 'react-native';
 import { router, useLocalSearchParams } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
@@ -11,6 +11,7 @@ import {
   HERDER_BRAND as BRAND,
   PROVINCES,
   HerderAPI,
+  ProductGridSkeleton,
   type HerderProduct,
 } from '../../../src/features/herder';
 import { MALCHNAAS_ENABLED } from '../../../src/config/flags';
@@ -32,6 +33,13 @@ export default function HerderProfileScreen() {
     queryFn:  () => HerderAPI.list({ herderId, limit: 30 }),
     enabled:  !!herderId && MALCHNAAS_ENABLED,
   });
+
+  const [refreshing, setRefreshing] = useState(false);
+  const onRefresh = useCallback(async () => {
+    setRefreshing(true);
+    await Promise.all([profileQ.refetch(), listingsQ.refetch()]);
+    setRefreshing(false);
+  }, [profileQ, listingsQ]);
 
   if (!MALCHNAAS_ENABLED) {
     return (
@@ -71,7 +79,11 @@ export default function HerderProfileScreen() {
     : null;
 
   return (
-    <ScrollView style={s.root} contentContainerStyle={{ paddingBottom: 40 }}>
+    <ScrollView
+      style={s.root}
+      contentContainerStyle={{ paddingBottom: 40 }}
+      refreshControl={<RefreshControl refreshing={refreshing} onRefresh={onRefresh} tintColor={BRAND} />}
+    >
       {/* Cover + back */}
       <View style={s.cover}>
         {profile.coverImage ? (
@@ -142,7 +154,7 @@ export default function HerderProfileScreen() {
         <Text style={s.sectionTitle}>Бүтээгдэхүүн ({products.length})</Text>
 
         {listingsQ.isLoading ? (
-          <ActivityIndicator color={BRAND} style={{ marginTop: 20 }} />
+          <ProductGridSkeleton count={4} />
         ) : products.length === 0 ? (
           <View style={s.emptyBox}>
             <Ionicons name="leaf-outline" size={36} color="#ccc" />

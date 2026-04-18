@@ -1,7 +1,7 @@
 import React, { useState, useCallback, useEffect } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, StyleSheet,
-  Image, RefreshControl, ActivityIndicator,
+  Image, RefreshControl,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
@@ -12,6 +12,7 @@ import {
   PROVINCES,
   CATEGORIES,
   HerderAPI,
+  ProductListSkeleton,
   type HerderProduct,
 } from '../../src/features/herder';
 import { useCart } from '../../src/store/cart';
@@ -139,7 +140,7 @@ export default function HerderScreen() {
       <View style={s.section}>
         <Text style={s.sectionTitle}>Бүтээгдэхүүн</Text>
         {loading ? (
-          <ActivityIndicator size="large" color={BRAND} style={{ marginVertical: 40 }} />
+          <ProductListSkeleton count={3} />
         ) : products.length === 0 ? (
           <View style={s.empty}>
             <Ionicons name="leaf-outline" size={48} color="#ccc" />
