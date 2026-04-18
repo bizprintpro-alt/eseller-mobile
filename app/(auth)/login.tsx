@@ -15,8 +15,8 @@ import {
   isBiometricAvailable,
   isBiometricEnabled,
   authenticateWithBiometric,
-  getSavedCredentials,
-  saveCredentials,
+  getBiometricSession,
+  enableBiometric,
 } from '../../src/shared/biometric';
 
 const TEST_USERS = [
@@ -50,6 +50,8 @@ export default function LoginScreen() {
   }, []);
 
   async function quickLogin(testPhone: string) {
+    // Dev-only helper — disabled in release builds
+    if (!__DEV__) return;
     try {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
       await login(testPhone, TEST_PASSWORD);
@@ -62,7 +64,7 @@ export default function LoginScreen() {
 
   const finishLogin = (role: string) => routeByRole(role);
 
-  const offerBioSave = (phone: string, password: string, role: string) => {
+  const offerBioSave = (phone: string, _password: string, role: string) => {
     if (!bioAvailable || bioEnabled) {
       finishLogin(role);
       return;
@@ -75,7 +77,7 @@ export default function LoginScreen() {
         {
           text: 'Идэвхжүүлэх',
           onPress: async () => {
-            try { await saveCredentials(phone, password); } catch {}
+            try { await enableBiometric(phone); } catch {}
             finishLogin(role);
           },
         },
@@ -104,13 +106,13 @@ export default function LoginScreen() {
       `${bioType || 'Биометр'}-ээр нэвтрэх`,
     );
     if (!ok) return;
-    const creds = await getSavedCredentials();
-    if (!creds) {
-      Alert.alert('Анхаар', 'Хадгалсан нэвтрэлт олдсонгүй. Нууц үгээр нэвтэрнэ үү');
+    const session = await getBiometricSession();
+    if (!session) {
+      Alert.alert('Анхаар', 'Сесс дуусжээ. Нууц үгээр дахин нэвтэрнэ үү');
       return;
     }
     try {
-      await login(creds.phone, creds.password);
+      await useAuth.getState().restoreSession(session.token);
       const currentUser = useAuth.getState().user;
       routeByRole(currentUser?.role || 'buyer');
     } catch (e: any) {
@@ -140,40 +142,42 @@ export default function LoginScreen() {
           </Text>
         </View>
 
-        {/* Quick Login — 4 test roles */}
-        <View style={{
-          backgroundColor: C.bgCard, borderRadius: R.lg,
-          padding: 14, marginBottom: 18,
-          borderWidth: 1, borderColor: C.border,
-        }}>
-          <Text style={{
-            color: C.textSub, fontSize: 12, fontWeight: '600',
-            marginBottom: 10, textAlign: 'center',
+        {/* Quick Login — dev-only helper with hardcoded test creds */}
+        {__DEV__ && (
+          <View style={{
+            backgroundColor: C.bgCard, borderRadius: R.lg,
+            padding: 14, marginBottom: 18,
+            borderWidth: 1, borderColor: C.border,
           }}>
-            ⚡ Хурдан нэвтрэх (тест)
-          </Text>
-          <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
-            {TEST_USERS.map((u) => (
-              <TouchableOpacity
-                key={u.phone}
-                onPress={() => quickLogin(u.phone)}
-                disabled={loading}
-                style={{
-                  flexBasis: '47%', backgroundColor: C.bgSection,
-                  borderRadius: R.md, padding: 10, alignItems: 'center',
-                  borderWidth: 1.5, borderColor: u.color,
-                }}
-              >
-                <Text style={{ color: u.color, fontSize: 12, fontWeight: '600' }}>
-                  {u.label}
-                </Text>
-                <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>
-                  {u.phone}
-                </Text>
-              </TouchableOpacity>
-            ))}
+            <Text style={{
+              color: C.textSub, fontSize: 12, fontWeight: '600',
+              marginBottom: 10, textAlign: 'center',
+            }}>
+              ⚡ Хурдан нэвтрэх (тест)
+            </Text>
+            <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+              {TEST_USERS.map((u) => (
+                <TouchableOpacity
+                  key={u.phone}
+                  onPress={() => quickLogin(u.phone)}
+                  disabled={loading}
+                  style={{
+                    flexBasis: '47%', backgroundColor: C.bgSection,
+                    borderRadius: R.md, padding: 10, alignItems: 'center',
+                    borderWidth: 1.5, borderColor: u.color,
+                  }}
+                >
+                  <Text style={{ color: u.color, fontSize: 12, fontWeight: '600' }}>
+                    {u.label}
+                  </Text>
+                  <Text style={{ color: C.textMuted, fontSize: 10, marginTop: 2 }}>
+                    {u.phone}
+                  </Text>
+                </TouchableOpacity>
+              ))}
+            </View>
           </View>
-        </View>
+        )}
 
         {/* Email / Phone */}
         <Text style={{ color: C.textSub, fontSize: 13, marginBottom: 6, fontWeight: '600' }}>
