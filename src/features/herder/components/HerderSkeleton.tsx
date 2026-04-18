@@ -40,6 +40,22 @@ export function ProductGridSkeleton({ count = 4 }: { count?: number }) {
   );
 }
 
+export function HomeRowSkeleton({ count = 4 }: { count?: number }) {
+  return (
+    <View style={s.row}>
+      {Array.from({ length: count }).map((_, i) => (
+        <View key={i} style={s.rowCard}>
+          <Block style={{ height: 88, borderRadius: 0 }} />
+          <View style={{ padding: 10, gap: 5 }}>
+            <Block style={{ height: 10, width: '90%' }} />
+            <Block style={{ height: 12, width: '50%' }} />
+          </View>
+        </View>
+      ))}
+    </View>
+  );
+}
+
 export function ProductListSkeleton({ count = 3 }: { count?: number }) {
   return (
     <View style={{ gap: 12 }}>
@@ -62,4 +78,6 @@ const s = StyleSheet.create({
   grid:  { flexDirection: 'row', flexWrap: 'wrap', gap: 10 },
   tile:  { width: '48%' as any, backgroundColor: '#fff', borderRadius: 12, borderWidth: 1, borderColor: '#e7e5e4', overflow: 'hidden' },
   listCard: { backgroundColor: '#fff', borderRadius: 16, overflow: 'hidden', borderWidth: 1, borderColor: '#e7e5e4' },
+  row:      { flexDirection: 'row', gap: 10, paddingHorizontal: 16 },
+  rowCard:  { width: 134, backgroundColor: '#fff', borderRadius: 12, borderWidth: 0.5, borderColor: '#e7e5e4', overflow: 'hidden' },
 });
