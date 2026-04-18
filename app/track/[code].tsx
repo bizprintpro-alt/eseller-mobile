@@ -1,9 +1,9 @@
-import React from 'react'
+import React, { useState, useCallback } from 'react'
 import {
   View, Text, ScrollView,
   TouchableOpacity,
 } from 'react-native'
-import { router, useLocalSearchParams } from 'expo-router'
+import { router, useLocalSearchParams, useFocusEffect } from 'expo-router'
 import { useQuery }   from '@tanstack/react-query'
 import { Ionicons }   from '@expo/vector-icons'
 import { get }        from '../../src/services/api'
@@ -25,10 +25,18 @@ const STEPS = [
 export default function TrackScreen() {
   const { code } = useLocalSearchParams()
 
+  const [isFocused, setIsFocused] = useState(true)
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true)
+      return () => setIsFocused(false)
+    }, []),
+  )
+
   const { data } = useQuery({
     queryKey: ['track', code],
     queryFn:  () => get(`/tracking/${code}`),
-    refetchInterval: 30000,
+    refetchInterval: isFocused ? 30000 : false,
   })
 
   const order       = data as any

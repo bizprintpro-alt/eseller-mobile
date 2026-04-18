@@ -1,8 +1,8 @@
-import React from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, ScrollView, TouchableOpacity, Image,
 } from 'react-native';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { LiveAPI, type LiveStreamItem } from '../../src/services/api';
@@ -10,13 +10,21 @@ import { C, R, F } from '../../src/shared/design';
 
 /**
  * Horizontal carousel of live streams for the buyer home.
- * Auto-refreshes every 30s. Hidden entirely when there are no LIVE streams.
+ * Auto-refreshes every 30s on focus. Hidden entirely when there are no LIVE streams.
  */
 export function LiveCarousel() {
+  const [isFocused, setIsFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, []),
+  );
+
   const { data, isLoading } = useQuery({
     queryKey: ['live', 'active'],
     queryFn: () => LiveAPI.getActive(),
-    refetchInterval: 30_000,
+    refetchInterval: isFocused ? 30_000 : false,
     staleTime: 20_000,
   });
 

@@ -1,5 +1,6 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import { router } from 'expo-router';
 
 const BASE = __DEV__
   ? 'http://192.168.1.9:3000/api'   // local dev
@@ -22,12 +23,34 @@ api.interceptors.request.use(async (config) => {
   return config;
 });
 
+// 401 дээр дуудагдах. auth store-г api модулиас шууд импортлохоос
+// (circular dep) зайлсхийхийн тулд auth.ts инициализаци болох үедээ
+// энд register хийдэг.
+let onUnauthorized: (() => void) | null = null;
+export function setOnUnauthorized(fn: () => void) {
+  onUnauthorized = fn;
+}
+
+// 401 дахин дахин гарахад router.replace-ийг spam хийхгүй болгох
+let unauthorizedHandling = false;
+
 // Response interceptor — алдаа боловсруулах
 api.interceptors.response.use(
   (res) => res.data,
   async (err) => {
     if (err.response?.status === 401) {
       await SecureStore.deleteItemAsync('token');
+      if (!unauthorizedHandling) {
+        unauthorizedHandling = true;
+        try {
+          onUnauthorized?.();
+          // Auth screen руу чиглүүлэх — router mount болсон үед л ажиллана
+          try { router.replace('/(auth)/login' as never); } catch {}
+        } finally {
+          // Дараагийн 401-ийг хүлээж авахын тулд жаахан хугацааны дараа дахин тэнцүүлнэ
+          setTimeout(() => { unauthorizedHandling = false; }, 1000);
+        }
+      }
     }
     const data = err.response?.data;
     const message = data?.message || data?.error || 'Сервертэй холбогдож чадсангүй';
@@ -118,7 +141,7 @@ export const WalletAPI = {
     amount: number;
     bankName: string;
     bankAccount: string;
-  }) => post('/wallet/payout', data),
+  }) => post('/wallet/withdraw', data),
 };
 
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
@@ -208,9 +231,9 @@ export const POSAPI = {
       description: description || 'POS захиалга',
     }),
 
-  /** Poll payment status — POST body `{invoiceId}`; response `{paid, paidDate?}` */
+  /** Poll payment status — GET /payment/qpay/check/:invoiceId; response `{paid, paidDate?}` */
   checkPayment: (invoiceId: string) =>
-    post('/payment/qpay/check', { invoiceId }),
+    get(`/payment/qpay/check/${invoiceId}`),
 
   /** POST /api/orders/pos — create completed POS sale */
   createOrder: (data: POSOrderInput) => post('/orders/pos', data),
@@ -253,15 +276,18 @@ export const LiveAPI = {
 // ━━━━━━━━━━━━━━━━━━━━━━━━━━━━
 
 export const OrderAPI = {
+  // Backend `/orders` is role-aware (filters by JWT role: buyer / seller / delivery).
+  // See Sarana backend routes/orders.js.
+
   // Buyer
-  myOrders: () => get('/buyer/orders'),
-  detail: (id: string) => get(`/buyer/orders/${id}`),
+  myOrders: () => get('/orders'),
+  detail: (id: string) => get(`/orders/${id}`),
 
   // Seller
   sellerOrders: (status?: string) =>
-    get('/seller/orders', status ? { status } : undefined),
+    get('/orders', status ? { status } : undefined),
   updateStatus: (id: string, status: string) =>
-    put(`/seller/orders/${id}/status`, { status }),
+    put(`/orders/${id}/status`, { status }),
 
   // Driver
   availableOrders: () => get('/driver/orders', { type: 'available' }),

@@ -52,6 +52,7 @@ export default function LoginScreen() {
   async function quickLogin(testPhone: string) {
     // Dev-only helper — disabled in release builds
     if (!__DEV__) return;
+    if (useAuth.getState().loading) return;
     try {
       try { Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light); } catch {}
       await login(testPhone, TEST_PASSWORD);
@@ -86,6 +87,7 @@ export default function LoginScreen() {
   };
 
   const handleLogin = async () => {
+    if (loading) return;
     if (!email || !pass) {
       Alert.alert('Анхаар', 'Бүх талбарыг бөглөнө үү');
       return;
@@ -217,6 +219,9 @@ export default function LoginScreen() {
         <TouchableOpacity
           onPress={handleLogin}
           disabled={loading}
+          accessibilityRole="button"
+          accessibilityLabel="Нэвтрэх"
+          accessibilityState={{ disabled: loading, busy: loading }}
           style={{
             backgroundColor: loading ? C.bgSection : C.brand,
             borderRadius: R.lg, padding: 17, alignItems: 'center', marginBottom: 12,
@@ -262,9 +267,15 @@ export default function LoginScreen() {
         <TouchableOpacity
           onPress={async () => {
             try {
-              const baseUrl = __DEV__ ? 'http://192.168.1.9:3000' : 'https://eseller.mn';
+              // Dev машин бүр LAN IP өөр тул EXPO_PUBLIC_DEV_API-ийг .env-д оруулна.
+              // Default prod URL-г __DEV__-гүй үед ашиглана.
+              const baseUrl = __DEV__
+                ? (process.env.EXPO_PUBLIC_DEV_API || process.env.EXPO_PUBLIC_API_URL || 'https://eseller.mn')
+                : 'https://eseller.mn';
               await WebBrowser.openBrowserAsync(`${baseUrl}/api/auth/google?role=buyer&redirect=eseller://auth/callback`);
-            } catch {}
+            } catch (e) {
+              if (__DEV__) console.error('[google-oauth]', e);
+            }
           }}
           style={{
             backgroundColor: C.white, borderRadius: R.lg,

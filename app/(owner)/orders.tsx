@@ -1,6 +1,7 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import { View, Text, FlatList, TouchableOpacity, RefreshControl, StyleSheet, Alert } from 'react-native';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useFocusEffect } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { get, put } from '../../src/services/api';
 
@@ -21,17 +22,27 @@ const NEXT_STATUS: Record<string, { label: string; next: string }> = {
 
 export default function OwnerOrdersScreen() {
   const [tab, setTab] = useState('');
+  const [isFocused, setIsFocused] = useState(true);
   const qc = useQueryClient();
+
+  // Screen blur үед 15с-ийн refetch loop-ыг зогсооно — background data burn
+  // хийхгүй, мөн navigate буцахад шинэ data автоматаар авна.
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, []),
+  );
 
   const { data, isRefetching, refetch } = useQuery<any>({
     queryKey: ['seller-orders', tab],
-    queryFn: () => get(`/seller/orders${tab ? `?status=${tab}` : ''}`),
-    refetchInterval: 15000,
+    queryFn: () => get(`/orders${tab ? `?status=${tab}` : ''}`),
+    refetchInterval: isFocused ? 15000 : false,
   });
 
   const updateStatus = useMutation({
     mutationFn: ({ id, status }: { id: string; status: string }) =>
-      put(`/seller/orders/${id}/status`, { status }),
+      put(`/orders/${id}/status`, { status }),
     onSuccess: () => {
       Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
       qc.invalidateQueries({ queryKey: ['seller-orders'] });

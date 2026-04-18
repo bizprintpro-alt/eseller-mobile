@@ -1,8 +1,9 @@
-import { useState } from 'react';
+import { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity,
   RefreshControl, StyleSheet, Alert, ActivityIndicator,
 } from 'react-native';
+import { useFocusEffect } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { get, post } from '../../src/services/api';
@@ -13,10 +14,18 @@ export default function DriverDeliveriesScreen() {
   const [tab, setTab] = useState<'available' | 'mine'>('available');
   const qc = useQueryClient();
 
+  const [isFocused, setIsFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, []),
+  );
+
   const { data, isRefetching, refetch, isLoading } = useQuery<any>({
     queryKey: ['driver-orders', tab],
     queryFn: () => get(`/driver/orders?type=${tab}`),
-    refetchInterval: 10000,
+    refetchInterval: isFocused ? 10000 : false,
   });
 
   const accept = useMutation({

@@ -1,8 +1,9 @@
+import { useState, useCallback } from 'react'
 import {
   View, Text, FlatList,
   TouchableOpacity, RefreshControl,
 } from 'react-native'
-import { router }   from 'expo-router'
+import { router, useFocusEffect } from 'expo-router'
 import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { get }      from '../../src/services/api'
@@ -15,11 +16,19 @@ export default function ChatScreen() {
 }
 
 function BuyerChatList({ user }: { user: any }) {
+  const [isFocused, setIsFocused] = useState(true)
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true)
+      return () => setIsFocused(false)
+    }, []),
+  )
+
   const { data, isLoading, refetch } = useQuery({
     queryKey: ['conversations'],
     queryFn:  () => get('/chat/conversations'),
     enabled:  !!user,
-    refetchInterval: 5000,
+    refetchInterval: isFocused ? 5000 : false,
   })
 
   const convs = Array.isArray(data) ? data : []

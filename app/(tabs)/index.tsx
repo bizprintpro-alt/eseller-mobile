@@ -146,8 +146,8 @@ function StoreDashboard() {
       </View>
 
       <View style={{ flexDirection: 'row', flexWrap: 'wrap', padding: 8, gap: 10 }}>
-        {CARDS.map((c, i) => (
-          <View key={i} style={{ width: '47%', backgroundColor: C.bgCard, borderRadius: R.lg, padding: 16, borderLeftWidth: 3, borderLeftColor: c.color, borderWidth: 1, borderColor: C.border }}>
+        {CARDS.map((c) => (
+          <View key={c.label} style={{ width: '47%', backgroundColor: C.bgCard, borderRadius: R.lg, padding: 16, borderLeftWidth: 3, borderLeftColor: c.color, borderWidth: 1, borderColor: C.border }}>
             <Ionicons name={c.icon} size={24} color={c.color} />
             <Text style={{ color: c.color, fontSize: 22, fontWeight: '900', marginTop: 8 }}>{c.value}</Text>
             <Text style={{ color: C.textSub, fontSize: 12, marginTop: 4 }}>{c.label}</Text>
@@ -163,8 +163,8 @@ function StoreDashboard() {
             { icon: 'receipt' as const, label: 'Захиалгууд', color: '#1A73E8', route: '/orders' },
             { icon: 'people' as const, label: 'Борлуулагчид', color: '#7C3AED', route: '/(seller)/products' },
             { icon: 'bar-chart' as const, label: 'Тайлан', color: '#F9A825', route: '/(seller)/earnings' },
-          ].map((a, i) => (
-            <TouchableOpacity key={i} onPress={() => router.push(a.route as any)}
+          ].map((a) => (
+            <TouchableOpacity key={a.route} onPress={() => router.push(a.route as any)}
               style={{ width: '47%', backgroundColor: a.color + '15', borderRadius: R.lg, padding: 16, alignItems: 'center', gap: 8, borderWidth: 1, borderColor: a.color + '30' }}>
               <Ionicons name={a.icon} size={26} color={a.color} />
               <Text style={{ color: C.text, fontSize: 13, fontWeight: '600', textAlign: 'center' }}>{a.label}</Text>
@@ -215,17 +215,22 @@ function CountdownTimer({ endsAt }: { endsAt?: string }) {
   const [label, setLabel] = React.useState('')
   React.useEffect(() => {
     if (!endsAt) return
+    let id: ReturnType<typeof setInterval> | null = null
     const tick = () => {
       const diff = new Date(endsAt).getTime() - Date.now()
-      if (diff <= 0) { setLabel('Дууслаа'); return }
+      if (diff <= 0) {
+        setLabel('Дууслаа')
+        if (id) { clearInterval(id); id = null }
+        return
+      }
       const h = Math.floor(diff / 3_600_000)
       const m = Math.floor((diff % 3_600_000) / 60_000)
       const s = Math.floor((diff % 60_000) / 1_000)
       setLabel(`${String(h).padStart(2, '0')}:${String(m).padStart(2, '0')}:${String(s).padStart(2, '0')}`)
     }
     tick()
-    const id = setInterval(tick, 1_000)
-    return () => clearInterval(id)
+    id = setInterval(tick, 1_000)
+    return () => { if (id) clearInterval(id) }
   }, [endsAt])
   if (!label) return null
   return (

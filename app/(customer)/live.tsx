@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
+import React, { useState, useCallback } from 'react';
 import {
   View, Text, FlatList, TouchableOpacity, StyleSheet,
   RefreshControl, ActivityIndicator,
 } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import { router } from 'expo-router';
+import { router, useFocusEffect } from 'expo-router';
 import { useQuery } from '@tanstack/react-query';
 import { LiveAPI, type LiveStreamItem } from '../../src/services/api';
 import { C, R, F } from '../../src/shared/design';
@@ -25,10 +25,18 @@ function toList(res: any): LiveStreamItem[] {
 export default function LiveListScreen() {
   const [tab, setTab] = useState<LiveTab>('active');
 
+  const [isFocused, setIsFocused] = useState(true);
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true);
+      return () => setIsFocused(false);
+    }, []),
+  );
+
   const activeQ = useQuery({
     queryKey: ['live', 'active'],
     queryFn: () => LiveAPI.getActive(),
-    refetchInterval: 30_000,
+    refetchInterval: isFocused ? 30_000 : false,
   });
 
   const scheduledQ = useQuery({
@@ -44,6 +52,7 @@ export default function LiveListScreen() {
   const refreshing =
     (tab === 'active' && activeQ.isRefetching) ||
     (tab === 'scheduled' && scheduledQ.isRefetching);
+
 
   const onRefresh = () => {
     if (tab === 'active') activeQ.refetch();

@@ -61,14 +61,19 @@ export default function LiveDetailScreen() {
         setStream(data);
         setMessages((data.messages || []).slice().reverse());
       }
-    } catch {}
+    } catch (e) {
+      if (__DEV__) console.warn('[live fetchStream]', e);
+    }
   }, [id]);
 
   useEffect(() => {
     fetchStream();
+    // Stream дууссан бол polling эхлүүлэхгүй — үүнгүйгээр секунд тутамд
+    // ENDED stream-д шаардлагагүй network storm үүсэх болно
+    if (stream?.status === 'ENDED') return;
     const interval = setInterval(fetchStream, 5000);
     return () => clearInterval(interval);
-  }, [fetchStream]);
+  }, [fetchStream, stream?.status]);
 
   useEffect(() => {
     setTimeout(() => chatRef.current?.scrollToEnd({ animated: true }), 100);
@@ -84,7 +89,9 @@ export default function LiveDetailScreen() {
         setMessages((prev) => [...prev, msg]);
         setChatInput('');
       }
-    } catch {}
+    } catch (e) {
+      if (__DEV__) console.warn('[live sendMessage]', e);
+    }
     setSending(false);
   };
 

@@ -51,7 +51,8 @@ export const useCart = create<CartStore>()(
 
       clear: () => set({ items: [] }),
 
-      total: () => get().items.reduce((sum, i) => sum + i.price * i.qty, 0),
+      // MNT бүхэл тоо байдаг — float дүгнэлт дэх 0.00001 алдааг арилгахын тулд round хийнэ
+      total: () => Math.round(get().items.reduce((sum, i) => sum + i.price * i.qty, 0)),
 
       count: () => get().items.reduce((sum, i) => sum + i.qty, 0),
     }),

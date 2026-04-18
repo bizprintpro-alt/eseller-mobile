@@ -9,7 +9,6 @@ import { Ionicons } from '@expo/vector-icons'
 import { post }     from '../../src/services/api'
 import { useAuth }  from '../../src/store/auth'
 import { C, R, F }  from '../../src/shared/design'
-import * as SecureStore from 'expo-secure-store'
 
 export default function RegisterScreen() {
   const { login }              = useAuth()
@@ -50,22 +49,16 @@ export default function RegisterScreen() {
         name, email, phone: phone || undefined, password: pass, role,
       })
 
-      if (res?.token && res?.user) {
-        // Token-г хадгалаад шууд нэвтрэх
-        await SecureStore.setItemAsync('token', res.token)
-        // Auth store-д user тохируулах — login дуудахгүй
-        const mappedRole = role === 'buyer' ? 'BUYER' : role === 'seller' ? 'STORE' : role === 'affiliate' ? 'SELLER' : 'DRIVER'
-        useAuth.setState({
-          user:  res.user,
-          token: res.token,
-          role:  mappedRole,
-        })
-        router.replace('/(tabs)' as any)
+      if (res?.token) {
+        // Token-ийг /auth/me-ээр баталгаажуулаад, canonical user-ийг ачаална.
+        // Шууд setState хийвэл token хүчингүй / user shape дутуу бол
+        // tabs руу ороход UI эвдэрч магадгүй.
+        await useAuth.getState().restoreSession(res.token)
       } else {
         // Token буцаагаагүй бол login хийх
         await login(email, pass)
-        router.replace('/(tabs)' as any)
       }
+      router.replace('/(tabs)' as any)
     } catch (e: any) {
       Alert.alert('Алдаа',
         e.message || 'Бүртгэл үүсгэхэд алдаа гарлаа')

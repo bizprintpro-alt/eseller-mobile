@@ -15,18 +15,53 @@ const STATUS: Record<string, { label: string; color: string; bg: string }> = {
 };
 
 export default function OrdersScreen() {
-  const { data, isLoading, refetch, isRefetching } = useQuery<any>({
+  const { data, isLoading, isError, refetch, isRefetching } = useQuery<any>({
     queryKey: ['buyer-orders'],
-    queryFn: () => get('/buyer/orders'),
+    queryFn: () => get('/orders'),
   });
 
-  // Response: { success, data: [...] } — interceptor returns res.data
-  const orders: any[] = Array.isArray(data?.data) ? data.data : Array.isArray(data) ? data : [];
+  // Response shapes we accept:
+  //   { orders: [...] }  — eseller.mn backend (role-aware /orders route)
+  //   { success, data: [...] } — legacy wrapper
+  //   [...] — plain array (dev stubs)
+  const orders: any[] = Array.isArray(data?.orders)
+    ? data.orders
+    : Array.isArray(data?.data)
+      ? data.data
+      : Array.isArray(data)
+        ? data
+        : [];
 
   if (isLoading) {
     return (
       <View style={s.center}>
         <ActivityIndicator size="large" color="#1B3A5C" />
+      </View>
+    );
+  }
+
+  // Сүлжээ / 500 алдаа. Хоосон жагсаалттай адил харуулахгүй —
+  // retry товч заавал өгнө.
+  if (isError) {
+    return (
+      <View style={s.screen}>
+        <View style={s.header}>
+          <TouchableOpacity onPress={() => router.back()}>
+            <Text style={{ fontSize: 22, color: '#fff' }}>←</Text>
+          </TouchableOpacity>
+          <Text style={s.headerTitle}>Миний захиалгууд</Text>
+          <View style={{ width: 22 }} />
+        </View>
+        <View style={[s.center, { padding: 24 }]}>
+          <Text style={{ fontSize: 48, marginBottom: 12 }}>⚠️</Text>
+          <Text style={s.emptyTitle}>Захиалга татахад алдаа гарлаа</Text>
+          <Text style={{ color: '#888', fontSize: 13, textAlign: 'center', marginBottom: 20 }}>
+            Сүлжээгээ шалгаад дахин оролдоно уу
+          </Text>
+          <TouchableOpacity onPress={() => refetch()} style={s.shopBtn}>
+            <Text style={s.shopBtnText}>Дахин оролдох</Text>
+          </TouchableOpacity>
+        </View>
       </View>
     );
   }
@@ -43,7 +78,17 @@ export default function OrdersScreen() {
 
       <FlatList
         data={orders}
-        keyExtractor={(o) => o._id || o.id}
+        // Мongol захиалга obj зарим response-д `_id` (mongo), зарим ын-д
+        // `id` (sql) өгнө. Хоёулан нь undefined бол index-д fallback хийнэ,
+        // гэхдээ warning log-лоход туслахаар __DEV__-д мэдээлнэ.
+        keyExtractor={(o, i) => {
+          const key = o?._id || o?.id;
+          if (!key) {
+            if (__DEV__) console.warn('[orders] item missing id/_id, falling back to index', o);
+            return `fallback-${i}`;
+          }
+          return String(key);
+        }}
         refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} />}
         contentContainerStyle={
           orders.length === 0

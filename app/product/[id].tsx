@@ -19,7 +19,7 @@ const { width } = Dimensions.get('window')
 
 export default function ProductDetailScreen() {
   const { id }              = useLocalSearchParams()
-  const { add }             = useCart()
+  const { add, items }      = useCart()
   const { user }            = useAuth()
   const [imgIdx, setImgIdx] = useState(0)
   const [qty, setQty]       = useState(1)
@@ -36,6 +36,33 @@ export default function ProductDetailScreen() {
 
   const handleAddToCart = () => {
     if (!p) return
+
+    // Stock-ыг backend-ээс `stock` эсвэл `quantity` талбараар өгнө.
+    // 0 бол outOfStock — undefined/null бол хязгааргүй (legacy data).
+    const stock: number | undefined =
+      typeof p.stock === 'number' ? p.stock
+      : typeof p.quantity === 'number' ? p.quantity
+      : undefined
+
+    if (stock === 0) {
+      Alert.alert('Барагдсан', 'Энэ бараа одоогоор дууссан байна')
+      return
+    }
+
+    if (stock !== undefined) {
+      const existingQty = items.find((i) => i.id === p.id)?.qty || 0
+      if (existingQty + qty > stock) {
+        const remaining = Math.max(stock - existingQty, 0)
+        Alert.alert(
+          'Үлдэгдэл хүрэхгүй',
+          remaining > 0
+            ? `Та сагсанд ${existingQty} ширхэг оруулсан. Үлдэгдэл: ${remaining} ширхэг`
+            : `Сагсанд хамгийн их тоо хэдийн нэмэгдсэн байна (${stock} ширхэг)`,
+        )
+        return
+      }
+    }
+
     Haptics.notificationAsync(
       Haptics.NotificationFeedbackType.Success
     )
@@ -108,6 +135,8 @@ export default function ProductDetailScreen() {
           {/* Back */}
           <TouchableOpacity
             onPress={() => router.back()}
+            accessibilityRole="button"
+            accessibilityLabel="Буцах"
             style={{
               position: 'absolute', top: 48, left: 16,
               backgroundColor: 'rgba(0,0,0,0.5)',
@@ -124,6 +153,9 @@ export default function ProductDetailScreen() {
               Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
               setSaved(!saved)
             }}
+            accessibilityRole="button"
+            accessibilityLabel={saved ? 'Хадгалснаас хасах' : 'Хадгалах'}
+            accessibilityState={{ selected: saved }}
             style={{
               position: 'absolute', top: 48, right: 16,
               backgroundColor: 'rgba(0,0,0,0.5)',
@@ -216,6 +248,11 @@ export default function ProductDetailScreen() {
             </Text>
             <TouchableOpacity
               onPress={() => {
+                const stock: number | undefined =
+                  typeof p?.stock === 'number' ? p.stock
+                  : typeof p?.quantity === 'number' ? p.quantity
+                  : undefined
+                if (stock !== undefined && qty >= stock) return
                 Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light)
                 setQty(q => q + 1)
               }}
@@ -291,6 +328,8 @@ export default function ProductDetailScreen() {
       }}>
         <TouchableOpacity
           onPress={handleAddToCart}
+          accessibilityRole="button"
+          accessibilityLabel={`Сагсанд нэмэх, ${qty} ширхэг`}
           style={{
             flex: 1, backgroundColor: C.bgSection, borderRadius: R.lg,
             padding: 16, alignItems: 'center', borderWidth: 1.5,
@@ -315,6 +354,8 @@ export default function ProductDetailScreen() {
               params: { productId: id as string, qty: qty.toString() }
             })
           }}
+          accessibilityRole="button"
+          accessibilityLabel={`Шууд захиалах, ${qty} ширхэг`}
           style={{
             flex: 2, backgroundColor: C.brand, borderRadius: R.lg,
             padding: 16, alignItems: 'center', flexDirection: 'row',

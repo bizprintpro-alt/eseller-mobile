@@ -1,6 +1,6 @@
-import { useState, useEffect, useRef } from 'react'
+import { useState, useEffect, useRef, useCallback } from 'react'
 import { View, Text, FlatList, TextInput, TouchableOpacity, KeyboardAvoidingView, Platform, ActivityIndicator } from 'react-native'
-import { useLocalSearchParams, router } from 'expo-router'
+import { useLocalSearchParams, router, useFocusEffect } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { get, post } from '../../src/services/api'
@@ -13,11 +13,20 @@ export default function ChatRoomScreen() {
   const qc = useQueryClient()
   const listRef = useRef<FlatList>(null)
   const [msg, setMsg] = useState('')
+  const [isFocused, setIsFocused] = useState(true)
+
+  // Chat polling 3с тутамд гүйдэг — blur үед зогсоох нь battery/data хэмнэнэ
+  useFocusEffect(
+    useCallback(() => {
+      setIsFocused(true)
+      return () => setIsFocused(false)
+    }, []),
+  )
 
   const { data, isLoading } = useQuery({
     queryKey: ['chat', id],
     queryFn: () => get(`/chat/conversations/${id}/messages`),
-    refetchInterval: 3000,
+    refetchInterval: isFocused ? 3000 : false,
   })
 
   const sendMutation = useMutation({
