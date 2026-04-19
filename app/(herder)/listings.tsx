@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import {
   View,
   Text,
@@ -7,11 +7,13 @@ import {
   Image,
   RefreshControl,
   Alert,
+  ActivityIndicator,
 } from 'react-native';
 import { router } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import { HerderAPI } from '../../src/features/herder/api';
+import * as HerderQueue from '../../src/features/herder/queue';
 import type { MyHerderProduct } from '../../src/features/herder/types';
 import { C, R } from '../../src/shared/design';
 
@@ -26,6 +28,35 @@ export default function HerderListings() {
     queryFn:  () => HerderAPI.my.products.list({ status: filter }),
   });
 
+  const queue = useQuery({
+    queryKey: ['herder', 'queue'],
+    queryFn:  () => HerderQueue.list(),
+    staleTime: 0,
+  });
+
+  const drain = useMutation({
+    mutationFn: () => HerderQueue.drain(),
+    onSuccess: (r) => {
+      qc.invalidateQueries({ queryKey: ['herder', 'queue'] });
+      if (r.succeeded > 0) {
+        qc.invalidateQueries({ queryKey: ['herder', 'my', 'products'] });
+      }
+      if (r.failedOffline > 0 && r.succeeded === 0) {
+        Alert.alert('Интернэт алга', 'Холболт сэргэсний дараа дахин оролдоно уу.');
+      } else if (r.failedServer > 0) {
+        Alert.alert('Зарим бараа татгалзлаа', 'Алдаатай барааг засаад дахин илгээнэ үү.');
+      }
+    },
+  });
+
+  // Opportunistic drain on mount and whenever the listings refetch — cheap,
+  // fails silently if we're still offline. The banner's Retry button is the
+  // explicit manual path.
+  useEffect(() => {
+    drain.mutate();
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, []);
+
   const remove = useMutation({
     mutationFn: (id: string) => HerderAPI.my.products.remove(id),
     onSuccess:  () => {
@@ -33,6 +64,19 @@ export default function HerderListings() {
     },
     onError: (e: Error) => Alert.alert('Алдаа', e.message),
   });
+
+  const discardQueued = (id: string) => {
+    Alert.alert('Цуцлах', 'Энэ хүсэлтийг дараалалаас устгах уу?', [
+      { text: 'Болих', style: 'cancel' },
+      {
+        text: 'Устгах', style: 'destructive',
+        onPress: async () => {
+          await HerderQueue.remove(id);
+          qc.invalidateQueries({ queryKey: ['herder', 'queue'] });
+        },
+      },
+    ]);
+  };
 
   const confirmDelete = (p: MyHerderProduct) => {
     Alert.alert(
@@ -82,6 +126,81 @@ export default function HerderListings() {
           </TouchableOpacity>
         ))}
       </View>
+
+      {(queue.data?.length ?? 0) > 0 && (
+        <View
+          style={{
+            marginHorizontal: 12,
+            marginBottom: 10,
+            backgroundColor: C.bgCard,
+            borderRadius: R.lg,
+            borderWidth: 1,
+            borderColor: C.gold,
+            padding: 12,
+            gap: 8,
+          }}
+        >
+          <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }}>
+            <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, flex: 1 }}>
+              <Ionicons name="cloud-offline-outline" size={18} color={C.gold} />
+              <Text style={{ color: C.text, fontWeight: '800', fontSize: 13, flex: 1 }}>
+                Офлайнд хадгалсан {queue.data!.length}
+              </Text>
+            </View>
+            <TouchableOpacity
+              onPress={() => drain.mutate()}
+              disabled={drain.isPending}
+              style={{
+                backgroundColor: drain.isPending ? C.textMuted : C.herder,
+                borderRadius: R.full,
+                paddingHorizontal: 12,
+                paddingVertical: 6,
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 6,
+              }}
+            >
+              {drain.isPending ? (
+                <ActivityIndicator color="#fff" size="small" />
+              ) : (
+                <Ionicons name="sync" size={14} color="#fff" />
+              )}
+              <Text style={{ color: '#fff', fontWeight: '800', fontSize: 12 }}>Дахин илгээх</Text>
+            </TouchableOpacity>
+          </View>
+          {queue.data!.map((q) => (
+            <View
+              key={q.id}
+              style={{
+                flexDirection: 'row',
+                alignItems: 'center',
+                gap: 8,
+                paddingTop: 6,
+                borderTopWidth: 0.5,
+                borderTopColor: C.border,
+              }}
+            >
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.text, fontSize: 13, fontWeight: '600' }} numberOfLines={1}>
+                  {q.kind === 'create' ? 'Шинэ: ' : 'Засвар: '}{q.payload.name || '(нэргүй)'}
+                </Text>
+                {q.lastError ? (
+                  <Text style={{ color: C.error, fontSize: 11, marginTop: 2 }} numberOfLines={2}>
+                    {q.lastError}
+                  </Text>
+                ) : (
+                  <Text style={{ color: C.textMuted, fontSize: 11, marginTop: 2 }}>
+                    {q.attempts > 0 ? `${q.attempts} удаа оролдлоо` : 'Хүлээж байна'}
+                  </Text>
+                )}
+              </View>
+              <TouchableOpacity onPress={() => discardQueued(q.id)} hitSlop={8}>
+                <Ionicons name="close-circle" size={20} color={C.textMuted} />
+              </TouchableOpacity>
+            </View>
+          ))}
+        </View>
+      )}
 
       <FlatList
         data={products}

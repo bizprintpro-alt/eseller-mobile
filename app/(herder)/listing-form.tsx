@@ -15,8 +15,10 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { HerderAPI } from '../../src/features/herder/api';
+import * as HerderQueue from '../../src/features/herder/queue';
 import { CATEGORIES } from '../../src/features/herder/constants';
 import type { ProductWritable } from '../../src/features/herder/types';
+import { isOfflineError } from '../../src/services/api';
 import { C, R } from '../../src/shared/design';
 
 type FormState = {
@@ -80,7 +82,31 @@ export default function HerderListingForm() {
       qc.invalidateQueries({ queryKey: ['herder', 'my', 'products'] });
       router.back();
     },
-    onError: (e: Error) => Alert.alert('Алдаа', e.message),
+    onError: async (e: Error, payload) => {
+      // Transport-level failure → park it in the offline queue so the
+      // herder doesn't have to re-type the form once wifi comes back.
+      // 4xx/5xx from the server go straight to the alert — retrying
+      // a validation error would just fail again.
+      if (isOfflineError(e)) {
+        try {
+          if (isEdit && id) {
+            await HerderQueue.enqueue({ kind: 'update', productId: id, payload });
+          } else {
+            await HerderQueue.enqueue({ kind: 'create', payload });
+          }
+          qc.invalidateQueries({ queryKey: ['herder', 'queue'] });
+          Alert.alert(
+            'Офлайн горимд хадгаллаа',
+            'Интернэт холбогдмогц автоматаар илгээнэ.',
+            [{ text: 'OK', onPress: () => router.back() }],
+          );
+          return;
+        } catch {
+          // fall through to generic alert
+        }
+      }
+      Alert.alert('Алдаа', e.message);
+    },
   });
 
   const pickImage = async () => {
