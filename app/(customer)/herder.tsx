@@ -13,8 +13,10 @@ import {
   CATEGORIES,
   HerderAPI,
   ProductListSkeleton,
+  useProvinceDays,
   type HerderProduct,
 } from '../../src/features/herder';
+import { useAimagDeliveryMap } from '../../src/config/remoteFlags';
 import { useCart } from '../../src/store/cart';
 
 function fmt(n: number) { return n.toLocaleString() + '₮'; }
@@ -58,6 +60,8 @@ export default function HerderScreen() {
   }, [load]);
 
   const selectedProvince = PROVINCES.find((p) => p.code === province);
+  const selectedProvinceDays = useProvinceDays(province);
+  const deliveryMap = useAimagDeliveryMap();
 
   const buyNow = (product: HerderProduct) => {
     const unit = product.salePrice ?? product.price;
@@ -116,7 +120,7 @@ export default function HerderScreen() {
                 activeOpacity={0.7}
               >
                 <Text style={[s.provinceText, province === p.code && s.provinceTextActive]}>{p.name}</Text>
-                <Text style={[s.provinceDays, province === p.code && s.provinceDaysActive]}>{p.days} хоног</Text>
+                <Text style={[s.provinceDays, province === p.code && s.provinceDaysActive]}>{deliveryMap[p.code] ?? p.days} хоног</Text>
               </TouchableOpacity>
             ))}
           </View>
@@ -216,10 +220,10 @@ export default function HerderScreen() {
                       <Text style={s.salePrice}>{fmt(product.price)}</Text>
                     )}
                   </View>
-                  {product.herder && selectedProvince && (
+                  {product.herder && selectedProvince && selectedProvinceDays && (
                     <View style={s.deliveryRow}>
                       <Ionicons name="car-outline" size={12} color="#888" />
-                      <Text style={s.deliveryText}>{selectedProvince.days} хоногт хүргэнэ</Text>
+                      <Text style={s.deliveryText}>{selectedProvinceDays} хоногт хүргэнэ</Text>
                     </View>
                   )}
                   <TouchableOpacity

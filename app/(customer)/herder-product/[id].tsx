@@ -12,6 +12,7 @@ import {
   HERDER_BRAND as BRAND,
   PROVINCES,
   HerderAPI,
+  useProvinceDays,
 } from '../../../src/features/herder';
 import { useMalchnaasEnabled } from '../../../src/config/remoteFlags';
 import { useCart } from '../../../src/store/cart';
@@ -33,6 +34,9 @@ export default function HerderProductDetailScreen() {
     queryFn:  () => HerderAPI.detail(String(id)),
     enabled:  !!id && malchnaasEnabled,
   });
+
+  // Hook must run before any early return — safely handles undefined code.
+  const provinceDays = useProvinceDays(product?.herder?.province);
 
   if (!malchnaasEnabled) {
     return (
@@ -216,7 +220,7 @@ export default function HerderProductDetailScreen() {
             <View style={s.infoRow}>
               <Ionicons name="car-outline" size={18} color={BRAND} />
               <Text style={s.infoText}>
-                {province.name} → УБ · {province.days} хоног
+                {province.name} → УБ · {provinceDays ?? province.days} хоног
               </Text>
             </View>
           </View>
