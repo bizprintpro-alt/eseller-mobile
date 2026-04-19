@@ -35,8 +35,28 @@ export function setOnUnauthorized(fn: () => void) {
 let unauthorizedHandling = false;
 
 // Response interceptor — алдаа боловсруулах
+//
+// Response envelope handling (AUDIT M5 phase 1):
+// Sarana API is migrating to a unified `{ success, data }` envelope.
+// To let old and new routes coexist, this interceptor sniffs the body:
+//   • `{ success: true,  data: X }` → unwrap to X
+//   • `{ success: false, error: Y }` → throw ApiError with message Y
+//   • anything else → pass through untouched (legacy routes)
+// Keep this detection tight — only treat a body as an envelope when
+// `success` is explicitly a boolean, otherwise a legacy route that
+// happens to return `{ success: 'ok' }` would get mis-unwrapped.
 api.interceptors.response.use(
-  (res) => res.data,
+  (res) => {
+    const body = res.data;
+    if (body && typeof body === 'object' && typeof body.success === 'boolean') {
+      if (body.success) return body.data;
+      const wrapped = new Error(body.error || 'Хүсэлт амжилтгүй') as ApiError;
+      wrapped.status = res.status;
+      wrapped.isOffline = false;
+      throw wrapped;
+    }
+    return body;
+  },
   async (err) => {
     if (err.response?.status === 401) {
       await SecureStore.deleteItemAsync('token');
