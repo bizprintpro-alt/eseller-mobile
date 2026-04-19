@@ -309,7 +309,19 @@ export default function ProductDetailScreen() {
             )}
           </View>
 
-          {/* Quantity */}
+          {/* Entity-specific details — mirrors web ProductDetailClient
+              per-entityType layouts (AUDIT M2). Rendered above the generic
+              Quantity block so category-relevant specs (apartment area,
+              service duration, pre-order batch progress) surface first.
+              Falls through for STORE / legacy products. */}
+          {p?.entityType === 'REAL_ESTATE' && <RealEstateDetails p={p} />}
+          {p?.entityType === 'SERVICE'     && <ServiceDetails     p={p} />}
+          {p?.entityType === 'PRE_ORDER'   && <PreOrderDetails    p={p} />}
+
+          {/* Quantity — hidden for REAL_ESTATE (buying units of a flat
+              makes no sense) and PRE_ORDER (one slot per buyer). Stays
+              visible for SERVICE so buyers can book multiple sessions. */}
+          {p?.entityType !== 'REAL_ESTATE' && p?.entityType !== 'PRE_ORDER' && (
           <View style={{
             flexDirection: 'row', alignItems: 'center', gap: 16,
             marginBottom: 16, backgroundColor: C.bgSection,
@@ -357,6 +369,7 @@ export default function ProductDetailScreen() {
               <Ionicons name="add" size={18} color={C.white} />
             </TouchableOpacity>
           </View>
+          )}
 
           {/* Delivery info — per-product fee + ETA, mirrors web storefront
               ModalBody. Skipped entirely for dropship products because the
@@ -807,5 +820,156 @@ function RelatedCard({ product, currentId }: { product: RelatedProduct; currentI
         )}
       </View>
     </TouchableOpacity>
+  )
+}
+
+// ─── Entity-specific detail sections (AUDIT M2) ─────────────────────
+// Mirror of web `ProductDetailClient` per-entityType layouts. Each
+// component renders a self-contained card/block above the Quantity +
+// Delivery sections. Fields are all optional — if the row has no
+// relevant data the sub-blocks simply don't render.
+
+function SpecCard({ icon, label, value }: { icon: any; label: string; value: string }) {
+  return (
+    <View style={{
+      flex: 1, minWidth: '47%', flexDirection: 'row', alignItems: 'center',
+      gap: 10, padding: 12, borderRadius: R.lg,
+      backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.border,
+    }}>
+      <Ionicons name={icon} size={20} color={C.textMuted} />
+      <View style={{ flex: 1 }}>
+        <Text style={{ color: C.textMuted, fontSize: 11 }}>{label}</Text>
+        <Text style={{ color: C.text, fontSize: 14, fontWeight: '700' }} numberOfLines={1}>
+          {value}
+        </Text>
+      </View>
+    </View>
+  )
+}
+
+function SpecPill({ icon, value, iconColor }: { icon: any; value: string; iconColor?: string }) {
+  return (
+    <View style={{
+      flexDirection: 'row', alignItems: 'center', gap: 6,
+      paddingHorizontal: 12, paddingVertical: 8, borderRadius: R.full,
+      backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.border,
+    }}>
+      <Ionicons name={icon} size={14} color={iconColor || C.textSub} />
+      <Text style={{ color: C.text, fontSize: 12, fontWeight: '600' }}>{value}</Text>
+    </View>
+  )
+}
+
+function RealEstateDetails({ p }: { p: any }) {
+  const price    = p.salePrice ?? p.price
+  const hasSpecs = p.area || p.rooms || p.floor || p.district
+  if (!hasSpecs && !p.area) return null
+  return (
+    <View style={{ marginBottom: 16, gap: 10 }}>
+      {hasSpecs && (
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+          {p.area     && <SpecCard icon="resize-outline"  label="Талбай" value={`${p.area}м²`} />}
+          {p.rooms    && <SpecCard icon="bed-outline"     label="Өрөө"   value={`${p.rooms}`} />}
+          {p.floor    && (
+            <SpecCard
+              icon="business-outline"
+              label="Давхар"
+              value={`${p.floor}${p.totalFloors ? '/' + p.totalFloors : ''}`}
+            />
+          )}
+          {p.district && <SpecCard icon="location-outline" label="Дүүрэг" value={p.district} />}
+        </View>
+      )}
+      {p.area && price > 0 && (
+        <Text style={{ color: C.textMuted, fontSize: 13 }}>
+          м²-ийн үнэ: <Text style={{ color: C.text, fontWeight: '700' }}>
+            {Math.round(price / p.area).toLocaleString()}₮
+          </Text>
+        </Text>
+      )}
+    </View>
+  )
+}
+
+function ServiceDetails({ p }: { p: any }) {
+  const hasPills = p.duration || p.rating || p.district
+  if (!hasPills) return null
+  return (
+    <View style={{ marginBottom: 16, gap: 10 }}>
+      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 8 }}>
+        {p.duration && <SpecPill icon="time-outline"     value={`${p.duration} мин`} />}
+        {p.rating   && <SpecPill icon="star"             value={`${p.rating}`} iconColor="#F9A825" />}
+        {p.district && <SpecPill icon="location-outline" value={p.district} />}
+      </View>
+      {p.availableSlots != null && p.availableSlots > 0 && (
+        <Text style={{ color: C.textMuted, fontSize: 13 }}>
+          Захиалах боломжтой цаг: <Text style={{ color: C.text, fontWeight: '700' }}>
+            {p.availableSlots}
+          </Text>
+        </Text>
+      )}
+    </View>
+  )
+}
+
+function PreOrderDetails({ p }: { p: any }) {
+  const current  = Number(p.currentBatch) || 0
+  const min      = Number(p.minBatch) || 1
+  const progress = Math.min(Math.round((current / min) * 100), 100)
+  // deliveryEstimate is stored as a date string on the Product model; if
+  // it parses to a valid date, compute days left — otherwise treat it as
+  // free-form text and render it under the bar.
+  const deadline   = p.deliveryEstimate ? new Date(p.deliveryEstimate) : null
+  const hasValidDate = deadline && !isNaN(deadline.getTime())
+  const daysLeft   = hasValidDate
+    ? Math.max(0, Math.ceil((deadline.getTime() - Date.now()) / 86400000))
+    : null
+  const price    = p.salePrice ?? p.price
+  const advance  = p.advancePercent
+    ? Math.round((price * p.advancePercent) / 100)
+    : null
+
+  return (
+    <View style={{ marginBottom: 16, gap: 10 }}>
+      <View style={{
+        padding: 14, borderRadius: R.lg, gap: 8,
+        backgroundColor: C.bgCard, borderWidth: 1, borderColor: C.border,
+      }}>
+        <View style={{ flexDirection: 'row', justifyContent: 'space-between' }}>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '600' }}>
+            Захиалга цугласан
+          </Text>
+          <Text style={{ color: C.text, fontSize: 13, fontWeight: '800' }}>
+            {current}/{min}
+          </Text>
+        </View>
+        <View style={{
+          height: 10, borderRadius: 5, overflow: 'hidden',
+          backgroundColor: C.bgSection,
+        }}>
+          <View style={{
+            width: `${progress}%`, height: '100%',
+            backgroundColor: C.brand, borderRadius: 5,
+          }} />
+        </View>
+        {daysLeft !== null && (
+          <Text style={{ color: C.textMuted, fontSize: 12 }}>
+            {daysLeft} хоног үлдсэн
+          </Text>
+        )}
+        {!hasValidDate && p.deliveryEstimate && (
+          <Text style={{ color: C.textMuted, fontSize: 12 }}>
+            Хүргэлт: {p.deliveryEstimate}
+          </Text>
+        )}
+      </View>
+      {advance != null && (
+        <Text style={{ color: C.textMuted, fontSize: 13 }}>
+          Урьдчилгаа: <Text style={{ color: C.text, fontWeight: '700' }}>
+            {p.advancePercent}% ({advance.toLocaleString()}₮)
+          </Text>
+        </Text>
+      )}
+    </View>
   )
 }
