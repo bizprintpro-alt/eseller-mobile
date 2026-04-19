@@ -53,11 +53,38 @@ export interface HerderProfile extends HerderSummary {
   livestock?:     LivestockCounts;
   coverImage?:    string;
   avatar?:        string;
+  reviewCount?:   number;           // total public reviews
   stats?: {
     deliverySuccessRate?: number;   // 0-1
     onTimeRate?:          number;   // 0-1
     productCount?:        number;
   };
+}
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Reviews — buyer-submitted ratings for delivered HerderOrders.
+// Backend contract: GET /herder/profile/:id/reviews, POST /herder/reviews.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export interface HerderReview {
+  id:        string;
+  rating:    number;      // 1-5
+  text:      string;
+  createdAt: string;      // ISO
+  buyerName: string;
+}
+
+export interface HerderReviewsResponse {
+  reviews: HerderReview[];
+  total:   number;
+  page:    number;
+  pages:   number;
+}
+
+export interface HerderReviewPayload {
+  orderId: string;
+  rating:  number;        // 1-5
+  text?:   string;        // ≤500 chars
 }
 
 export interface LivestockCounts {

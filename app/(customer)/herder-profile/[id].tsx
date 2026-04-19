@@ -14,6 +14,7 @@ import {
   ProductGridSkeleton,
   useProvinceDays,
   type HerderProduct,
+  type HerderReview,
 } from '../../../src/features/herder';
 import { useMalchnaasEnabled } from '../../../src/config/remoteFlags';
 
@@ -36,12 +37,18 @@ export default function HerderProfileScreen() {
     enabled:  !!herderId && malchnaasEnabled,
   });
 
+  const reviewsQ = useQuery({
+    queryKey: ['herder-reviews', herderId],
+    queryFn:  () => HerderAPI.reviews(herderId, { limit: 10 }),
+    enabled:  !!herderId && malchnaasEnabled,
+  });
+
   const [refreshing, setRefreshing] = useState(false);
   const onRefresh = useCallback(async () => {
     setRefreshing(true);
-    await Promise.all([profileQ.refetch(), listingsQ.refetch()]);
+    await Promise.all([profileQ.refetch(), listingsQ.refetch(), reviewsQ.refetch()]);
     setRefreshing(false);
-  }, [profileQ, listingsQ]);
+  }, [profileQ, listingsQ, reviewsQ]);
 
   // Hook must run before early returns — undefined code is handled safely.
   const provinceDays = useProvinceDays(profileQ.data?.province);
@@ -171,7 +178,49 @@ export default function HerderProfileScreen() {
           </View>
         )}
       </View>
+
+      {/* Reviews */}
+      <View style={{ paddingHorizontal: 16, marginTop: 26 }}>
+        <Text style={s.sectionTitle}>
+          Үнэлгээ ({reviewsQ.data?.total ?? profile.reviewCount ?? 0})
+        </Text>
+        {reviewsQ.isLoading ? (
+          <ActivityIndicator color={BRAND} style={{ marginTop: 10 }} />
+        ) : (reviewsQ.data?.reviews.length ?? 0) === 0 ? (
+          <View style={s.emptyBox}>
+            <Ionicons name="chatbubble-ellipses-outline" size={36} color="#ccc" />
+            <Text style={s.muted}>Одоогоор үнэлгээ байхгүй</Text>
+          </View>
+        ) : (
+          <View style={{ gap: 10 }}>
+            {reviewsQ.data!.reviews.map((r) => <ReviewRow key={r.id} r={r} />)}
+          </View>
+        )}
+      </View>
     </ScrollView>
+  );
+}
+
+function ReviewRow({ r }: { r: HerderReview }) {
+  const when = new Date(r.createdAt).toLocaleDateString('mn-MN');
+  return (
+    <View style={s.reviewCard}>
+      <View style={s.reviewHead}>
+        <Text style={s.reviewName}>{r.buyerName}</Text>
+        <View style={s.reviewStars}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Ionicons
+              key={n}
+              name={n <= r.rating ? 'star' : 'star-outline'}
+              size={13}
+              color={n <= r.rating ? '#F59E0B' : '#D6D3D1'}
+            />
+          ))}
+        </View>
+      </View>
+      {r.text ? <Text style={s.reviewText}>{r.text}</Text> : null}
+      <Text style={s.reviewDate}>{when}</Text>
+    </View>
   );
 }
 
@@ -241,4 +290,11 @@ const s = StyleSheet.create({
 
   secondaryBtn: { borderWidth: 1, borderColor: BRAND, borderRadius: 10, paddingHorizontal: 18, paddingVertical: 10 },
   secondaryBtnText: { color: BRAND, fontWeight: '700' },
+
+  reviewCard: { backgroundColor: '#fafaf9', borderWidth: 1, borderColor: '#f5f5f4', borderRadius: 12, padding: 12 },
+  reviewHead: { flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', marginBottom: 6 },
+  reviewName: { fontSize: 13, fontWeight: '700', color: '#292524' },
+  reviewStars: { flexDirection: 'row', gap: 2 },
+  reviewText: { fontSize: 13, color: '#44403c', lineHeight: 18, marginBottom: 6 },
+  reviewDate: { fontSize: 11, color: '#a8a29e' },
 });
