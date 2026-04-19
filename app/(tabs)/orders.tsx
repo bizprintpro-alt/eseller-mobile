@@ -4,14 +4,16 @@ import { useQuery } from '@tanstack/react-query';
 import { get } from '../../src/services/api';
 
 const STATUS: Record<string, { label: string; color: string; bg: string }> = {
-  pending: { label: 'Хүлээгдэж байна', color: '#854F0B', bg: '#FAEEDA' },
-  confirmed: { label: 'Баталгаажсан', color: '#185FA5', bg: '#E6F1FB' },
-  preparing: { label: 'Бэлтгэж байна', color: '#534AB7', bg: '#EEEDFE' },
-  ready: { label: 'Бэлэн', color: '#0F6E56', bg: '#E1F5EE' },
-  handed_to_driver: { label: 'Жолоочид өгсөн', color: '#854F0B', bg: '#FAEEDA' },
-  delivering: { label: 'Хүргэж байна', color: '#185FA5', bg: '#E6F1FB' },
-  delivered: { label: 'Хүргэгдсэн', color: '#3B6D11', bg: '#EAF3DE' },
-  cancelled: { label: 'Цуцлагдсан', color: '#A32D2D', bg: '#FCEBEB' },
+  pending:          { label: 'Хүлээгдэж байна', color: '#854F0B', bg: '#FAEEDA' },
+  confirmed:        { label: 'Баталгаажсан',    color: '#185FA5', bg: '#E6F1FB' },
+  preparing:        { label: 'Бэлтгэж байна',   color: '#534AB7', bg: '#EEEDFE' },
+  ready:            { label: 'Бэлэн',           color: '#0F6E56', bg: '#E1F5EE' },
+  handed_to_driver: { label: 'Жолоочид өгсөн',  color: '#854F0B', bg: '#FAEEDA' },
+  delivering:       { label: 'Хүргэж байна',    color: '#185FA5', bg: '#E6F1FB' },
+  delivered:        { label: 'Хүргэгдсэн',      color: '#3B6D11', bg: '#EAF3DE' },
+  cancelled:        { label: 'Цуцлагдсан',      color: '#A32D2D', bg: '#FCEBEB' },
+  // Legacy — migrated from the old 5-state pipeline. Render as "Хүргэж байна".
+  shipped:          { label: 'Хүргэж байна',    color: '#185FA5', bg: '#E6F1FB' },
 };
 
 export default function OrdersScreen() {
