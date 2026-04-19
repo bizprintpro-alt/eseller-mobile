@@ -54,9 +54,25 @@ api.interceptors.response.use(
     }
     const data = err.response?.data;
     const message = data?.message || data?.error || 'Сервертэй холбогдож чадсангүй';
-    throw new Error(message);
+    const wrapped = new Error(message) as ApiError;
+    wrapped.status = err.response?.status;
+    // No response at all → network down / timeout / DNS. Preserve for
+    // offline-queue heuristics in feature code without re-coupling to axios.
+    wrapped.isOffline = !err.response;
+    throw wrapped;
   },
 );
+
+/** Error thrown by the api helpers. `isOffline` is true when the server
+ *  was unreachable (no response), false when the server returned 4xx/5xx. */
+export interface ApiError extends Error {
+  status?:    number;
+  isOffline?: boolean;
+}
+
+export function isOfflineError(e: unknown): boolean {
+  return !!(e && typeof e === 'object' && (e as ApiError).isOffline);
+}
 
 export const get = (url: string, params?: any) =>
   api.get(url, { params });
