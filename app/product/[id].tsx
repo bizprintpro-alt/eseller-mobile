@@ -17,6 +17,24 @@ import { Skeleton }  from '../../src/shared/ui/Skeleton'
 
 const { width } = Dimensions.get('window')
 
+interface ReviewItem {
+  id:           string
+  rating:       number
+  title?:       string | null
+  comment?:     string | null
+  buyerName?:   string | null
+  isVerified?:  boolean
+  sellerReply?: string | null
+  createdAt:    string
+}
+
+interface ReviewsResponse {
+  reviews: ReviewItem[]
+  total:   number
+  breakdown: { rating: number; count: number }[]
+  hasMore: boolean
+}
+
 export default function ProductDetailScreen() {
   const { id }              = useLocalSearchParams()
   const { add, items }      = useCart()
@@ -28,6 +46,15 @@ export default function ProductDetailScreen() {
   const { data: product, isLoading } = useQuery({
     queryKey: ['product', id],
     queryFn:  () => get(`/products/${id}`),
+    enabled:  !!id,
+  })
+
+  const { data: reviewsData } = useQuery<ReviewsResponse>({
+    queryKey: ['product-reviews', id],
+    // axios response interceptor unwraps res.data at runtime, so the
+    // runtime shape is the review payload even though the static type
+    // of `get()` still says AxiosResponse. Double cast to bridge.
+    queryFn:  () => get(`/products/${id}/reviews?limit=5`) as unknown as Promise<ReviewsResponse>,
     enabled:  !!id,
   })
 
@@ -321,6 +348,13 @@ export default function ProductDetailScreen() {
             </View>
           )}
 
+          {/* Reviews section — matches web ReviewSection parity (audit C7).
+              Hidden entirely when there are no reviews so the screen doesn't
+              render an empty "0 үнэлгээ" block. */}
+          {reviewsData && reviewsData.total > 0 && (
+            <ReviewSection data={reviewsData} avgRating={p?.rating ?? 0} />
+          )}
+
           {/* Store */}
           {p?.entity && (
             <TouchableOpacity
@@ -409,6 +443,131 @@ export default function ProductDetailScreen() {
           </Text>
         </TouchableOpacity>
       </View>
+    </View>
+  )
+}
+
+function ReviewSection({ data, avgRating }: { data: ReviewsResponse; avgRating: number }) {
+  // Backend returns only the rating buckets that actually have reviews,
+  // so fill in the missing rows with 0 counts for a stable 5-bar layout.
+  const countsByRating: Record<number, number> = { 1: 0, 2: 0, 3: 0, 4: 0, 5: 0 }
+  for (const b of data.breakdown) countsByRating[b.rating] = b.count
+
+  return (
+    <View style={{
+      backgroundColor: C.bgCard, borderRadius: R.lg,
+      padding: 16, marginBottom: 16,
+      borderWidth: 1, borderColor: C.border,
+    }}>
+      <Text style={{ ...F.h4, color: C.text, marginBottom: 12 }}>
+        Үнэлгээ ({data.total})
+      </Text>
+
+      {/* Summary row: big avg on the left, breakdown bars on the right */}
+      <View style={{ flexDirection: 'row', alignItems: 'center', gap: 16, marginBottom: 14 }}>
+        <View style={{ alignItems: 'center', minWidth: 80 }}>
+          <Text style={{ fontSize: 32, fontWeight: '900', color: C.text }}>
+            {(avgRating || 0).toFixed(1)}
+          </Text>
+          <View style={{ flexDirection: 'row', gap: 2, marginTop: 2 }}>
+            {[1, 2, 3, 4, 5].map((n) => (
+              <Ionicons
+                key={n}
+                name={n <= Math.round(avgRating) ? 'star' : 'star-outline'}
+                size={12}
+                color="#F59E0B"
+              />
+            ))}
+          </View>
+        </View>
+        <View style={{ flex: 1, gap: 4 }}>
+          {[5, 4, 3, 2, 1].map((r) => {
+            const count = countsByRating[r]
+            const pct = data.total > 0 ? (count / data.total) * 100 : 0
+            return (
+              <View key={r} style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                <Text style={{ color: C.textMuted, fontSize: 11, width: 10 }}>{r}</Text>
+                <Ionicons name="star" size={10} color="#F59E0B" />
+                <View style={{
+                  flex: 1, height: 6, borderRadius: 3, backgroundColor: C.bgSection,
+                  overflow: 'hidden',
+                }}>
+                  <View style={{ width: `${pct}%`, height: '100%', backgroundColor: '#F59E0B' }} />
+                </View>
+                <Text style={{ color: C.textMuted, fontSize: 11, width: 24, textAlign: 'right' }}>
+                  {count}
+                </Text>
+              </View>
+            )
+          })}
+        </View>
+      </View>
+
+      {/* Individual reviews */}
+      <View style={{ gap: 12 }}>
+        {data.reviews.map((r) => <ReviewRow key={r.id} r={r} />)}
+      </View>
+
+      {data.hasMore && (
+        <Text style={{ color: C.textMuted, fontSize: 12, marginTop: 12, textAlign: 'center' }}>
+          +{data.total - data.reviews.length} бусад үнэлгээ
+        </Text>
+      )}
+    </View>
+  )
+}
+
+function ReviewRow({ r }: { r: ReviewItem }) {
+  const when = new Date(r.createdAt).toLocaleDateString('mn-MN')
+  return (
+    <View style={{
+      backgroundColor: C.bgSection, borderRadius: R.md,
+      padding: 12, borderWidth: 0.5, borderColor: C.border,
+    }}>
+      <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+        <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6, flex: 1 }}>
+          <Text style={{ color: C.text, fontWeight: '700', fontSize: 13 }} numberOfLines={1}>
+            {r.buyerName || 'Хэрэглэгч'}
+          </Text>
+          {r.isVerified && (
+            <Ionicons name="checkmark-circle" size={13} color="#16A34A" />
+          )}
+        </View>
+        <View style={{ flexDirection: 'row', gap: 1 }}>
+          {[1, 2, 3, 4, 5].map((n) => (
+            <Ionicons
+              key={n}
+              name={n <= r.rating ? 'star' : 'star-outline'}
+              size={12}
+              color={n <= r.rating ? '#F59E0B' : C.border}
+            />
+          ))}
+        </View>
+      </View>
+      {r.title ? (
+        <Text style={{ color: C.text, fontWeight: '600', fontSize: 13, marginBottom: 4 }}>
+          {r.title}
+        </Text>
+      ) : null}
+      {r.comment ? (
+        <Text style={{ color: C.textSub, fontSize: 13, lineHeight: 19 }}>
+          {r.comment}
+        </Text>
+      ) : null}
+      {r.sellerReply ? (
+        <View style={{
+          marginTop: 8, paddingTop: 8, paddingLeft: 10,
+          borderLeftWidth: 2, borderLeftColor: C.brand,
+        }}>
+          <Text style={{ color: C.brand, fontWeight: '700', fontSize: 11, marginBottom: 2 }}>
+            Худалдагчийн хариу
+          </Text>
+          <Text style={{ color: C.textSub, fontSize: 12, lineHeight: 17 }}>
+            {r.sellerReply}
+          </Text>
+        </View>
+      ) : null}
+      <Text style={{ color: C.textMuted, fontSize: 11, marginTop: 6 }}>{when}</Text>
     </View>
   )
 }
