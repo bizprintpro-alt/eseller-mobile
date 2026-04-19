@@ -4,6 +4,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { post } from '../../src/services/api';
+import { uploadImageToCloudinary } from '../../src/lib/uploadImage';
 import { C, R, F } from '../../src/shared/design';
 import { useMalchnaasEnabled } from '../../src/config/remoteFlags';
 
@@ -35,7 +36,16 @@ export default function RegisterShopScreen() {
 
   const pickImg = async () => {
     const r = await ImagePicker.launchImageLibraryAsync({ mediaTypes: ['images'], quality: 0.8, allowsEditing: true, aspect: [1, 1] });
-    if (!r.canceled) setLogo(r.assets[0].uri);
+    if (r.canceled) return;
+    setSubmitting(true);
+    try {
+      const cloudUrl = await uploadImageToCloudinary(r.assets[0].uri);
+      setLogo(cloudUrl);
+    } catch {
+      Alert.alert('Алдаа', 'Зураг хуулахад алдаа гарлаа');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const canNext = () => {
@@ -58,7 +68,7 @@ export default function RegisterShopScreen() {
   const handleSubmit = async () => {
     setSubmitting(true);
     try {
-      await post('/shops', { type: shopType, name, slug: slug || name.toLowerCase().replace(/\s+/g, '-'), phone, about, bankName, bankAccount });
+      await post('/shops', { type: shopType, name, slug: slug || name.toLowerCase().replace(/\s+/g, '-'), phone, about, bankName, bankAccount, logo: logo || undefined });
       Alert.alert('Амжилттай! 🎉', 'Дэлгүүр үүслээ', [{ text: 'OK', onPress: () => router.back() }]);
     } catch (e: any) { Alert.alert('Алдаа', e.message); }
     setSubmitting(false);

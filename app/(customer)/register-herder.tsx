@@ -7,6 +7,7 @@ import { Ionicons } from '@expo/vector-icons';
 import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
+import { uploadImageToCloudinary } from '../../src/lib/uploadImage';
 
 import { C, R, F } from '../../src/shared/design';
 import { useMalchnaasEnabled, usePilotAimags, isPilotAimag } from '../../src/config/remoteFlags';
@@ -70,7 +71,16 @@ export default function RegisterHerderScreen() {
     const r = await ImagePicker.launchImageLibraryAsync({
       mediaTypes: ['images'], quality: 0.7, allowsEditing: true,
     });
-    if (!r.canceled) setVetCertUri(r.assets[0].uri);
+    if (r.canceled) return;
+    setSubmitting(true);
+    try {
+      const cloudUrl = await uploadImageToCloudinary(r.assets[0].uri);
+      setVetCertUri(cloudUrl);
+    } catch {
+      Alert.alert('Алдаа', 'Зураг хуулахад алдаа гарлаа');
+    } finally {
+      setSubmitting(false);
+    }
   };
 
   const captureGps = async () => {

@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import {
   View, Text, FlatList, TouchableOpacity, Image, TextInput, Alert, RefreshControl,
+  ActivityIndicator,
 } from 'react-native'
 import { router } from 'expo-router'
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query'
@@ -8,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as ImagePicker from 'expo-image-picker'
 import * as Haptics from 'expo-haptics'
 import { get, post, del } from '../../src/services/api'
+import { uploadMultipleImages } from '../../src/lib/uploadImage'
 import { C, R } from '../../src/shared/design'
 
 export default function OwnerProducts() {
@@ -17,6 +19,7 @@ export default function OwnerProducts() {
   const [form, setForm] = useState({
     name: '', price: '', description: '', stock: '', category: 'other', images: [] as string[],
   })
+  const [uploading, setUploading] = useState(false)
 
   const { data, refetch, isRefetching } = useQuery({
     queryKey: ['owner-products'],
@@ -45,8 +48,16 @@ export default function OwnerProducts() {
       allowsMultipleSelection: true,
       quality: 0.8,
     })
-    if (!r.canceled) {
-      setForm(f => ({ ...f, images: [...f.images, ...r.assets.map(a => a.uri)].slice(0, 5) }))
+    if (r.canceled) return
+    const localUris = r.assets.map(a => a.uri)
+    setUploading(true)
+    try {
+      const cloudUrls = await uploadMultipleImages(localUris)
+      setForm(f => ({ ...f, images: [...f.images, ...cloudUrls].slice(0, 5) }))
+    } catch {
+      Alert.alert('Алдаа', 'Зураг хуулахад алдаа гарлаа')
+    } finally {
+      setUploading(false)
     }
   }
 
@@ -140,9 +151,13 @@ export default function OwnerProducts() {
                 style={{ backgroundColor: C.bgSection, borderRadius: R.lg, padding: 12, color: C.text, fontSize: 14, marginBottom: 10, borderWidth: 1, borderColor: C.border }}
               />
             ))}
-            <TouchableOpacity onPress={pickImage} style={{ backgroundColor: C.bgSection, borderRadius: R.lg, padding: 14, alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: C.border, flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
-              <Ionicons name="camera" size={18} color={C.textMuted} />
-              <Text style={{ color: C.textMuted, fontWeight: '600' }}>Зураг нэмэх ({form.images.length}/5)</Text>
+            <TouchableOpacity onPress={pickImage} disabled={uploading} style={{ backgroundColor: C.bgSection, borderRadius: R.lg, padding: 14, alignItems: 'center', marginBottom: 16, borderWidth: 1, borderColor: C.border, flexDirection: 'row', justifyContent: 'center', gap: 8 }}>
+              {uploading
+                ? <ActivityIndicator size="small" color={C.brand} />
+                : <Ionicons name="camera" size={18} color={C.textMuted} />}
+              <Text style={{ color: C.textMuted, fontWeight: '600' }}>
+                {uploading ? 'Зураг хуулж байна...' : `Зураг нэмэх (${form.images.length}/5)`}
+              </Text>
             </TouchableOpacity>
             <View style={{ flexDirection: 'row', gap: 10 }}>
               <TouchableOpacity onPress={() => setModal(false)} style={{ flex: 1, backgroundColor: C.bgSection, borderRadius: R.lg, padding: 14, alignItems: 'center', borderWidth: 1, borderColor: C.border }}>

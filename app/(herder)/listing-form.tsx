@@ -15,6 +15,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Ionicons } from '@expo/vector-icons';
 import * as ImagePicker from 'expo-image-picker';
 import { HerderAPI } from '../../src/features/herder/api';
+import { uploadMultipleImages } from '../../src/lib/uploadImage';
 import * as HerderQueue from '../../src/features/herder/queue';
 import { CATEGORIES } from '../../src/features/herder/constants';
 import type { ProductWritable } from '../../src/features/herder/types';
@@ -49,6 +50,7 @@ export default function HerderListingForm() {
   const qc = useQueryClient();
   const [form, setForm] = useState<FormState>(EMPTY);
   const [hydrated, setHydrated] = useState(false);
+  const [uploading, setUploading] = useState(false);
 
   const existing = useQuery({
     queryKey: ['herder', 'my', 'products', 'detail', id],
@@ -115,11 +117,16 @@ export default function HerderListingForm() {
       allowsMultipleSelection: true,
       quality: 0.8,
     });
-    if (!r.canceled) {
-      setForm((f) => ({
-        ...f,
-        images: [...f.images, ...r.assets.map((a) => a.uri)].slice(0, 5),
-      }));
+    if (r.canceled) return;
+    const localUris = r.assets.map((a) => a.uri);
+    setUploading(true);
+    try {
+      const cloudUrls = await uploadMultipleImages(localUris);
+      setForm((f) => ({ ...f, images: [...f.images, ...cloudUrls].slice(0, 5) }));
+    } catch {
+      Alert.alert('Алдаа', 'Зураг хуулахад алдаа гарлаа');
+    } finally {
+      setUploading(false);
     }
   };
 
@@ -327,6 +334,7 @@ export default function HerderListingForm() {
             {form.images.length < 5 && (
               <TouchableOpacity
                 onPress={pickImage}
+                disabled={uploading}
                 style={{
                   width: 80,
                   height: 80,
@@ -339,10 +347,15 @@ export default function HerderListingForm() {
                   justifyContent: 'center',
                 }}
               >
-                <Ionicons name="camera" size={22} color={C.herder} />
-                <Text style={{ color: C.herder, fontSize: 10, marginTop: 4, fontWeight: '700' }}>
-                  Нэмэх
-                </Text>
+                {uploading
+                  ? <ActivityIndicator size="small" color={C.herder} />
+                  : <>
+                      <Ionicons name="camera" size={22} color={C.herder} />
+                      <Text style={{ color: C.herder, fontSize: 10, marginTop: 4, fontWeight: '700' }}>
+                        Нэмэх
+                      </Text>
+                    </>
+                }
               </TouchableOpacity>
             )}
           </View>
@@ -352,9 +365,9 @@ export default function HerderListingForm() {
       <View style={{ padding: 12, paddingBottom: 32 }}>
         <TouchableOpacity
           onPress={onSubmit}
-          disabled={save.isPending}
+          disabled={save.isPending || uploading}
           style={{
-            backgroundColor: save.isPending ? C.textMuted : C.herder,
+            backgroundColor: (save.isPending || uploading) ? C.textMuted : C.herder,
             borderRadius: R.lg,
             padding: 16,
             alignItems: 'center',
