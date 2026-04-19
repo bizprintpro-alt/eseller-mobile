@@ -6,10 +6,10 @@ import {
 } from 'react-native'
 import { router, useLocalSearchParams }
   from 'expo-router'
-import { useQuery } from '@tanstack/react-query'
+import { useQuery, useMutation } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
-import { get }       from '../../src/services/api'
+import { get, post } from '../../src/services/api'
 import { useCart }   from '../../src/store/cart'
 import { useAuth }   from '../../src/store/auth'
 import { C, R, F, S } from '../../src/shared/design'
@@ -81,6 +81,35 @@ export default function ProductDetailScreen() {
 
   const p      = product as any
   const images = p?.images || p?.media || []
+
+  // Start-or-resume conversation with the shop. Backend find-or-creates
+  // so a buyer tapping the button twice still lands on the same thread.
+  // Sends product context so the seller sees what the buyer is asking
+  // about (mirrors the web chat widget payload).
+  const startChat = useMutation({
+    mutationFn: async () => {
+      if (!user) throw new Error('AUTH_REQUIRED')
+      if (!p?.shop?.id) throw new Error('NO_SHOP')
+      const price = p.salePrice ?? p.price
+      return post('/chat/conversations', {
+        shopId:        p.shop.id,
+        customerId:    user.id,
+        customerName:  user.name || 'Хэрэглэгч',
+        productName:   p.name,
+        productPrice:  price,
+      }) as unknown as Promise<{ id: string }>
+    },
+    onSuccess: (conv) => {
+      router.push({ pathname: '/chat/[id]', params: { id: conv.id } } as any)
+    },
+    onError: (err: Error) => {
+      if (err.message === 'AUTH_REQUIRED') {
+        router.push('/(auth)/login' as any)
+        return
+      }
+      Alert.alert('Чат эхлүүлж чадсангүй', 'Дахин оролдоно уу')
+    },
+  })
 
   const handleAddToCart = () => {
     if (!p) return
@@ -463,6 +492,48 @@ export default function ProductDetailScreen() {
                 </Text>
               </View>
               <Ionicons name="chevron-forward" size={18} color={C.border} />
+            </TouchableOpacity>
+          )}
+
+          {/* Chat-with-seller — parity with web chat widget (AUDIT M1c).
+              Uses p.shop from the API (the legacy Store card above still
+              reads p.entity and silently hides). Tap → find-or-create
+              conversation with product context, then open chat screen.
+              Hidden when the product has no shop (herder / orphan listings). */}
+          {p?.shop?.id && (
+            <TouchableOpacity
+              onPress={() => startChat.mutate()}
+              disabled={startChat.isPending}
+              accessibilityRole="button"
+              accessibilityLabel={`Худалдагчтай чатлах${p.shop.name ? `: ${p.shop.name}` : ''}`}
+              style={{
+                flexDirection: 'row', alignItems: 'center',
+                backgroundColor: C.bgCard, borderRadius: R.lg,
+                padding: 14, marginBottom: 16, gap: 12,
+                borderWidth: 1, borderColor: C.brand,
+                opacity: startChat.isPending ? 0.6 : 1,
+              }}
+            >
+              <View style={{
+                width: 40, height: 40, borderRadius: 20,
+                backgroundColor: C.brand,
+                alignItems: 'center', justifyContent: 'center',
+              }}>
+                <Ionicons name="chatbubbles" size={18} color={C.white} />
+              </View>
+              <View style={{ flex: 1 }}>
+                <Text style={{ color: C.text, fontWeight: '700', fontSize: 14 }}>
+                  Худалдагчтай чатлах
+                </Text>
+                <Text style={{ color: C.textMuted, fontSize: 12, marginTop: 2 }}>
+                  {p.shop.name || 'Асуух зүйл байвал шууд бичнэ үү'}
+                </Text>
+              </View>
+              <Ionicons
+                name={startChat.isPending ? 'hourglass-outline' : 'chevron-forward'}
+                size={18}
+                color={C.brand}
+              />
             </TouchableOpacity>
           )}
         </View>
