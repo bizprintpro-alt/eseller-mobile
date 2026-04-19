@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 
 import { C, R, F } from '../../src/shared/design';
-import { MALCHNAAS_ENABLED } from '../../src/config/flags';
+import { MALCHNAAS_ENABLED, MALCHNAAS_PILOT_AIMAGS, isPilotAimag } from '../../src/config/flags';
 import {
   PROVINCES,
   HERDER_BRAND,
@@ -92,7 +92,7 @@ export default function RegisterHerderScreen() {
     switch (step) {
       case 1: return !!firstName.trim() && !!lastName.trim() && REGISTER_NUMBER_RE.test(registerNumber) && /^\d{8,}$/.test(phone);
       case 2: return totalHead > 0 && !!aDansNumber.trim();
-      case 3: return !!province && !!district.trim();
+      case 3: return !!province && isPilotAimag(province) && !!district.trim();
       case 4: return true; // vet cert optional until backend enforces it
       case 5: return !!bankName && /^\d{6,}$/.test(bankAccount);
       case 6: return true;
@@ -202,10 +202,12 @@ export default function RegisterHerderScreen() {
 
       {step === 3 && (<>
         <Text style={st.title}>Байршил</Text>
-        <Text style={st.helper}>Хүргэлтийн хугацаа сонгосон аймагт тулгуурлана</Text>
+        <Text style={st.helper}>
+          Пилот үе шатанд зөвхөн сонгосон аймгуудад бүртгэл нээлттэй. Бусад аймагт удахгүй нэмэгдэнэ.
+        </Text>
         <Text style={st.sectionLabel}>Аймаг *</Text>
         <View style={st.provinceGrid}>
-          {PROVINCES.map((p) => (
+          {PROVINCES.filter((p) => MALCHNAAS_PILOT_AIMAGS.includes(p.code)).map((p) => (
             <TouchableOpacity
               key={p.code}
               style={[st.provinceChip, province === p.code && st.provinceChipActive]}
