@@ -5,7 +5,7 @@ import {
 import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '../../store/auth';
+import { useAuth, type AppRole } from '../../store/auth';
 import { C, R, roleColor } from '../design';
 
 // Test account phone numbers — role switcher is only visible for these
@@ -100,7 +100,7 @@ export function RoleSwitcher() {
 function RoleModal({ open, onClose }: { open: boolean; onClose: () => void }) {
   const { role, setRole } = useAuth();
 
-  const handleSelect = (key: string) => {
+  const handleSelect = (key: AppRole) => {
     Haptics.notificationAsync(Haptics.NotificationFeedbackType.Success);
     setRole(key);
     onClose();

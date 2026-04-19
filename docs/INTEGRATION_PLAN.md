@@ -215,19 +215,19 @@ Rate limit: same 1000 req/hour as `/dropshipping/*` (doc 02 §7).
 
 Each milestone is one PR, one feature-flag-safe deploy.
 
-| M | Title | Files | Dep | Ships if flag OFF? |
-|---|-------|-------|-----|--------------------|
-| **M0** | `MALCHNAAS_ENABLED` flag + `src/features/herder/` skeleton (A1, A2, A3, A5, M12) | 5 new + 1 mod | — | ✅ yes (no user-visible) |
-| **M1** | Wire discovery screen (M3, M4, M5, M6) — fixes dead "Шууд захиалах" button, routes to new detail | 4 mods | M0 | ✅ yes (flag guards A8 route; button still wires but product detail falls back) |
-| **M2** | Herder product detail (A8) + herder public profile (A9) | 2 new | M0 | ✅ yes |
-| **M3** | Home flag gates (M7, M8) | 2 mods | M0 | ✅ yes |
-| **M4** | Become-herder landing + wizard (A6, A7) — depends on backend POST /herder/register | 2 new | backend | ✅ yes |
-| **M5** | Herder dashboard + listings CRUD (A10, A11, A12, M10) | 3 new + 1 mod | M4 | ✅ yes |
-| **M6** | Herder orders + state transitions + earnings (A13, A14) | 2 new | M5 | ✅ yes |
-| **M7** | Coordinator dashboard (A15) | 1 new | M5 | ✅ yes |
-| **M8** | 8th card in register-shop wizard (M1, M2) — opens the funnel | 1 mod | M4 | ✅ yes |
-| **M9** | Pilot enable: flip `MALCHNAAS_ENABLED=true` for 3 aimags (Архангай/Төв/Сэлэнгэ) | config only | M1-M8 | N/A |
-| **M10** | Offline-first listing create (cache + retry queue) | 1 new | M5 | ✅ yes |
+| M | Title | Files | Dep | Ships if flag OFF? | Status |
+|---|-------|-------|-----|--------------------|--------|
+| **M0** | `MALCHNAAS_ENABLED` flag + `src/features/herder/` skeleton (A1, A2, A3, A5, M12) | 5 new + 1 mod | — | ✅ yes (no user-visible) | ✅ done |
+| **M1** | Wire discovery screen (M3, M4, M5, M6) — fixes dead "Шууд захиалах" button, routes to new detail | 4 mods | M0 | ✅ yes (flag guards A8 route; button still wires but product detail falls back) | ✅ done |
+| **M2** | Herder product detail (A8) + herder public profile (A9) | 2 new | M0 | ✅ yes | ✅ done |
+| **M3** | Home flag gates (M7, M8) | 2 mods | M0 | ✅ yes | ✅ done |
+| **M4** | Become-herder landing + wizard (A6, A7) — depends on backend POST /herder/register | 2 new | backend | ✅ yes | ✅ done |
+| **M5** | Herder dashboard + listings CRUD (A10, A11, A12, M10) | 3 new + 1 mod | M4 | ✅ yes | ✅ done |
+| **M6** | Herder orders + state transitions + earnings (A13, A14) | 2 new | M5 | ✅ yes | ✅ done |
+| **M7** | Coordinator dashboard (A15) | 1 new | M5 | ✅ yes | ✅ done |
+| **M8** | 8th card in register-shop wizard (M1, M2) — opens the funnel | 1 mod | M4 | ✅ yes | ✅ done |
+| **M9** | Pilot enable: flip `MALCHNAAS_ENABLED=true` for 3 aimags (Архангай/Төв/Сэлэнгэ) | config only | M1-M8 | N/A | ✅ done |
+| **M10** | Polish pass: role union type (`AppRole` / `BackendRole`) + doc hygiene. Offline-first listing create deferred to Phase-2. | 4 mods | M5-M9 | ✅ yes | ✅ done |
 
 ### Order of work
 
