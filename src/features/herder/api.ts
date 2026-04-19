@@ -24,6 +24,9 @@ import type {
   HerderProfile,
   HerderRegisterPayload,
   HerderRegisterResponse,
+  HerderReview,
+  HerderReviewPayload,
+  HerderReviewsResponse,
   HerderRosterResponse,
   MyHerderOrder,
   MyHerderProduct,
@@ -70,6 +73,38 @@ export const HerderAPI = {
       const data = unwrap<HerderProfile | null>(res);
       return data ?? null;
     }),
+
+  /**
+   * Public reviews for a herder profile. Paginated, hides `isHidden` entries
+   * server-side. Not cache-wrapped — review freshness matters more than
+   * offline tolerance here.
+   *   GET /api/herder/profile/:herderId/reviews?page&limit
+   */
+  reviews: async (
+    herderId: string,
+    params: { page?: number; limit?: number } = {},
+  ): Promise<HerderReviewsResponse> => {
+    const res = await get(`/herder/profile/${herderId}/reviews`, params);
+    const data = unwrap<Partial<HerderReviewsResponse>>(res);
+    return {
+      reviews: data.reviews ?? [],
+      total:   data.total   ?? 0,
+      page:    data.page    ?? 1,
+      pages:   data.pages   ?? 0,
+    };
+  },
+
+  /**
+   * Submit a review for a delivered HerderOrder. Backend enforces:
+   *   - caller is the order's buyer
+   *   - order.status === 'delivered'
+   *   - one review per order (unique index)
+   *   POST /api/herder/reviews
+   */
+  submitReview: async (payload: HerderReviewPayload): Promise<HerderReview> => {
+    const res = await post('/herder/reviews', payload);
+    return unwrap<HerderReview>(res);
+  },
 
   /**
    * Submit a herder registration application.
