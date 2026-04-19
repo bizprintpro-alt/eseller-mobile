@@ -5,14 +5,16 @@ import { router } from 'expo-router';
  * the backend `role` field (lowercase) returned in the login response.
  *
  * Backend role mapping:
- *   buyer      → /(tabs)              — default buyer home
- *   seller     → /(owner)/dashboard    — shop owner (STORE in app)
- *   store      → /(owner)/dashboard    — legacy alias
- *   owner      → /(owner)/dashboard    — legacy alias
- *   affiliate  → /(seller)/dashboard   — commission marketer
- *   delivery   → /(driver)/deliveries  — courier
- *   driver     → /(driver)/deliveries  — alias
- *   admin      → /(tabs)
+ *   buyer       → /(tabs)                   — default buyer home
+ *   seller      → /(owner)/dashboard         — shop owner (STORE in app)
+ *   store       → /(owner)/dashboard         — legacy alias
+ *   owner       → /(owner)/dashboard         — legacy alias
+ *   affiliate   → /(seller)/dashboard        — commission marketer
+ *   delivery    → /(driver)/deliveries       — courier
+ *   driver      → /(driver)/deliveries       — alias
+ *   herder      → /(herder)/dashboard        — Малчнаас шууд seller
+ *   coordinator → /(coordinator)/dashboard   — sum-level onboarding helper
+ *   admin       → /(tabs)
  */
 export function routeByRole(role: string | null | undefined): void {
   const r = (role ?? '').toLowerCase();
@@ -27,6 +29,14 @@ export function routeByRole(role: string | null | undefined): void {
   }
   if (r === 'delivery' || r === 'driver') {
     router.replace('/(driver)/deliveries' as never);
+    return;
+  }
+  if (r === 'herder') {
+    router.replace('/(herder)/dashboard' as never);
+    return;
+  }
+  if (r === 'coordinator') {
+    router.replace('/(coordinator)/dashboard' as never);
     return;
   }
   // buyer / admin / unknown
