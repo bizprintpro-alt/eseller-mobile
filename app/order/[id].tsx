@@ -5,14 +5,22 @@ import { Ionicons } from '@expo/vector-icons';
 import { OrderAPI } from '../../src/services/api';
 import { C, R } from '../../src/shared/design';
 
+// Keep in sync with backend Order.status enum and (tabs)/orders.tsx STATUS.
+// `handed_to_driver` is the seller-facing "жолоочид өгсөн" step; `delivering`
+// is the driver-facing "замд явж байна" step.
 const STATUS_STEPS = [
-  { key: 'pending', label: 'Хүлээгдэж', icon: 'time-outline' as const },
-  { key: 'confirmed', label: 'Баталгаажсан', icon: 'checkmark-circle-outline' as const },
-  { key: 'preparing', label: 'Бэлтгэж', icon: 'construct-outline' as const },
-  { key: 'ready', label: 'Бэлэн', icon: 'cube-outline' as const },
-  { key: 'delivering', label: 'Хүргэж', icon: 'car-outline' as const },
-  { key: 'delivered', label: 'Хүргэгдсэн', icon: 'checkmark-done-outline' as const },
+  { key: 'pending',          label: 'Хүлээгдэж',    icon: 'time-outline' as const },
+  { key: 'confirmed',        label: 'Баталгаажсан', icon: 'checkmark-circle-outline' as const },
+  { key: 'preparing',        label: 'Бэлтгэж',      icon: 'construct-outline' as const },
+  { key: 'ready',            label: 'Бэлэн',        icon: 'cube-outline' as const },
+  { key: 'handed_to_driver', label: 'Жолоочид',     icon: 'bicycle-outline' as const },
+  { key: 'delivering',       label: 'Хүргэж',       icon: 'car-outline' as const },
+  { key: 'delivered',        label: 'Хүргэгдсэн',   icon: 'checkmark-done-outline' as const },
 ];
+
+// Legacy backend rows may still carry `shipped`. Treat it as `delivering`
+// so the timeline renders sensibly instead of showing "Unknown".
+const STATUS_ALIAS: Record<string, string> = { shipped: 'delivering' };
 
 export default function OrderDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
@@ -40,7 +48,8 @@ export default function OrderDetailScreen() {
   }
 
   const items = Array.isArray(order.items) ? order.items : [];
-  const currentStepIdx = STATUS_STEPS.findIndex((s) => s.key === order.status);
+  const resolvedStatus = STATUS_ALIAS[order.status] ?? order.status;
+  const currentStepIdx = STATUS_STEPS.findIndex((s) => s.key === resolvedStatus);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }}>
