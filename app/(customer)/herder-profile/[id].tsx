@@ -12,6 +12,7 @@ import {
   PROVINCES,
   HerderAPI,
   ProductGridSkeleton,
+  useProvinceDays,
   type HerderProduct,
 } from '../../../src/features/herder';
 import { useMalchnaasEnabled } from '../../../src/config/remoteFlags';
@@ -41,6 +42,9 @@ export default function HerderProfileScreen() {
     await Promise.all([profileQ.refetch(), listingsQ.refetch()]);
     setRefreshing(false);
   }, [profileQ, listingsQ]);
+
+  // Hook must run before early returns — undefined code is handled safely.
+  const provinceDays = useProvinceDays(profileQ.data?.province);
 
   if (!malchnaasEnabled) {
     return (
@@ -139,7 +143,7 @@ export default function HerderProfileScreen() {
             <StatPill label="Мал" value={`${head}`} />
           )}
           {province && (
-            <StatPill label="Хүргэлт" value={`${province.days}ө`} />
+            <StatPill label="Хүргэлт" value={`${provinceDays ?? province.days}ө`} />
           )}
           {profile.stats?.deliverySuccessRate !== undefined && (
             <StatPill label="Амжилт" value={`${Math.round(profile.stats.deliverySuccessRate * 100)}%`} />

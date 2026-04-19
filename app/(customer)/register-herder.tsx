@@ -14,6 +14,7 @@ import {
   PROVINCES,
   HERDER_BRAND,
   HerderAPI,
+  useProvinceDays,
   type HerderRegisterPayload,
   type LivestockCounts,
 } from '../../src/features/herder';
@@ -142,6 +143,7 @@ export default function RegisterHerderScreen() {
   };
 
   const selectedProvince = PROVINCES.find((p) => p.code === province);
+  const selectedProvinceDays = useProvinceDays(province);
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: R.lg, paddingBottom: 80 }}>
@@ -220,7 +222,7 @@ export default function RegisterHerderScreen() {
           ))}
         </View>
         {selectedProvince && (
-          <Text style={st.helper}>Хүргэлт ~{selectedProvince.days} хоног</Text>
+          <Text style={st.helper}>Хүргэлт ~{selectedProvinceDays ?? selectedProvince.days} хоног</Text>
         )}
         <TextInput style={st.input} placeholder="Сум / баг *" placeholderTextColor={C.textMuted} value={district} onChangeText={setDistrict} />
         <TouchableOpacity style={st.gpsBtn} onPress={captureGps} disabled={gpsLoading}>

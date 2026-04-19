@@ -13,7 +13,11 @@
  *
  *   GET /api/config/mobile
  *   → 200 {
- *       malchnaas?: { enabled?: boolean; pilotAimags?: string[] }
+ *       malchnaas?: {
+ *         enabled?:        boolean;
+ *         pilotAimags?:    string[];
+ *         aimagDelivery?:  Record<string, string>;  // code → "7-10"
+ *       }
  *     }
  *
  * This is a public endpoint — no auth required. It must never return
@@ -32,8 +36,10 @@ const CACHE_KEY  = 'remote-config:v1';
 const REFRESH_MS = 15 * 60 * 1000; // 15 min — lazy refresh on foreground
 
 export interface MalchnaasConfig {
-  enabled:     boolean;
-  pilotAimags: readonly string[];
+  enabled:       boolean;
+  pilotAimags:   readonly string[];
+  /** Per-aimag delivery window override: code → human string (e.g. "7-10"). */
+  aimagDelivery: Readonly<Record<string, string>>;
 }
 
 interface RemoteConfigState {
@@ -45,13 +51,26 @@ interface RemoteConfigState {
 }
 
 const DEFAULT_MALCHNAAS: MalchnaasConfig = {
-  enabled:     MALCHNAAS_ENABLED_DEFAULT,
-  pilotAimags: MALCHNAAS_PILOT_AIMAGS_DEFAULT,
+  enabled:       MALCHNAAS_ENABLED_DEFAULT,
+  pilotAimags:   MALCHNAAS_PILOT_AIMAGS_DEFAULT,
+  // Empty map = "no overrides"; consumers fall through to PROVINCES[].days.
+  aimagDelivery: {},
 };
 
 interface CachedEnvelope {
   t: number;
   v: { malchnaas: MalchnaasConfig };
+}
+
+function coerceAimagDelivery(raw: unknown): Record<string, string> {
+  if (!raw || typeof raw !== 'object') return {};
+  const out: Record<string, string> = {};
+  for (const [k, v] of Object.entries(raw as Record<string, unknown>)) {
+    if (typeof k === 'string' && k.length > 0 && typeof v === 'string' && v.length > 0) {
+      out[k.toUpperCase()] = v;
+    }
+  }
+  return out;
 }
 
 function coerceMalchnaas(raw: unknown): MalchnaasConfig {
@@ -65,7 +84,8 @@ function coerceMalchnaas(raw: unknown): MalchnaasConfig {
         .filter((x): x is string => typeof x === 'string' && x.length > 0)
         .map((s) => s.toUpperCase())
     : MALCHNAAS_PILOT_AIMAGS_DEFAULT;
-  return { enabled, pilotAimags };
+  const aimagDelivery = coerceAimagDelivery(r.aimagDelivery);
+  return { enabled, pilotAimags, aimagDelivery };
 }
 
 export const useRemoteConfig = create<RemoteConfigState>((set, getState) => ({
@@ -121,6 +141,27 @@ export const useMalchnaasEnabled = (): boolean =>
 export const usePilotAimags = (): readonly string[] =>
   useRemoteConfig((s) => s.malchnaas.pilotAimags);
 
+/**
+ * Remote override for an aimag's delivery window. Returns `undefined`
+ * when ops hasn't overridden this aimag — consumers should fall back
+ * to the compiled-in `PROVINCES[code].days` default. Subscribes to the
+ * store so a fresh remote-config round-trip re-renders the UI.
+ */
+export const useAimagDeliveryOverride = (
+  code: string | null | undefined,
+): string | undefined =>
+  useRemoteConfig((s) =>
+    code ? s.malchnaas.aimagDelivery[code.toUpperCase()] : undefined,
+  );
+
+/**
+ * Full override map for list contexts — a parent that renders a loop
+ * of aimag rows can subscribe once here and look up each code inline,
+ * instead of calling a hook per row (React doesn't allow that).
+ */
+export const useAimagDeliveryMap = (): Readonly<Record<string, string>> =>
+  useRemoteConfig((s) => s.malchnaas.aimagDelivery);
+
 export function getMalchnaasEnabled(): boolean {
   return useRemoteConfig.getState().malchnaas.enabled;
 }
@@ -132,4 +173,11 @@ export function getPilotAimags(): readonly string[] {
 export function isPilotAimag(code: string | null | undefined): boolean {
   if (!code) return false;
   return getPilotAimags().includes(code.toUpperCase());
+}
+
+export function getAimagDeliveryOverride(
+  code: string | null | undefined,
+): string | undefined {
+  if (!code) return undefined;
+  return useRemoteConfig.getState().malchnaas.aimagDelivery[code.toUpperCase()];
 }
