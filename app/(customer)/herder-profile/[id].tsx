@@ -14,24 +14,25 @@ import {
   ProductGridSkeleton,
   type HerderProduct,
 } from '../../../src/features/herder';
-import { MALCHNAAS_ENABLED } from '../../../src/config/flags';
+import { useMalchnaasEnabled } from '../../../src/config/remoteFlags';
 
 function fmt(n: number) { return n.toLocaleString() + '₮'; }
 
 export default function HerderProfileScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const herderId = String(id ?? '');
+  const malchnaasEnabled = useMalchnaasEnabled();
 
   const profileQ = useQuery({
     queryKey: ['herder-profile', herderId],
     queryFn:  () => HerderAPI.profile(herderId),
-    enabled:  !!herderId && MALCHNAAS_ENABLED,
+    enabled:  !!herderId && malchnaasEnabled,
   });
 
   const listingsQ = useQuery({
     queryKey: ['herder-profile-products', herderId],
     queryFn:  () => HerderAPI.list({ herderId, limit: 30 }),
-    enabled:  !!herderId && MALCHNAAS_ENABLED,
+    enabled:  !!herderId && malchnaasEnabled,
   });
 
   const [refreshing, setRefreshing] = useState(false);
@@ -41,7 +42,7 @@ export default function HerderProfileScreen() {
     setRefreshing(false);
   }, [profileQ, listingsQ]);
 
-  if (!MALCHNAAS_ENABLED) {
+  if (!malchnaasEnabled) {
     return (
       <View style={s.center}>
         <Ionicons name="leaf-outline" size={48} color="#ccc" />

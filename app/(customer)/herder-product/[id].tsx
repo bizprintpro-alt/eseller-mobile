@@ -13,7 +13,7 @@ import {
   PROVINCES,
   HerderAPI,
 } from '../../../src/features/herder';
-import { MALCHNAAS_ENABLED } from '../../../src/config/flags';
+import { useMalchnaasEnabled } from '../../../src/config/remoteFlags';
 import { useCart } from '../../../src/store/cart';
 
 const { width } = Dimensions.get('window');
@@ -23,6 +23,7 @@ function fmt(n: number) { return n.toLocaleString() + '₮'; }
 export default function HerderProductDetailScreen() {
   const { id } = useLocalSearchParams<{ id: string }>();
   const add = useCart((s) => s.add);
+  const malchnaasEnabled = useMalchnaasEnabled();
 
   const [imgIdx, setImgIdx] = useState(0);
   const [qty, setQty] = useState(1);
@@ -30,10 +31,10 @@ export default function HerderProductDetailScreen() {
   const { data: product, isLoading, isError } = useQuery({
     queryKey: ['herder-product', id],
     queryFn:  () => HerderAPI.detail(String(id)),
-    enabled:  !!id && MALCHNAAS_ENABLED,
+    enabled:  !!id && malchnaasEnabled,
   });
 
-  if (!MALCHNAAS_ENABLED) {
+  if (!malchnaasEnabled) {
     return (
       <View style={s.centerScreen}>
         <Ionicons name="leaf-outline" size={48} color="#ccc" />

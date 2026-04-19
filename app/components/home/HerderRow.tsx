@@ -3,20 +3,21 @@ import { View, Text, ScrollView, TouchableOpacity, Image } from 'react-native';
 import { useQuery } from '@tanstack/react-query';
 import { router } from 'expo-router';
 import { HerderAPI, HomeRowSkeleton } from '../../../src/features/herder';
-import { MALCHNAAS_ENABLED } from '../../../src/config/flags';
+import { useMalchnaasEnabled } from '../../../src/config/remoteFlags';
 import { H } from './tokens';
 import { SectionHeader } from './SectionHeader';
 
 export function HerderRow() {
+  const malchnaasEnabled = useMalchnaasEnabled();
   const { data, isLoading } = useQuery({
     queryKey: ['herder-home'],
     queryFn:  () => HerderAPI.list({ limit: 6 }),
     staleTime: 120_000,
     retry:     false,
-    enabled:   MALCHNAAS_ENABLED,
+    enabled:   malchnaasEnabled,
   });
 
-  if (!MALCHNAAS_ENABLED) return null;
+  if (!malchnaasEnabled) return null;
 
   const products = data?.products ?? [];
 

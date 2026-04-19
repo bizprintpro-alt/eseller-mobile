@@ -9,7 +9,7 @@ import * as ImagePicker from 'expo-image-picker';
 import * as Location from 'expo-location';
 
 import { C, R, F } from '../../src/shared/design';
-import { MALCHNAAS_ENABLED, MALCHNAAS_PILOT_AIMAGS, isPilotAimag } from '../../src/config/flags';
+import { useMalchnaasEnabled, usePilotAimags, isPilotAimag } from '../../src/config/remoteFlags';
 import {
   PROVINCES,
   HERDER_BRAND,
@@ -35,6 +35,8 @@ const LIVESTOCK: { key: LivestockKey; label: string; emoji: string }[] = [
 
 export default function RegisterHerderScreen() {
   const { user } = useAuth();
+  const malchnaasEnabled = useMalchnaasEnabled();
+  const pilotAimags = usePilotAimags();
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
 
@@ -54,9 +56,9 @@ export default function RegisterHerderScreen() {
   const [gpsLoading, setGpsLoading]         = useState(false);
 
   useEffect(() => {
-    if (!MALCHNAAS_ENABLED) router.replace('/(customer)/register-shop' as never);
-  }, []);
-  if (!MALCHNAAS_ENABLED) return null;
+    if (!malchnaasEnabled) router.replace('/(customer)/register-shop' as never);
+  }, [malchnaasEnabled]);
+  if (!malchnaasEnabled) return null;
 
   const setHead = (k: LivestockKey, v: string) => {
     const n = parseInt(v || '0', 10);
@@ -207,7 +209,7 @@ export default function RegisterHerderScreen() {
         </Text>
         <Text style={st.sectionLabel}>Аймаг *</Text>
         <View style={st.provinceGrid}>
-          {PROVINCES.filter((p) => MALCHNAAS_PILOT_AIMAGS.includes(p.code)).map((p) => (
+          {PROVINCES.filter((p) => pilotAimags.includes(p.code)).map((p) => (
             <TouchableOpacity
               key={p.code}
               style={[st.provinceChip, province === p.code && st.provinceChipActive]}
