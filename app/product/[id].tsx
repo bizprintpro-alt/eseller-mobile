@@ -148,8 +148,10 @@ export default function ProductDetailScreen() {
       name:       p.name,
       price:      p.price,
       image:      images[0]?.url || null,
-      entityId:   p.entityId || '',
-      entityName: p.entity?.name || '',
+      // Cart labels shop ownership under the legacy `entityId/entityName`
+      // keys. API returns this as `shop.id/shop.name`, so map them here.
+      entityId:   p.shop?.id   || '',
+      entityName: p.shop?.name || '',
     }, qty)
     Alert.alert('Сагсанд нэмлээ',
       `${p.name} x ${qty}`,
@@ -474,11 +476,13 @@ export default function ProductDetailScreen() {
             <ReviewSection data={reviewsData} avgRating={p?.rating ?? 0} />
           )}
 
-          {/* Store */}
-          {p?.entity && (
+          {/* Store — links to /storefront/[slug]. The API returns the
+              seller's shop as `shop: { id, name, slug, logo }`. Requires
+              a slug so we don't navigate to /storefront/undefined. */}
+          {p?.shop?.slug && (
             <TouchableOpacity
               onPress={() =>
-                router.push(`/storefront/${p.entity.storefrontSlug}` as any)
+                router.push(`/storefront/${p.shop.slug}` as any)
               }
               style={{
                 flexDirection: 'row', alignItems: 'center',
@@ -487,18 +491,25 @@ export default function ProductDetailScreen() {
                 borderWidth: 1, borderColor: C.border,
               }}
             >
-              <View style={{
-                width: 48, height: 48, borderRadius: 24,
-                backgroundColor: C.primary,
-                alignItems: 'center', justifyContent: 'center',
-              }}>
-                <Text style={{ color: C.white, fontSize: 20, fontWeight: '700' }}>
-                  {p.entity.name?.[0]}
-                </Text>
-              </View>
+              {p.shop.logo ? (
+                <Image
+                  source={{ uri: p.shop.logo }}
+                  style={{ width: 48, height: 48, borderRadius: 24 }}
+                />
+              ) : (
+                <View style={{
+                  width: 48, height: 48, borderRadius: 24,
+                  backgroundColor: C.primary,
+                  alignItems: 'center', justifyContent: 'center',
+                }}>
+                  <Text style={{ color: C.white, fontSize: 20, fontWeight: '700' }}>
+                    {p.shop.name?.[0] || '?'}
+                  </Text>
+                </View>
+              )}
               <View style={{ flex: 1 }}>
                 <Text style={{ color: C.text, fontWeight: '700', fontSize: 15 }}>
-                  {p.entity.name}
+                  {p.shop.name}
                 </Text>
                 <Text style={{ color: C.textMuted, fontSize: 12, marginTop: 2 }}>
                   Дэлгүүр харах
@@ -509,9 +520,8 @@ export default function ProductDetailScreen() {
           )}
 
           {/* Chat-with-seller — parity with web chat widget (AUDIT M1c).
-              Uses p.shop from the API (the legacy Store card above still
-              reads p.entity and silently hides). Tap → find-or-create
-              conversation with product context, then open chat screen.
+              Tap → find-or-create conversation with product context, then
+              open chat screen.
               Hidden when the product has no shop (herder / orphan listings). */}
           {p?.shop?.id && (
             <TouchableOpacity
