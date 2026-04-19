@@ -3,13 +3,18 @@ import {
   View, Text, TextInput, TouchableOpacity,
   Alert, ActivityIndicator,
 } from 'react-native';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { useAuth } from '../../src/store/auth';
 import { routeByRole } from '../../src/shared/routing';
 import { post } from '../../src/services/api';
 import { C, R } from '../../src/shared/design';
+import { OTP_ENABLED_DEFAULT } from '../../src/config/flags';
 
 export default function OtpScreen() {
+  // Deep-link safeguard (see forgot-password.tsx).
+  if (!OTP_ENABLED_DEFAULT) {
+    return <Redirect href={'/(auth)/login' as never} />;
+  }
   const { loginWithOTP } = useAuth();
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');
