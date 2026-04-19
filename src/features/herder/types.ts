@@ -185,3 +185,74 @@ export interface EarningsSummary {
   }>;
   commissionRate: number;
 }
+
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+// Coordinator (sum-level review / roster)
+// Matches /api/herder/coordinator/* contract.
+// ━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━━
+
+export type ApplicationStatus = 'pending' | 'under_review' | 'approved' | 'rejected';
+
+export interface CoordinatorApplication {
+  id:             string;
+  user:           { _id: string; name: string; email: string; phone?: string } | null;
+  herderName:     string;
+  phone:          string;
+  registerNumber: string;
+  province:       string;
+  provinceName:   string;
+  district:       string;
+  livestock?:     LivestockCounts;
+  aDansNumber?:   string;
+  vetCertUri?:    string;
+  bankInfo?:      { bankName: string; accountNumber: string; accountName?: string };
+  notes?:         string;
+  status:         ApplicationStatus;
+  createdAt:      string;
+}
+
+export interface ApplicationsResponse {
+  applications: CoordinatorApplication[];
+  total:        number;
+  page:         number;
+  pages:        number;
+}
+
+export type ApplicationAction = 'approve' | 'reject' | 'request_review';
+
+export interface ApplicationReviewResponse {
+  id:              string;
+  status:          ApplicationStatus;
+  reviewedAt:      string;
+  rejectionReason?: string;
+}
+
+export interface CoordinatorHerderRow {
+  id:           string;
+  user:         { _id: string; name: string; phone?: string; email?: string } | null;
+  herderName:   string;
+  phone:        string;
+  province:     string;
+  district:     string;
+  isVerified:   boolean;
+  rating:       number;
+  orderCount:   number;
+  productCount: number;
+  onTimeRate:   number;
+  joinedAt:     string;
+}
+
+export interface HerderRosterResponse {
+  herders: CoordinatorHerderRow[];
+  total:   number;
+  page:    number;
+  pages:   number;
+}
+
+export interface CoordinatorStats {
+  scope:        string[] | 'ALL';
+  applications: { pending: number; underReview: number; approved: number; rejected: number };
+  herders:      { active: number };
+  orders:       Partial<Record<HerderOrderStatus, number>>;
+  sales:        { total: number; count: number };
+}
