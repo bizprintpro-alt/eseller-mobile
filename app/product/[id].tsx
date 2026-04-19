@@ -223,9 +223,25 @@ export default function ProductDetailScreen() {
             flexDirection: 'row', alignItems: 'center',
             justifyContent: 'space-between', marginBottom: 16,
           }}>
-            <Text style={{ color: C.brand, fontSize: 28, fontWeight: '900' }}>
-              {p?.price?.toLocaleString()}₮
-            </Text>
+            {/* Price block — if salePrice is set and lower than price,
+                show salePrice as the big brand-colored number and strike
+                through the original price next to it. Matches web
+                ProductDetailClient (AUDIT M1). */}
+            <View style={{ flexDirection: 'row', alignItems: 'baseline', gap: 10, flexShrink: 1 }}>
+              <Text style={{ color: C.brand, fontSize: 28, fontWeight: '900' }}>
+                {(p?.salePrice ?? p?.price)?.toLocaleString()}₮
+              </Text>
+              {p?.salePrice != null && p?.salePrice < p?.price && (
+                <Text style={{
+                  color: C.textMuted,
+                  fontSize: 16,
+                  fontWeight: '500',
+                  textDecorationLine: 'line-through',
+                }}>
+                  {p.price.toLocaleString()}₮
+                </Text>
+              )}
+            </View>
             {p?.rating > 0 && (
               <View style={{
                 flexDirection: 'row', alignItems: 'center', gap: 4,
@@ -291,6 +307,46 @@ export default function ProductDetailScreen() {
               <Ionicons name="add" size={18} color={C.white} />
             </TouchableOpacity>
           </View>
+
+          {/* Delivery info — per-product fee + ETA, mirrors web storefront
+              ModalBody. Skipped entirely for dropship products because the
+              yellow dropship card below already covers shipping semantics
+              (and dropship.estimatedShippingDaysMin/Max is in days, not mins).
+              Also skipped when both fields are empty so legacy products
+              without delivery metadata don't render an empty card. */}
+          {!p?.dropship && (p?.deliveryFee != null || p?.estimatedMins != null) && (
+            <View style={{
+              flexDirection: 'row',
+              alignItems: 'center',
+              gap: 14,
+              marginBottom: 16,
+              backgroundColor: C.bgSection,
+              borderRadius: R.lg,
+              padding: 12,
+              borderWidth: 1,
+              borderColor: C.border,
+            }}>
+              {p?.deliveryFee != null && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="car-outline" size={16} color={C.textSub} />
+                  <Text style={{ color: C.text, fontSize: 13, fontWeight: '600' }}>
+                    {p.deliveryFee === 0 ? 'Үнэгүй хүргэлт' : `${p.deliveryFee.toLocaleString()}₮ хүргэлт`}
+                  </Text>
+                </View>
+              )}
+              {p?.deliveryFee != null && p?.estimatedMins != null && (
+                <View style={{ width: 1, height: 14, backgroundColor: C.border }} />
+              )}
+              {p?.estimatedMins != null && (
+                <View style={{ flexDirection: 'row', alignItems: 'center', gap: 6 }}>
+                  <Ionicons name="time-outline" size={16} color={C.textSub} />
+                  <Text style={{ color: C.text, fontSize: 13, fontWeight: '600' }}>
+                    ~{p.estimatedMins} мин
+                  </Text>
+                </View>
+              )}
+            </View>
+          )}
 
           {/* Dropship badges — shown only for products imported from AliExpress / CJ.
               Sits above the description so the buyer sees the shipping caveats
