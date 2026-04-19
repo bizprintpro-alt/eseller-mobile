@@ -1,10 +1,20 @@
-import { Tabs } from 'expo-router';
+import { Tabs, Redirect } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { C } from '../../src/shared/design';
+import { useAuth } from '../../src/store/auth';
 
 export default function HerderLayout() {
   const insets = useSafeAreaInsets();
+  const { token, role } = useAuth();
+
+  // Deep-link guard: unauth → login, wrong role → buyer tabs.
+  // Admin passes through so support can inspect the herder UI.
+  if (!token) return <Redirect href={'/login' as never} />;
+  const backendRole = (useAuth.getState().user?.role || '').toString().toLowerCase();
+  if (role !== 'HERDER' && backendRole !== 'admin' && backendRole !== 'superadmin') {
+    return <Redirect href={'/(tabs)' as never} />;
+  }
 
   return (
     <Tabs
