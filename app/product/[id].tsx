@@ -265,6 +265,46 @@ export default function ProductDetailScreen() {
             </TouchableOpacity>
           </View>
 
+          {/* Dropship badges — shown only for products imported from AliExpress / CJ.
+              Sits above the description so the buyer sees the shipping caveats
+              before reading the product copy. Matches Amazon-style "Import from"
+              convention: origin + ETA + customs disclaimer. */}
+          {p?.dropship && (
+            <View style={{
+              backgroundColor: '#FEF3C7',
+              borderRadius: R.lg,
+              padding: 14,
+              marginBottom: 16,
+              borderWidth: 1,
+              borderColor: '#FDE68A',
+              gap: 8,
+            }}>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="earth" size={18} color="#92400E" />
+                <Text style={{ color: '#92400E', fontWeight: '800', fontSize: 14 }}>
+                  Олон улсаас хүргэнэ
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8 }}>
+                <Ionicons name="time-outline" size={16} color="#92400E" />
+                <Text style={{ color: '#78350F', fontSize: 13 }}>
+                  Хүргэх хугацаа: {p.dropship.estimatedShippingDaysMin || 15}–{p.dropship.estimatedShippingDaysMax || 30} хоног
+                </Text>
+              </View>
+              <View style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+                <Ionicons name="information-circle-outline" size={16} color="#92400E" style={{ marginTop: 1 }} />
+                <Text style={{ color: '#78350F', fontSize: 12, flex: 1, lineHeight: 17 }}>
+                  Гаалийн хураамж, импортын татвар барааны үнэд багтаагүй. Хэрэглэгч тусад нь төлөх магадлалтай.
+                </Text>
+              </View>
+              {p.dropship.supplierName && (
+                <Text style={{ color: '#78350F', fontSize: 11, opacity: 0.75 }}>
+                  Нийлүүлэгч: {p.dropship.supplierName.toUpperCase()}
+                </Text>
+              )}
+            </View>
+          )}
+
           {/* Description */}
           {p?.description && (
             <View style={{
