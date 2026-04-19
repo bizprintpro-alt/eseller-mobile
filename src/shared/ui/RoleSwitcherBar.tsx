@@ -2,12 +2,12 @@ import React from 'react';
 import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
-import { useAuth } from '../../store/auth';
+import { useAuth, type AppRole } from '../../store/auth';
 import { MALCHNAAS_ENABLED } from '../../config/flags';
 import { C, R } from '../design';
 
 type RolePill = {
-  key:   string;
+  key:   AppRole;
   icon:  string;
   label: string;
   color: string;

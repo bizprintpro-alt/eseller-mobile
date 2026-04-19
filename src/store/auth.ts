@@ -5,6 +5,19 @@ import * as SecureStore from 'expo-secure-store';
 import * as LocalAuth from 'expo-local-authentication';
 import { post, get, setOnUnauthorized } from '../services/api';
 
+/** Backend role as returned by the Express API. */
+export type BackendRole =
+  | 'buyer'
+  | 'seller'
+  | 'affiliate'
+  | 'delivery'
+  | 'admin'
+  | 'herder'       // Малчнаас шууд — direct-from-herder seller
+  | 'coordinator'; // local sum coordinator helping herders onboard
+
+/** App-side role used by the UI (RoleSwitcherBar pills, route guards). */
+export type AppRole = 'BUYER' | 'STORE' | 'SELLER' | 'DRIVER' | 'HERDER' | 'COORDINATOR';
+
 interface User {
   _id?:    string;
   id?:     string;
@@ -12,34 +25,34 @@ interface User {
   email:   string;
   phone?:  string;
   avatar?: string | null;
-  role:    string;
+  role:    BackendRole | string;
 }
 
 interface AuthStore {
   user:      User | null;
   token:     string | null;
-  role:      string;
+  role:      AppRole;
   loading:   boolean;
 
   login:          (identifier: string, pass: string) => Promise<void>;
   loginWithOTP:   (phone: string, otp: string) => Promise<void>;
   restoreSession: (token: string) => Promise<void>;
   logout:         () => Promise<void>;
-  setRole:        (role: string) => void;
+  setRole:        (role: AppRole) => void;
   checkBio:       () => Promise<boolean>;
   loginWithBio:   () => Promise<boolean>;
 }
 
 // Backend role → app role mapping
-function mapRole(backendRole?: string): string {
-  const map: Record<string, string> = {
+function mapRole(backendRole?: string): AppRole {
+  const map: Record<string, AppRole> = {
     buyer:       'BUYER',
     seller:      'STORE',
     affiliate:   'SELLER',
     delivery:    'DRIVER',
     admin:       'BUYER',
-    herder:      'HERDER',      // Малчнаас шууд — direct-from-herder seller
-    coordinator: 'COORDINATOR', // local sum coordinator helping herders onboard
+    herder:      'HERDER',
+    coordinator: 'COORDINATOR',
   };
   return map[backendRole || 'buyer'] || 'BUYER';
 }
