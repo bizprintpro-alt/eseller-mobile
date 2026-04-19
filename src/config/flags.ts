@@ -1,6 +1,12 @@
 /**
- * Feature flags. Values are read from EXPO_PUBLIC_* env vars at bundle time.
- * Default OFF — opt-in by setting the corresponding env before `expo start`.
+ * Static feature-flag defaults read from EXPO_PUBLIC_* env vars at bundle
+ * time. These are the *fallback* values — the effective runtime values
+ * come from `remoteFlags.ts`, which overlays a cached remote-config
+ * response on top of these defaults.
+ *
+ * Do NOT import these constants in UI code. Use the `useMalchnaasEnabled`
+ * / `usePilotAimags` hooks (or the `getMalchnaas*` snapshots) so ops can
+ * flip pilot aimags without shipping a new build.
  */
 
 function boolFlag(name: string, fallback = false): boolean {
@@ -15,21 +21,14 @@ function csvFlag(name: string, fallback: readonly string[]): readonly string[] {
   return v.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
 }
 
-/** "Малчнаас шууд" — direct-from-herder marketplace (PRD v1.0). */
-export const MALCHNAAS_ENABLED = boolFlag('EXPO_PUBLIC_MALCHNAAS_ENABLED', false);
+/** Build-time default for the Малчнаас шууд kill-switch. */
+export const MALCHNAAS_ENABLED_DEFAULT = boolFlag('EXPO_PUBLIC_MALCHNAAS_ENABLED', false);
 
 /**
- * Pilot aimag codes for the Phase-1 rollout (PRD v1.0 §8).
- * Herder onboarding is hard-gated to these codes so we don't accept
- * applications we can't fulfill logistically. Override via
+ * Build-time default pilot aimag list. Overridable via
  * `EXPO_PUBLIC_MALCHNAAS_PILOT_AIMAGS="AKH,TOV,SEL"` (comma-separated codes).
  */
-export const MALCHNAAS_PILOT_AIMAGS: readonly string[] = csvFlag(
+export const MALCHNAAS_PILOT_AIMAGS_DEFAULT: readonly string[] = csvFlag(
   'EXPO_PUBLIC_MALCHNAAS_PILOT_AIMAGS',
   ['AKH', 'TOV', 'SEL'],
 );
-
-export function isPilotAimag(code: string | null | undefined): boolean {
-  if (!code) return false;
-  return MALCHNAAS_PILOT_AIMAGS.includes(code.toUpperCase());
-}

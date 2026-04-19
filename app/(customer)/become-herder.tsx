@@ -1,7 +1,7 @@
 import { useEffect } from 'react';
 import { router } from 'expo-router';
 import { OnboardingLanding, OnboardingConfig } from '../components/OnboardingLanding';
-import { MALCHNAAS_ENABLED } from '../../src/config/flags';
+import { useMalchnaasEnabled } from '../../src/config/remoteFlags';
 
 const CONFIG: OnboardingConfig = {
   title:     'Малчин болох',
@@ -25,9 +25,10 @@ const CONFIG: OnboardingConfig = {
 };
 
 export default function BecomeHerder() {
+  const enabled = useMalchnaasEnabled();
   useEffect(() => {
-    if (!MALCHNAAS_ENABLED) router.replace('/(customer)/become-seller' as never);
-  }, []);
-  if (!MALCHNAAS_ENABLED) return null;
+    if (!enabled) router.replace('/(customer)/become-seller' as never);
+  }, [enabled]);
+  if (!enabled) return null;
   return <OnboardingLanding config={CONFIG} />;
 }

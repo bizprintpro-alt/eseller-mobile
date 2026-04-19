@@ -5,9 +5,9 @@ import { router } from 'expo-router';
 import * as ImagePicker from 'expo-image-picker';
 import { post } from '../../src/services/api';
 import { C, R, F } from '../../src/shared/design';
-import { MALCHNAAS_ENABLED } from '../../src/config/flags';
+import { useMalchnaasEnabled } from '../../src/config/remoteFlags';
 
-const TYPES = [
+const TYPES_BASE = [
   { key: 'GENERAL', icon: 'storefront-outline', label: 'Ерөнхий' },
   { key: 'PREORDER', icon: 'time-outline', label: 'Preorder' },
   { key: 'REAL_ESTATE', icon: 'home-outline', label: 'Үл хөдлөх' },
@@ -15,11 +15,13 @@ const TYPES = [
   { key: 'AUTO', icon: 'car-outline', label: 'Авто' },
   { key: 'SERVICE', icon: 'briefcase-outline', label: 'Үйлчилгээ' },
   { key: 'DIGITAL', icon: 'cloud-outline', label: 'Дижитал' },
-  ...(MALCHNAAS_ENABLED ? [{ key: 'HERDER', icon: 'leaf-outline', label: 'Малчин' }] : []),
 ];
+const HERDER_TYPE = { key: 'HERDER', icon: 'leaf-outline', label: 'Малчин' };
 const BANKS = ['Хаан банк', 'Голомт банк', 'ХХБ', 'Төрийн банк', 'Богд банк', 'Капитрон банк'];
 
 export default function RegisterShopScreen() {
+  const malchnaasEnabled = useMalchnaasEnabled();
+  const TYPES = malchnaasEnabled ? [...TYPES_BASE, HERDER_TYPE] : TYPES_BASE;
   const [step, setStep] = useState(1);
   const [submitting, setSubmitting] = useState(false);
   const [shopType, setShopType] = useState('');

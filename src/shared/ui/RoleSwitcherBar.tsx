@@ -3,7 +3,7 @@ import { View, Text, TouchableOpacity } from 'react-native';
 import { router } from 'expo-router';
 import * as Haptics from 'expo-haptics';
 import { useAuth, type AppRole } from '../../store/auth';
-import { MALCHNAAS_ENABLED } from '../../config/flags';
+import { useMalchnaasEnabled } from '../../config/remoteFlags';
 import { C, R } from '../design';
 
 type RolePill = {
@@ -37,10 +37,11 @@ const COORDINATOR_PILL: RolePill = {
  */
 export function RoleSwitcherBar() {
   const { role, setRole, user } = useAuth();
+  const malchnaasEnabled = useMalchnaasEnabled();
   if (!user) return null;
 
-  const showHerder      = MALCHNAAS_ENABLED && user.role === 'herder';
-  const showCoordinator = MALCHNAAS_ENABLED && user.role === 'coordinator';
+  const showHerder      = malchnaasEnabled && user.role === 'herder';
+  const showCoordinator = malchnaasEnabled && user.role === 'coordinator';
   const ROLES: readonly RolePill[] = [
     ...BASE_ROLES,
     ...(showHerder ? [HERDER_PILL] : []),

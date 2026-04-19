@@ -13,7 +13,7 @@ import { useAuth } from '../../src/store/auth'
 import { useCart } from '../../src/store/cart'
 import { get, SocialAPI, LiveAPI } from '../../src/services/api'
 import { C, R, F, S } from '../../src/shared/design'
-import { MALCHNAAS_ENABLED } from '../../src/config/flags'
+import { useMalchnaasEnabled } from '../../src/config/remoteFlags'
 
 import { Skeleton } from '../../src/shared/ui/Skeleton'
 import { LiveCarousel } from '../components/LiveCarousel'
@@ -38,7 +38,7 @@ const QA_ITEMS = [
   { icon: 'lock-closed-outline' as const, label: 'BNPL', color: '#7C3AED', bg: '#FAF5FF', route: '/(customer)/bnpl' },
 ]
 
-const SERVICE_ITEMS = [
+const SERVICE_ITEMS_BASE = [
   {
     icon: 'radio-button-on' as const,
     color: '#EF4444',
@@ -53,13 +53,6 @@ const SERVICE_ITEMS = [
     sub: 'QPay, SocialPay',
     route: '/(customer)/wallet',
   },
-  ...(MALCHNAAS_ENABLED ? [{
-    icon: 'leaf' as const,
-    color: '#059669',
-    name: 'Малчны',
-    sub: 'Шинэ бараа',
-    route: '/(customer)/herder',
-  }] : []),
   {
     icon: 'people' as const,
     color: '#7C3AED',
@@ -68,6 +61,14 @@ const SERVICE_ITEMS = [
     route: '/(customer)/become-seller',
   },
 ]
+
+const HERDER_SERVICE_ITEM = {
+  icon: 'leaf' as const,
+  color: '#059669',
+  name: 'Малчны',
+  sub: 'Шинэ бараа',
+  route: '/(customer)/herder',
+}
 
 const ENTITY_TYPES = [
   { type: 'STORE',        icon: 'storefront', name: 'Дэлгүүр',   color: '#E8242C' },
@@ -250,6 +251,10 @@ function CountdownTimer({ endsAt }: { endsAt?: string }) {
 function BuyerHome() {
   const { user, role } = useAuth()
   const { count } = useCart()
+  const malchnaasEnabled = useMalchnaasEnabled()
+  const SERVICE_ITEMS = malchnaasEnabled
+    ? [...SERVICE_ITEMS_BASE.slice(0, 2), HERDER_SERVICE_ITEM, ...SERVICE_ITEMS_BASE.slice(2)]
+    : SERVICE_ITEMS_BASE
   const [bannerIdx, setBannerIdx] = useState(0)
   const bannerRef = useRef<ScrollView>(null)
 
@@ -886,7 +891,7 @@ function BuyerHome() {
         </View>
 
         {/* ═══ МАЛЧНЫ БУЛАН ═══ */}
-        {MALCHNAAS_ENABLED && (
+        {malchnaasEnabled && (
           <View style={{ marginBottom: 4 }}>
             <View style={{
               flexDirection: 'row', justifyContent: 'space-between',

@@ -14,6 +14,7 @@ import AsyncStorage
   from '@react-native-async-storage/async-storage'
 import * as Notifications from 'expo-notifications'
 import { useAuth }  from '../src/store/auth'
+import { useRemoteConfig } from '../src/config/remoteFlags'
 import { routeByRole } from '../src/shared/routing'
 import {
   registerPushToken,
@@ -76,6 +77,13 @@ function AppContent() {
         if (!v) setOnboarding(true)
       })
       .catch(() => {})
+  }, [])
+
+  // Remote config: hydrate from cache synchronously-ish, then fetch.
+  // Fires once on mount; refresh() self-throttles via lastFetched.
+  useEffect(() => {
+    const { hydrate, refresh } = useRemoteConfig.getState()
+    hydrate().finally(() => { refresh() })
   }, [])
 
   // Push token бүртгэх + foreground/tap listeners (нэвтэрсэн үед)
