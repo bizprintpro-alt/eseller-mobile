@@ -3,14 +3,20 @@ import {
   View, Text, TextInput, TouchableOpacity, Alert,
   ActivityIndicator, ScrollView, KeyboardAvoidingView, Platform,
 } from 'react-native';
-import { router } from 'expo-router';
+import { Redirect, router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import { post } from '../../src/services/api';
 import { C, R } from '../../src/shared/design';
+import { OTP_ENABLED_DEFAULT } from '../../src/config/flags';
 
 type Step = 1 | 2 | 3;
 
 export default function ForgotPasswordScreen() {
+  // Deep-link safeguard: if the OTP flag is off, bounce to login instead of
+  // letting the user hit a 404 on /auth/otp/send.
+  if (!OTP_ENABLED_DEFAULT) {
+    return <Redirect href={'/(auth)/login' as never} />;
+  }
   const [step, setStep] = useState<Step>(1);
   const [phone, setPhone] = useState('');
   const [otp, setOtp] = useState('');

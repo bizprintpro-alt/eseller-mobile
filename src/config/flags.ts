@@ -37,3 +37,12 @@ export const MALCHNAAS_PILOT_AIMAGS_DEFAULT: readonly string[] = csvFlag(
   'EXPO_PUBLIC_MALCHNAAS_PILOT_AIMAGS',
   ['AKH', 'TOV', 'SEL'],
 );
+
+/**
+ * OTP gate — enables the forgot-password flow (and, transitively, any other
+ * feature that relies on `/auth/otp/send`, `/auth/otp/verify`, and
+ * `/auth/reset-password`). Off by default: the Express backend does not ship
+ * those endpoints yet, so exposing the UI produces 404s. Flip to `true` via
+ * `EXPO_PUBLIC_OTP_ENABLED=true` once an SMS provider is wired up.
+ */
+export const OTP_ENABLED_DEFAULT = boolFlag('EXPO_PUBLIC_OTP_ENABLED', false);

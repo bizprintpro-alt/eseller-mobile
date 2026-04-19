@@ -18,6 +18,7 @@ import {
   getBiometricSession,
   enableBiometric,
 } from '../../src/shared/biometric';
+import { OTP_ENABLED_DEFAULT } from '../../src/config/flags';
 
 const TEST_USERS = [
   { label: '🛍️ Худалдан авагч', phone: '99000001', color: '#1A73E8' },
@@ -287,27 +288,34 @@ export default function LoginScreen() {
           <Text style={{ color: '#333', fontSize: 15, fontWeight: '600' }}>Google-ээр нэвтрэх</Text>
         </TouchableOpacity>
 
-        {/* OTP */}
-        <TouchableOpacity
-          onPress={() => router.push('/(auth)/otp')}
-          style={{
-            backgroundColor: C.bgSection, borderRadius: R.lg,
-            padding: 15, alignItems: 'center', marginBottom: 16,
-            flexDirection: 'row', justifyContent: 'center', gap: 10,
-            borderWidth: 1, borderColor: C.border,
-          }}
-        >
-          <Ionicons name="phone-portrait" size={18} color={C.text} />
-          <Text style={{ color: C.text, fontSize: 15, fontWeight: '600' }}>Утсаар нэвтрэх</Text>
-        </TouchableOpacity>
+        {/* OTP phone login — same backend gap as forgot-password.
+            Calls /auth/otp-send + /auth/otp/verify which the Express API
+            doesn't ship. Gated behind the same flag. */}
+        {OTP_ENABLED_DEFAULT && (
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/otp')}
+            style={{
+              backgroundColor: C.bgSection, borderRadius: R.lg,
+              padding: 15, alignItems: 'center', marginBottom: 16,
+              flexDirection: 'row', justifyContent: 'center', gap: 10,
+              borderWidth: 1, borderColor: C.border,
+            }}
+          >
+            <Ionicons name="phone-portrait" size={18} color={C.text} />
+            <Text style={{ color: C.text, fontSize: 15, fontWeight: '600' }}>Утсаар нэвтрэх</Text>
+          </TouchableOpacity>
+        )}
 
-        {/* Forgot password */}
-        <TouchableOpacity
-          onPress={() => router.push('/(auth)/forgot-password' as never)}
-          style={{ alignItems: 'center', marginBottom: 12 }}
-        >
-          <Text style={{ color: C.textSub, fontSize: 13 }}>Нууц үгээ мартсан уу?</Text>
-        </TouchableOpacity>
+        {/* Forgot password — gated behind OTP_ENABLED because the backend
+            has no /auth/otp/send yet. Flip the flag once SMS is wired up. */}
+        {OTP_ENABLED_DEFAULT && (
+          <TouchableOpacity
+            onPress={() => router.push('/(auth)/forgot-password' as never)}
+            style={{ alignItems: 'center', marginBottom: 12 }}
+          >
+            <Text style={{ color: C.textSub, fontSize: 13 }}>Нууц үгээ мартсан уу?</Text>
+          </TouchableOpacity>
+        )}
 
         {/* Register */}
         <View style={{ flexDirection: 'row', justifyContent: 'center', gap: 6 }}>
