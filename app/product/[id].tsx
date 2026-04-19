@@ -35,6 +35,21 @@ interface ReviewsResponse {
   hasMore: boolean
 }
 
+interface RelatedProduct {
+  id:          string
+  name:        string
+  price:       number
+  salePrice?:  number | null
+  images?:     string[] | null
+  emoji?:      string | null
+  rating?:     number | null
+  reviewCount?: number | null
+}
+
+interface RelatedResponse {
+  products: RelatedProduct[]
+}
+
 export default function ProductDetailScreen() {
   const { id }              = useLocalSearchParams()
   const { add, items }      = useCart()
@@ -55,6 +70,12 @@ export default function ProductDetailScreen() {
     // runtime shape is the review payload even though the static type
     // of `get()` still says AxiosResponse. Double cast to bridge.
     queryFn:  () => get(`/products/${id}/reviews?limit=5`) as unknown as Promise<ReviewsResponse>,
+    enabled:  !!id,
+  })
+
+  const { data: relatedData } = useQuery<RelatedResponse>({
+    queryKey: ['product-related', id],
+    queryFn:  () => get(`/products/${id}/related?limit=6`) as unknown as Promise<RelatedResponse>,
     enabled:  !!id,
   })
 
@@ -446,6 +467,14 @@ export default function ProductDetailScreen() {
           )}
         </View>
 
+        {/* Related products — same-category feed, matches web parity (AUDIT M1b).
+            Placed outside the padded Info container so the horizontal
+            ScrollView can bleed to the screen edges. Hidden when the
+            endpoint returned nothing. */}
+        {relatedData && relatedData.products.length > 0 && (
+          <RelatedSection products={relatedData.products} currentId={id as string} />
+        )}
+
         <View style={{ height: 120 }} />
       </ScrollView>
 
@@ -625,5 +654,87 @@ function ReviewRow({ r }: { r: ReviewItem }) {
       ) : null}
       <Text style={{ color: C.textMuted, fontSize: 11, marginTop: 6 }}>{when}</Text>
     </View>
+  )
+}
+
+function RelatedSection({ products, currentId }: { products: RelatedProduct[]; currentId: string }) {
+  return (
+    <View style={{ marginBottom: 8 }}>
+      <Text style={{
+        ...F.h4,
+        color: C.text,
+        marginBottom: 12,
+        paddingHorizontal: 16,
+      }}>
+        Төстэй бараа
+      </Text>
+      <ScrollView
+        horizontal
+        showsHorizontalScrollIndicator={false}
+        contentContainerStyle={{ paddingHorizontal: 16, gap: 10 }}
+      >
+        {products.map((rp) => (
+          <RelatedCard key={rp.id} product={rp} currentId={currentId} />
+        ))}
+      </ScrollView>
+    </View>
+  )
+}
+
+function RelatedCard({ product, currentId }: { product: RelatedProduct; currentId: string }) {
+  const display = product.salePrice ?? product.price
+  const image = product.images?.[0]
+  // router.replace (not push) so the back button still returns to the
+  // originating screen rather than walking through the chain of related
+  // products the user tapped through.
+  const handlePress = () => {
+    if (product.id === currentId) return
+    router.replace({ pathname: '/product/[id]', params: { id: product.id } } as any)
+  }
+  return (
+    <TouchableOpacity
+      onPress={handlePress}
+      activeOpacity={0.8}
+      style={{
+        width: 140,
+        backgroundColor: C.bgCard,
+        borderRadius: R.lg,
+        borderWidth: 1,
+        borderColor: C.border,
+        overflow: 'hidden',
+      }}
+    >
+      <View style={{
+        width: '100%',
+        height: 140,
+        backgroundColor: C.bgSection,
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}>
+        {image ? (
+          <Image source={{ uri: image }} style={{ width: '100%', height: '100%' }} resizeMode="cover" />
+        ) : product.emoji ? (
+          <Text style={{ fontSize: 48 }}>{product.emoji}</Text>
+        ) : (
+          <Ionicons name="image-outline" size={32} color={C.border} />
+        )}
+      </View>
+      <View style={{ padding: 10, gap: 4 }}>
+        <Text numberOfLines={2} style={{ color: C.text, fontSize: 12, fontWeight: '600', minHeight: 32 }}>
+          {product.name}
+        </Text>
+        <Text style={{ color: C.brand, fontSize: 14, fontWeight: '800' }}>
+          {display?.toLocaleString()}₮
+        </Text>
+        {product.rating != null && product.rating > 0 && (
+          <View style={{ flexDirection: 'row', alignItems: 'center', gap: 3 }}>
+            <Ionicons name="star" size={11} color="#F9A825" />
+            <Text style={{ color: C.textMuted, fontSize: 11 }}>
+              {product.rating.toFixed(1)} ({product.reviewCount || 0})
+            </Text>
+          </View>
+        )}
+      </View>
+    </TouchableOpacity>
   )
 }
