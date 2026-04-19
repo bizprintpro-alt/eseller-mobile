@@ -11,6 +11,11 @@
 import { get, post, put, del } from '../../services/api';
 import { withCache } from './cache';
 import type {
+  ApplicationAction,
+  ApplicationReviewResponse,
+  ApplicationsResponse,
+  ApplicationStatus,
+  CoordinatorStats,
   EarningsSummary,
   HerderListParams,
   HerderListResponse,
@@ -19,6 +24,7 @@ import type {
   HerderProfile,
   HerderRegisterPayload,
   HerderRegisterResponse,
+  HerderRosterResponse,
   MyHerderOrder,
   MyHerderProduct,
   MyOrdersResponse,
@@ -137,6 +143,56 @@ export const HerderAPI = {
     earnings: async (): Promise<EarningsSummary> => {
       const res = await get('/herder/my/earnings');
       return unwrap<EarningsSummary>(res);
+    },
+  },
+
+  /**
+   * Coordinator-side endpoints. Require authenticated coordinator (or admin)
+   * whose `coordinatorProvinces` scope covers the target aimag. Out-of-scope
+   * writes return 404; the server deliberately hides whether an id exists
+   * outside the coordinator's region.
+   */
+  coordinator: {
+    applications: {
+      list: async (
+        params: { status?: ApplicationStatus | 'all'; page?: number; limit?: number } = {},
+      ): Promise<ApplicationsResponse> => {
+        const res = await get('/herder/coordinator/applications', params);
+        const data = unwrap<Partial<ApplicationsResponse>>(res);
+        return {
+          applications: data.applications ?? [],
+          total:        data.total        ?? 0,
+          page:         data.page         ?? 1,
+          pages:        data.pages        ?? 0,
+        };
+      },
+
+      review: async (
+        id: string,
+        action: ApplicationAction,
+        reason?: string,
+      ): Promise<ApplicationReviewResponse> => {
+        const res = await put(`/herder/coordinator/applications/${id}`, { action, reason });
+        return unwrap<ApplicationReviewResponse>(res);
+      },
+    },
+
+    herders: {
+      list: async (params: { page?: number; limit?: number } = {}): Promise<HerderRosterResponse> => {
+        const res = await get('/herder/coordinator/herders', params);
+        const data = unwrap<Partial<HerderRosterResponse>>(res);
+        return {
+          herders: data.herders ?? [],
+          total:   data.total   ?? 0,
+          page:    data.page    ?? 1,
+          pages:   data.pages   ?? 0,
+        };
+      },
+    },
+
+    stats: async (): Promise<CoordinatorStats> => {
+      const res = await get('/herder/coordinator/stats');
+      return unwrap<CoordinatorStats>(res);
     },
   },
 };

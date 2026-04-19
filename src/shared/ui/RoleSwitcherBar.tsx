@@ -25,17 +25,27 @@ const HERDER_PILL: RolePill = {
   key: 'HERDER', icon: '🐑', label: 'Малчин', color: C.herder, route: '/(herder)/dashboard',
 };
 
+const COORDINATOR_PILL: RolePill = {
+  key: 'COORDINATOR', icon: '🧭', label: 'Координатор', color: C.herder, route: '/(coordinator)/dashboard',
+};
+
 /**
  * Horizontal role switcher shown at the top of each role's home screen.
- * Adds HERDER pill only when the flag is on and the user's backend role
- * is 'herder' — non-herders can't use those routes anyway (requireHerder).
+ * HERDER / COORDINATOR pills appear only when the flag is on and the
+ * user's backend role matches — the underlying routes are gated by
+ * requireHerder / requireCoordinator on the server regardless.
  */
 export function RoleSwitcherBar() {
   const { role, setRole, user } = useAuth();
   if (!user) return null;
 
-  const showHerder = MALCHNAAS_ENABLED && user.role === 'herder';
-  const ROLES: readonly RolePill[] = showHerder ? [...BASE_ROLES, HERDER_PILL] : BASE_ROLES;
+  const showHerder      = MALCHNAAS_ENABLED && user.role === 'herder';
+  const showCoordinator = MALCHNAAS_ENABLED && user.role === 'coordinator';
+  const ROLES: readonly RolePill[] = [
+    ...BASE_ROLES,
+    ...(showHerder ? [HERDER_PILL] : []),
+    ...(showCoordinator ? [COORDINATOR_PILL] : []),
+  ];
 
   function handleSelect(r: RolePill) {
     if (role === r.key) return;
