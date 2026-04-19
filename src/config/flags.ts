@@ -21,8 +21,13 @@ function csvFlag(name: string, fallback: readonly string[]): readonly string[] {
   return v.split(',').map((s) => s.trim().toUpperCase()).filter(Boolean);
 }
 
-/** Build-time default for the Малчнаас шууд kill-switch. */
-export const MALCHNAAS_ENABLED_DEFAULT = boolFlag('EXPO_PUBLIC_MALCHNAAS_ENABLED', false);
+/**
+ * Build-time default for the Малчнаас шууд kill-switch.
+ * Pilot went live — default to ON so the "Малчны булан" section shows on
+ * first boot before the /config/mobile round-trip completes. Ops can still
+ * flip it off from the backend remote-config.
+ */
+export const MALCHNAAS_ENABLED_DEFAULT = boolFlag('EXPO_PUBLIC_MALCHNAAS_ENABLED', true);
 
 /**
  * Build-time default pilot aimag list. Overridable via
