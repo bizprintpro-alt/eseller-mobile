@@ -1,6 +1,6 @@
 import { File } from 'expo-file-system';
 
-const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME ?? '';
+const CLOUD_NAME = process.env.EXPO_PUBLIC_CLOUDINARY_CLOUD_NAME ?? 'duo61k04v';
 const UPLOAD_PRESET = process.env.EXPO_PUBLIC_CLOUDINARY_UPLOAD_PRESET ?? 'eseller_mobile';
 
 export async function uploadImageToCloudinary(localUri: string): Promise<string> {
