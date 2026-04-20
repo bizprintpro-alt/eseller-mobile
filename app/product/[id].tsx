@@ -80,7 +80,11 @@ export default function ProductDetailScreen() {
   })
 
   const p      = product as any
-  const images = p?.images || p?.media || []
+  // images can be string[] (dropship/Prisma) or { url: string }[] (media)
+  const rawImages: any[] = p?.images?.length ? p.images : (p?.media || [])
+  const images = rawImages.map((img: any) =>
+    typeof img === 'string' ? { url: img } : img
+  )
 
   // Start-or-resume conversation with the shop. Backend find-or-creates
   // so a buyer tapping the button twice still lands on the same thread.

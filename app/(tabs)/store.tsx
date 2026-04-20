@@ -154,7 +154,7 @@ function BuyerStoreScreen() {
               }}
             >
               <Image
-                source={{ uri: item.images?.[0] || item.media?.[0]?.url }}
+                source={{ uri: (typeof item.images?.[0] === 'string' ? item.images[0] : item.images?.[0]?.url) || item.media?.[0]?.url }}
                 style={{ width: '100%', aspectRatio: 1, backgroundColor: C.bgSection }}
                 resizeMode="cover"
               />
@@ -162,9 +162,15 @@ function BuyerStoreScreen() {
                 <Text style={{ color: C.text, fontSize: 13, fontWeight: '500' }} numberOfLines={2}>
                   {item.name}
                 </Text>
-                <Text style={{ color: C.brand, fontWeight: '800', fontSize: 14, marginTop: 6 }}>
-                  {item.price?.toLocaleString()}₮
-                </Text>
+                {item.price > 0 ? (
+                  <Text style={{ color: C.brand, fontWeight: '800', fontSize: 14, marginTop: 6 }}>
+                    {item.price.toLocaleString()}₮
+                  </Text>
+                ) : (
+                  <Text style={{ color: '#D97706', fontWeight: '600', fontSize: 12, marginTop: 6 }}>
+                    Үнэ тохируулаагүй
+                  </Text>
+                )}
               </View>
             </TouchableOpacity>
           )}
@@ -336,7 +342,7 @@ function StoreOwnerProductsScreen() {
               borderWidth: 1, borderColor: C.border,
             }}>
               <Image
-                source={{ uri: item.images?.[0] || item.media?.[0]?.url }}
+                source={{ uri: (typeof item.images?.[0] === 'string' ? item.images[0] : item.images?.[0]?.url) || item.media?.[0]?.url }}
                 style={{ width: 90, height: 90, backgroundColor: C.bgSection }}
                 resizeMode="cover"
               />
@@ -345,9 +351,15 @@ function StoreOwnerProductsScreen() {
                   {item.name}
                 </Text>
                 <View style={{ flexDirection: 'row', alignItems: 'center', gap: 8, marginTop: 4 }}>
-                  <Text style={{ color: C.brand, fontWeight: '800', fontSize: 15 }}>
-                    {item.price?.toLocaleString()}₮
-                  </Text>
+                  {item.price > 0 ? (
+                    <Text style={{ color: C.brand, fontWeight: '800', fontSize: 15 }}>
+                      {item.price.toLocaleString()}₮
+                    </Text>
+                  ) : (
+                    <Text style={{ color: '#D97706', fontWeight: '600', fontSize: 12 }}>
+                      Үнэ тохируулаагүй
+                    </Text>
+                  )}
                   <View style={{
                     backgroundColor: (item.stock || 0) > 0 ? C.secondary + '18' : C.error + '18',
                     borderRadius: R.sm, paddingHorizontal: 6, paddingVertical: 2,
