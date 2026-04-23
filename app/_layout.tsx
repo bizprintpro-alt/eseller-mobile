@@ -218,6 +218,8 @@ function AppContent() {
       <Stack.Screen name="(owner)" options={{ headerShown: false }} />
       <Stack.Screen name="(seller)" options={{ headerShown: false }} />
       <Stack.Screen name="(driver)" options={{ headerShown: false }} />
+      <Stack.Screen name="(herder)" options={{ headerShown: false }} />
+      <Stack.Screen name="(coordinator)" options={{ headerShown: false }} />
       <Stack.Screen name="(seller)/influencer" options={{ headerShown: true, title: 'Инфлюэнсер' }} />
       <Stack.Screen name="feed/[id]" options={{ headerShown: true, title: 'Зарын дэлгэрэнгүй' }} />
       <Stack.Screen name="(customer)/wishlist" options={{ headerShown: true, title: 'Хадгалсан' }} />

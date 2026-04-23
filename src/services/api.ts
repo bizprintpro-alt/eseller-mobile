@@ -1,7 +1,9 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';h
+import * as SecureStore from 'expo-secure-store';
 import { router } from 'expo-router';
 
+// DEV: override with EXPO_PUBLIC_API_BASE_URL for physical devices (LAN IP)
+// Default falls back to 10.0.2.2 (Android emulator → host loopback)
 const BASE = process.env.EXPO_PUBLIC_API_BASE_URL
   ?? (__DEV__ ? 'http://10.0.2.2:3000/api' : 'https://eseller.mn/api');
 
