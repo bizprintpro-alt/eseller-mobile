@@ -13,6 +13,15 @@ import { GestureHandlerRootView }
 import AsyncStorage
   from '@react-native-async-storage/async-storage'
 import * as Notifications from 'expo-notifications'
+import * as Sentry from '@sentry/react-native'
+
+// Sentry init — production-only
+Sentry.init({
+  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
+  enabled: !__DEV__,
+  tracesSampleRate: 0.1,
+  environment: __DEV__ ? 'development' : 'production',
+})
 import { useAuth }  from '../src/store/auth'
 import { useRemoteConfig } from '../src/config/remoteFlags'
 import { routeByRole } from '../src/shared/routing'
@@ -213,7 +222,7 @@ function AppContent() {
   )
 }
 
-export default function RootLayout() {
+function RootLayout() {
   return (
     <GestureHandlerRootView style={{ flex: 1 }}>
       <SafeAreaProvider>
@@ -227,6 +236,8 @@ export default function RootLayout() {
     </GestureHandlerRootView>
   )
 }
+
+export default Sentry.wrap(RootLayout)
 
 
 
