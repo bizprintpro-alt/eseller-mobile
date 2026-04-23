@@ -1,36 +1,17 @@
 {
-  "cli": {
-    "version": ">= 12.0.0",
-    "appVersionSource": "local"
-  },
+  "cli": { "version": ">= 5.0.0" },
   "build": {
     "development": {
       "developmentClient": true,
       "distribution": "internal",
-      "ios": {
-        "simulator": true
-      },
-      "android": {
-        "buildType": "apk"
-      }
+      "env": { "EXPO_PUBLIC_API_BASE_URL": "https://eseller.mn/api" }
     },
     "preview": {
       "distribution": "internal",
-      "channel": "production",
-      "android": {
-        "buildType": "apk"
-      }
+      "env": { "EXPO_PUBLIC_API_BASE_URL": "https://eseller.mn/api" }
     },
     "production": {
-      "channel": "production",
-      "autoIncrement": true
-    }
-  },
-  "submit": {
-    "production": {
-      "android": {
-        "track": "internal"
-      }
+      "env": { "EXPO_PUBLIC_API_BASE_URL": "https://eseller.mn/api" }
     }
   }
 }
