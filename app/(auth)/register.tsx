@@ -9,6 +9,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { post }     from '../../src/services/api'
 import { useAuth }  from '../../src/store/auth'
 import { C, R, F }  from '../../src/shared/design'
+import { routeByRole } from '../../src/shared/routing'
 
 export default function RegisterScreen() {
   const { login }              = useAuth()
@@ -58,7 +59,8 @@ export default function RegisterScreen() {
         // Token буцаагаагүй бол login хийх
         await login(email, pass)
       }
-      router.replace('/(tabs)' as any)
+      const user = useAuth.getState().user
+      routeByRole(user?.role)
     } catch (e: any) {
       Alert.alert('Алдаа',
         e.message || 'Бүртгэл үүсгэхэд алдаа гарлаа')
