@@ -1,10 +1,9 @@
 import axios from 'axios';
-import * as SecureStore from 'expo-secure-store';
+import * as SecureStore from 'expo-secure-store';h
 import { router } from 'expo-router';
 
-const BASE = __DEV__
-  ? 'http://192.168.1.9:3000/api'   // local dev
-  : 'https://eseller.mn/api';        // production
+const BASE = process.env.EXPO_PUBLIC_API_BASE_URL
+  ?? (__DEV__ ? 'http://10.0.2.2:3000/api' : 'https://eseller.mn/api');
 
 export const api = axios.create({
   baseURL: BASE,
