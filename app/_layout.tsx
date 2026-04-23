@@ -15,13 +15,17 @@ import AsyncStorage
 import * as Notifications from 'expo-notifications'
 import * as Sentry from '@sentry/react-native'
 
-// Sentry init — production-only
-Sentry.init({
-  dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
-  enabled: !__DEV__,
-  tracesSampleRate: 0.1,
-  environment: __DEV__ ? 'development' : 'production',
-})
+// Sentry init — production-only, guard against missing native module
+try {
+  Sentry.init({
+    dsn: process.env.EXPO_PUBLIC_SENTRY_DSN || '',
+    enabled: !__DEV__,
+    tracesSampleRate: 0.1,
+    environment: __DEV__ ? 'development' : 'production',
+  })
+} catch (e) {
+  console.warn('[Sentry] init failed (native module missing — will work after next EAS build):', e)
+}
 import { useAuth }  from '../src/store/auth'
 import { useRemoteConfig } from '../src/config/remoteFlags'
 import { routeByRole } from '../src/shared/routing'
@@ -237,7 +241,13 @@ function RootLayout() {
   )
 }
 
-export default Sentry.wrap(RootLayout)
+// Wrap with Sentry if available, otherwise export raw (native module may be missing on OTA-only updates)
+let WrappedLayout: typeof RootLayout = RootLayout
+try {
+  WrappedLayout = Sentry.wrap(RootLayout) as typeof RootLayout
+} catch {}
+
+export default WrappedLayout
 
 
 
