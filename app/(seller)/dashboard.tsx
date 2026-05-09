@@ -6,6 +6,7 @@ import { get } from '../../src/services/api'
 import { C, R, F } from '../../src/shared/design'
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
 import { LogoutButton } from '../components/LogoutButton'
+import { SellerNetworkSection } from '../../src/features/sellerNetwork/SellerNetworkSection'
 
 export default function SellerDashboard() {
   const { data, refetch, isRefetching } = useQuery({
@@ -96,6 +97,11 @@ export default function SellerDashboard() {
           </View>
         )}
       </View>
+
+      {/* Seller-network read-only dashboard (PR103) — additive, does not
+          replace the existing affiliate flow above. Sourced from Sarana
+          BFF /api/seller/dashboard which proxies Negd's S2S adapter. */}
+      <SellerNetworkSection />
 
       <LogoutButton />
       <View style={{ height: 40 }} />

@@ -12,14 +12,44 @@ import {
   Card,
   InfoRow,
   MenuRow,
+  StatusBadge,
   PC,
 } from '../components/profile-ui';
 import { getReferralLink, getReferralCode, getTierLabel } from '../../src/utils/profile';
+import { useSellerMe } from '../../src/hooks/useSellerDashboard';
+
+function statusToBadgeState(status?: string): 'ok' | 'pending' | 'missing' {
+  if (status === 'ACTIVE') return 'ok';
+  if (status === 'PENDING') return 'pending';
+  return 'missing';
+}
+
+function mnSellerStatus(s?: string): string {
+  switch (s) {
+    case 'PENDING': return 'Хүлээгдэж байна';
+    case 'ACTIVE': return 'Идэвхтэй';
+    case 'SUSPENDED': return 'Түр түдгэлзүүлсэн';
+    case 'REJECTED': return 'Татгалзсан';
+    default: return s ?? '—';
+  }
+}
+
+function mnKycStatus(s?: string): string {
+  switch (s) {
+    case 'NOT_STARTED': return 'Эхлээгүй';
+    case 'PENDING': return 'Хүлээгдэж байна';
+    case 'APPROVED': return 'Зөвшөөрсөн';
+    case 'REJECTED': return 'Татгалзсан';
+    case 'NEEDS_REVIEW': return 'Шалгалтанд';
+    default: return s ?? '—';
+  }
+}
 
 export default function SellerProfile() {
   const { user } = useAuth();
   const refLink = getReferralLink(user?.id ?? user?._id);
   const refCode = getReferralCode(user?.id ?? user?._id);
+  const me = useSellerMe();
 
   async function copyReferral() {
     try {
@@ -54,6 +84,38 @@ export default function SellerProfile() {
             <InfoRow icon="💰" label="Комиссын хувь"   value="—" />
             <InfoRow icon="🏆" label="Tier"             value={getTierLabel(null)} />
             <InfoRow icon="📊" label="Нийт борлуулалт" value="—" />
+          </Card>
+
+          {/* Seller-network status (PR103). Read-only. Sourced from
+              Sarana BFF /api/seller/me, which proxies Negd's S2S
+              adapter. NOT mutable from mobile. */}
+          <SectionTitle>Худалдагчийн сүлжээний статус</SectionTitle>
+          <Card>
+            {me.isLoading ? (
+              <InfoRow icon="⏳" label="Ачааллаж байна…" value="" />
+            ) : me.isError ? (
+              <InfoRow icon="⚠️" label="Алдаа" value="Дахин оролдоно уу" />
+            ) : me.data ? (
+              <>
+                <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>
+                  <Text style={{ fontSize: 14, color: PC.text }}>Профайлын төлөв</Text>
+                  <StatusBadge status={statusToBadgeState(me.data.resellerProfile.status)} label={mnSellerStatus(me.data.resellerProfile.status)} />
+                </View>
+                <InfoRow icon="🪪" label="KYC" value={mnKycStatus(me.data.resellerProfile.kycStatus)} />
+                <InfoRow
+                  icon="🔗"
+                  label="Identity холбоо"
+                  value={
+                    me.data.identityLink
+                      ? me.data.identityLink.status === 'VERIFIED'
+                        ? 'Баталгаажсан'
+                        : me.data.identityLink.status
+                      : 'Байхгүй'
+                  }
+                />
+                <InfoRow icon="💳" label="Олголтын эрх" value={me.data.financeEligibility === 'NOT_AVAILABLE' ? 'Одоогоор байхгүй' : me.data.financeEligibility} />
+              </>
+            ) : null}
           </Card>
 
           <SectionTitle>Самбар</SectionTitle>
