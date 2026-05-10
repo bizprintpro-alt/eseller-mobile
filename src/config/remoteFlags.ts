@@ -26,7 +26,7 @@
 
 import { create } from 'zustand';
 import AsyncStorage from '@react-native-async-storage/async-storage';
-import { get } from '../services/api';
+import { get, isOfflineError } from '../services/api';
 import {
   MALCHNAAS_ENABLED_DEFAULT,
   MALCHNAAS_PILOT_AIMAGS_DEFAULT,
@@ -34,6 +34,17 @@ import {
 
 const CACHE_KEY  = 'remote-config:v1';
 const REFRESH_MS = 15 * 60 * 1000; // 15 min — lazy refresh on foreground
+
+// Boot lifecycle log. The four messages document which source seeded the
+// effective config so debugging "why is feature X off?" doesn't require
+// reading AsyncStorage.
+//   [config] default loaded            — app started, defaults active
+//   [config] cache loaded              — last-good cache restored over defaults
+//   [config] remote fetched            — /api/config/mobile succeeded
+//   [config] remote failed, using …    — /api/config/mobile errored, kept prior
+const log = (...args: unknown[]) => {
+  if (__DEV__) console.log('[config]', ...args);
+};
 
 export interface MalchnaasConfig {
   enabled:       boolean;
@@ -95,6 +106,7 @@ export const useRemoteConfig = create<RemoteConfigState>((set, getState) => ({
   // Read the most-recent cached payload (if any) into the store. Cheap,
   // synchronous-ish, called at app boot before the first network round-trip.
   hydrate: async () => {
+    log('default loaded');
     try {
       const raw = await AsyncStorage.getItem(CACHE_KEY);
       if (!raw) return;
@@ -105,6 +117,7 @@ export const useRemoteConfig = create<RemoteConfigState>((set, getState) => ({
         source:       'cache',
         lastFetched:  env.t,
       });
+      log('cache loaded', { lastFetched: new Date(env.t).toISOString() });
     } catch {
       // cache corrupt — ignore, defaults remain in place
     }
@@ -124,8 +137,11 @@ export const useRemoteConfig = create<RemoteConfigState>((set, getState) => ({
       set({ malchnaas, source: 'remote', lastFetched: now });
       const env: CachedEnvelope = { t: now, v: { malchnaas } };
       AsyncStorage.setItem(CACHE_KEY, JSON.stringify(env)).catch(() => {});
-    } catch {
+      log('remote fetched');
+    } catch (e: unknown) {
       // Backend not shipped yet, or offline — keep whatever we had.
+      const fallback = getState().source; // 'cache' if hydrate hit, otherwise 'default'
+      log('remote failed, using', fallback, isOfflineError(e) ? '(offline)' : '');
     }
   },
 }));
