@@ -43,9 +43,12 @@ export default function LoginScreen() {
       setBioAvailable(available);
       setBioEnabled(enabled);
       setBioType(type);
-      if (available && enabled) {
-        handleBio();
-      }
+      // ⚠️ DO NOT auto-trigger biometric here. The cold-start gate
+      // (src/shared/sessionGate.ts) is the canonical entry point for
+      // biometric unlock and runs BEFORE we ever route to this screen.
+      // Reaching this screen with a token + bio enabled means the user
+      // explicitly cancelled the prompt or it failed — auto-prompting
+      // again would be a UX trap. The button below is the manual retry.
     })();
     // eslint-disable-next-line react-hooks/exhaustive-deps
   }, []);
@@ -105,10 +108,16 @@ export default function LoginScreen() {
   };
 
   const handleBio = async () => {
-    const ok = await authenticateWithBiometric(
+    const result = await authenticateWithBiometric(
       `${bioType || 'Биометр'}-ээр нэвтрэх`,
     );
-    if (!ok) return;
+    if (!result.success) {
+      // user_cancel / system_cancel → silent. Anything else → tell the user.
+      if (result.error && result.error !== 'user_cancel' && result.error !== 'system_cancel') {
+        Alert.alert('Биометр амжилтгүй', `Код: ${result.error}`);
+      }
+      return;
+    }
     const session = await getBiometricSession();
     if (!session) {
       Alert.alert('Анхаар', 'Сесс дуусжээ. Нууц үгээр дахин нэвтэрнэ үү');

@@ -7,28 +7,54 @@ const BIO_PHONE_KEY = 'eseller_biometric_phone';
 // Legacy key — used to hold plaintext credentials; deleted on migration.
 const LEGACY_BIO_CREDS_KEY = 'eseller_biometric_creds';
 
-export async function isBiometricAvailable(): Promise<{
+const log = (...args: unknown[]) => {
+  if (__DEV__) console.log('[bio]', ...args);
+};
+
+export type BiometricUnavailableReason =
+  | 'no-hardware'
+  | 'not-enrolled'
+  | 'unknown';
+
+export interface BiometricStatus {
   available: boolean;
   type: string;
-}> {
+  reason?: BiometricUnavailableReason;
+}
+
+export async function isBiometricAvailable(): Promise<BiometricStatus> {
   try {
     const hw = await LocalAuth.hasHardwareAsync();
-    if (!hw) return { available: false, type: '' };
+    log('hasHardware:', hw);
+    if (!hw) return { available: false, type: '', reason: 'no-hardware' };
+
     const enrolled = await LocalAuth.isEnrolledAsync();
-    if (!enrolled) return { available: false, type: '' };
+    log('isEnrolled:', enrolled);
+    if (!enrolled) return { available: false, type: '', reason: 'not-enrolled' };
+
     const types = await LocalAuth.supportedAuthenticationTypesAsync();
     const type = types.includes(LocalAuth.AuthenticationType.FACIAL_RECOGNITION)
       ? 'Face ID'
       : 'Touch ID';
+    log('available type:', type);
     return { available: true, type };
-  } catch {
-    return { available: false, type: '' };
+  } catch (e) {
+    log('isBiometricAvailable threw:', (e as Error).message);
+    return { available: false, type: '', reason: 'unknown' };
   }
+}
+
+export interface BiometricAuthResult {
+  success: boolean;
+  /** error code from expo-local-authentication: 'user_cancel', 'system_cancel',
+   *  'authentication_failed', 'lockout', 'lockout_permanent', 'not_enrolled',
+   *  'not_available', 'unknown', 'exception'. */
+  error?: string;
 }
 
 export async function authenticateWithBiometric(
   promptMessage = 'eSeller-д нэвтрэх',
-): Promise<boolean> {
+): Promise<BiometricAuthResult> {
   try {
     const res = await LocalAuth.authenticateAsync({
       promptMessage,
@@ -36,9 +62,12 @@ export async function authenticateWithBiometric(
       fallbackLabel: 'Нууц үг ашиглах',
       disableDeviceFallback: false,
     });
-    return res.success;
-  } catch {
-    return false;
+    log('authenticateAsync result:', res);
+    if (res.success) return { success: true };
+    return { success: false, error: (res as { error?: string }).error || 'unknown' };
+  } catch (e) {
+    log('authenticateAsync threw:', (e as Error).message);
+    return { success: false, error: 'exception' };
   }
 }
 
@@ -49,6 +78,7 @@ export async function authenticateWithBiometric(
  * — we never persist the user's plaintext password.
  */
 export async function enableBiometric(phone: string): Promise<void> {
+  log('enableBiometric for phone:', phone);
   await SecureStore.setItemAsync(BIO_PHONE_KEY, phone);
   await AsyncStorage.setItem(BIO_FLAG_KEY, 'true');
   // Clean up any legacy plaintext credentials from older builds
@@ -65,9 +95,11 @@ export async function getBiometricSession(): Promise<{
   token: string;
 } | null> {
   const enabled = await AsyncStorage.getItem(BIO_FLAG_KEY);
+  log('getBiometricSession enabled flag:', enabled);
   if (enabled !== 'true') return null;
   const phone = await SecureStore.getItemAsync(BIO_PHONE_KEY);
   const token = await SecureStore.getItemAsync('token');
+  log('getBiometricSession phone present:', !!phone, 'token present:', !!token);
   if (!phone || !token) return null;
   return { phone, token };
 }
@@ -78,6 +110,7 @@ export async function isBiometricEnabled(): Promise<boolean> {
 }
 
 export async function disableBiometric(): Promise<void> {
+  log('disableBiometric');
   await AsyncStorage.removeItem(BIO_FLAG_KEY);
   await SecureStore.deleteItemAsync(BIO_PHONE_KEY);
   try { await SecureStore.deleteItemAsync(LEGACY_BIO_CREDS_KEY); } catch {}

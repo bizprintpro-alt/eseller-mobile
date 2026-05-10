@@ -29,6 +29,7 @@ try {
 import { useAuth }  from '../src/store/auth'
 import { useRemoteConfig } from '../src/config/remoteFlags'
 import { routeByRole } from '../src/shared/routing'
+import { runSessionGate } from '../src/shared/sessionGate'
 import {
   registerPushToken,
   resolveNotificationRoute,
@@ -66,8 +67,47 @@ function AppContent() {
     useState(true)
   const [showOnboarding, setOnboarding]  =
     useState(false)
+  // Cold-start session gate. While this runs we keep the splash overlay so
+  // there's no flash of public UI between the splash dismissal and the
+  // biometric prompt / silent restore. See src/shared/sessionGate.ts.
+  const [gateRunning, setGateRunning] = useState(true)
+  const [gateBlocked, setGateBlocked] = useState(false)
   const { user } = useAuth()
   const hasAutoRouted = useRef(false)
+
+  // Run the gate exactly once. It reads SecureStore('token'), prompts
+  // biometric if enabled, and calls restoreSession on success. While the
+  // gate is running OR has resolved to 'biometric-failed' / 'session-invalid'
+  // we hold the splash so the user never lands on a public tab thinking they
+  // were logged out.
+  useEffect(() => {
+    let cancelled = false
+    runSessionGate()
+      .then((result) => {
+        if (cancelled) return
+        if (__DEV__) console.log('[gate] result:', result)
+        if (result.status === 'biometric-failed') {
+          // Caller decided NOT to authenticate. Send them to login instead of
+          // a silently-broken authenticated tree.
+          setGateBlocked(true)
+        }
+      })
+      .catch((e) => {
+        if (__DEV__) console.warn('[gate] unexpected throw:', e)
+      })
+      .finally(() => {
+        if (!cancelled) setGateRunning(false)
+      })
+    return () => { cancelled = true }
+  }, [])
+
+  // If the gate ended in biometric-failed (user dismissed the prompt or it
+  // errored), bounce them to the login screen so they have a way out.
+  useEffect(() => {
+    if (gateRunning) return
+    if (!gateBlocked) return
+    try { router.replace('/(auth)/login' as never) } catch {}
+  }, [gateRunning, gateBlocked])
 
   // OTA update шалгах
   useEffect(() => {
@@ -146,8 +186,10 @@ function AppContent() {
     setOnboarding(false)
   }
 
-  // 1. Splash
-  if (showSplash) {
+  // 1. Splash. Hold it open while the cold-start session gate is still
+  // running so we never flash unauthenticated UI before the biometric
+  // prompt or silent restoreSession finishes.
+  if (showSplash || gateRunning) {
     return (
       <SplashScreen
         onDone={() => setSplash(false)}
