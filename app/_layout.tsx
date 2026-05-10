@@ -77,18 +77,25 @@ function AppContent() {
 
   // Run the gate exactly once. It reads SecureStore('token'), prompts
   // biometric if enabled, and calls restoreSession on success. While the
-  // gate is running OR has resolved to 'biometric-failed' / 'session-invalid'
-  // we hold the splash so the user never lands on a public tab thinking they
-  // were logged out.
+  // gate is running we hold the splash so the user never lands on a public
+  // tab thinking they were logged out.
+  //
+  // Two non-authenticated terminal states require bouncing to login:
+  //   - biometric-failed: user dismissed the prompt or it errored. Token
+  //     was preserved; they can retry from login.
+  //   - session-invalid: /auth/me rejected a stored token (terminal) OR a
+  //     transient/offline error left state empty. Either way the user has
+  //     nothing to operate on and shouldn't see protected UI. The login
+  //     screen reads SESSION_INVALIDATED_KEY itself to decide whether to
+  //     surface the "session expired" alert (only set on real 401, not on
+  //     transient network errors).
   useEffect(() => {
     let cancelled = false
     runSessionGate()
       .then((result) => {
         if (cancelled) return
         if (__DEV__) console.log('[gate] result:', result)
-        if (result.status === 'biometric-failed') {
-          // Caller decided NOT to authenticate. Send them to login instead of
-          // a silently-broken authenticated tree.
+        if (result.status === 'biometric-failed' || result.status === 'session-invalid') {
           setGateBlocked(true)
         }
       })

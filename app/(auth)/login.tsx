@@ -8,6 +8,8 @@ import { router } from 'expo-router';
 import { Ionicons } from '@expo/vector-icons';
 import * as Haptics from 'expo-haptics';
 import * as WebBrowser from 'expo-web-browser';
+import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { useAuth } from '../../src/store/auth';
 import { routeByRole } from '../../src/shared/routing';
 import { C, R } from '../../src/shared/design';
@@ -17,8 +19,10 @@ import {
   authenticateWithBiometric,
   getBiometricSession,
   enableBiometric,
+  disableBiometric,
 } from '../../src/shared/biometric';
 import { OTP_ENABLED_DEFAULT } from '../../src/config/flags';
+import { SESSION_INVALIDATED_KEY } from '../../src/services/api';
 
 const TEST_USERS = [
   { label: '🛍️ Худалдан авагч', phone: '99000001', color: '#1A73E8' },
@@ -40,9 +44,31 @@ export default function LoginScreen() {
     (async () => {
       const { available, type } = await isBiometricAvailable();
       const enabled = await isBiometricEnabled();
+      // Token presence gate — without this, a stale `bio_enabled=true`
+      // flag from an earlier build (or after a 401 wipe) would render
+      // the bio button on the login screen, where tapping it dropped
+      // straight into the "Сесс дуусжээ" alert because there's no token
+      // to restore. issue #46.
+      const token = await SecureStore.getItemAsync('token');
       setBioAvailable(available);
-      setBioEnabled(enabled);
+      setBioEnabled(enabled && !!token);
       setBioType(type);
+
+      // One-shot "session expired" alert. The api.ts 401 interceptor sets
+      // SESSION_INVALIDATED_KEY before redirecting here — only fires for
+      // a real authenticated 401 (not credential-endpoint 401, not offline,
+      // not fresh install). Read once and clear so it never repeats.
+      try {
+        const flag = await AsyncStorage.getItem(SESSION_INVALIDATED_KEY);
+        if (flag === '1') {
+          await AsyncStorage.removeItem(SESSION_INVALIDATED_KEY);
+          Alert.alert(
+            'Сесс хугацаа дууссан',
+            'Аюулгүй байдлын үүднээс дахин нэвтэрнэ үү',
+          );
+        }
+      } catch {}
+
       // ⚠️ DO NOT auto-trigger biometric here. The cold-start gate
       // (src/shared/sessionGate.ts) is the canonical entry point for
       // biometric unlock and runs BEFORE we ever route to this screen.
@@ -120,7 +146,19 @@ export default function LoginScreen() {
     }
     const session = await getBiometricSession();
     if (!session) {
-      Alert.alert('Анхаар', 'Сесс дуусжээ. Нууц үгээр дахин нэвтэрнэ үү');
+      // The mount-time token check should have already hidden the button,
+      // but if a race or a stale phone-hint slipped through, recover
+      // gracefully: turn biometric off so the next attempt won't dead-end
+      // here, and let the user log in with a password. We do NOT show
+      // "Сесс дуусжээ" — that alert is reserved for genuine session-expiry
+      // (api.ts SESSION_INVALIDATED_KEY) and would mislead the user when
+      // there was never an active session to expire.
+      try { await disableBiometric(); } catch {}
+      setBioEnabled(false);
+      Alert.alert(
+        'Биометр дахин тохируулах',
+        'Биометр нэвтрэлт ашиглахын өмнө имэйл/нууц үгээр нэг удаа нэвтэрнэ үү',
+      );
       return;
     }
     try {

@@ -147,10 +147,22 @@ export const useAuth = create<AuthStore>()(
         } catch (e: unknown) {
           const err = e as ApiError;
           const transient = isOfflineError(err) || (err.status != null && err.status >= 500);
-          log('restoreSession failed:', err.message, 'status:', err.status, 'transient:', transient);
+          // Differentiated logs help reproduce-matrix debugging when a user
+          // reports "logged out for no reason". A 401/403 is legitimately
+          // expired credentials; offline/5xx is a transient blip we should
+          // recover from on the next attempt.
+          if (isOfflineError(err)) {
+            log('restoreSession offline/transient', err.message);
+          } else if (err.status === 401 || err.status === 403) {
+            log('restoreSession 401/unauthorized — token will be wiped');
+          } else {
+            log('restoreSession failed:', err.message, 'status:', err.status, 'transient:', transient);
+          }
           if (!transient) {
             // 401/403/404 → token is genuinely invalid; wipe so the next launch
-            // doesn't keep retrying it.
+            // doesn't keep retrying it. (The axios 401 interceptor in api.ts
+            // already wipes for /auth/me, but this also covers shapes like
+            // 200 + missing user that we treated as "Сесс хүчингүй" above.)
             await SecureStore.deleteItemAsync('token');
           }
           set({ user: null, token: null, role: 'BUYER', loading: false });

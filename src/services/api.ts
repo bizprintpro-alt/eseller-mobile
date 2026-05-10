@@ -1,6 +1,34 @@
 import axios from 'axios';
 import * as SecureStore from 'expo-secure-store';
+import AsyncStorage from '@react-native-async-storage/async-storage';
 import { router } from 'expo-router';
+
+/**
+ * One-shot flag set by the 401 interceptor when a *real* session expires
+ * (i.e. an authenticated request the user was making in the background).
+ * The login screen reads this on mount and shows the "session expired"
+ * alert exactly once, then clears it. This is the only mechanism that
+ * should ever produce that alert — manual login / fresh-install must
+ * not surface it.
+ */
+export const SESSION_INVALIDATED_KEY = 'auth:session_just_invalidated';
+
+const apiLog = (...args: unknown[]) => {
+  if (__DEV__) console.log('[api]', ...args);
+};
+
+/** URLs that legitimately produce 401 responses without it meaning "session
+ *  expired" — wrong password or bad OTP code. The interceptor must NOT wipe
+ *  state or set the expired-session flag for these. */
+function isCredentialEndpoint(url: string | undefined): boolean {
+  if (!url) return false;
+  return (
+    url.includes('/auth/login') ||
+    url.includes('/auth/register') ||
+    url.includes('/auth/otp/verify') ||
+    url.includes('/auth/otp/send')
+  );
+}
 
 // DEV: override with EXPO_PUBLIC_API_BASE_URL for physical devices (LAN IP)
 // Default falls back to 10.0.2.2 (Android emulator → host loopback)
@@ -60,16 +88,30 @@ api.interceptors.response.use(
   },
   async (err) => {
     if (err.response?.status === 401) {
-      await SecureStore.deleteItemAsync('token');
-      if (!unauthorizedHandling) {
-        unauthorizedHandling = true;
+      const url = err.config?.url as string | undefined;
+      // Wrong password / bad OTP also returns 401, but it's NOT session
+      // expiry — the user has no session yet. Treat those as plain
+      // request errors (let the caller render its own alert).
+      if (isCredentialEndpoint(url)) {
+        apiLog('onUnauthorized SKIPPED (credential endpoint)', { url });
+      } else {
+        apiLog('onUnauthorized fired', { url });
+        await SecureStore.deleteItemAsync('token');
+        // Mark that a real session-expiry happened. Login screen reads
+        // this once on mount to render the alert.
         try {
-          onUnauthorized?.();
-          // Auth screen руу чиглүүлэх — router mount болсон үед л ажиллана
-          try { router.replace('/(auth)/login' as never); } catch {}
-        } finally {
-          // Дараагийн 401-ийг хүлээж авахын тулд жаахан хугацааны дараа дахин тэнцүүлнэ
-          setTimeout(() => { unauthorizedHandling = false; }, 1000);
+          await AsyncStorage.setItem(SESSION_INVALIDATED_KEY, '1');
+        } catch {}
+        if (!unauthorizedHandling) {
+          unauthorizedHandling = true;
+          try {
+            onUnauthorized?.();
+            // Auth screen руу чиглүүлэх — router mount болсон үед л ажиллана
+            try { router.replace('/(auth)/login' as never); } catch {}
+          } finally {
+            // Дараагийн 401-ийг хүлээж авахын тулд жаахан хугацааны дараа дахин тэнцүүлнэ
+            setTimeout(() => { unauthorizedHandling = false; }, 1000);
+          }
         }
       }
     }
