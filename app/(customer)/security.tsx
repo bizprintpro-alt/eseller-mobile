@@ -1,37 +1,73 @@
 import React, { useState, useEffect } from 'react';
 import { View, Text, ScrollView, Switch, TouchableOpacity, StyleSheet, Alert, TextInput } from 'react-native';
 import { Ionicons } from '@expo/vector-icons';
-import AsyncStorage from '@react-native-async-storage/async-storage';
-import * as LocalAuthentication from 'expo-local-authentication';
 import { C, R, F } from '../../src/shared/design';
+import {
+  isBiometricAvailable,
+  isBiometricEnabled,
+  enableBiometric,
+  disableBiometric,
+  authenticateWithBiometric,
+} from '../../src/shared/biometric';
+import { useAuth } from '../../src/store/auth';
 
 export default function SecurityScreen() {
+  const user = useAuth((s) => s.user);
   const [bioEnabled, setBioEnabled] = useState(false);
   const [bioAvailable, setBioAvailable] = useState(false);
+  const [bioReason, setBioReason] = useState<string | undefined>(undefined);
   const [showPassword, setShowPassword] = useState(false);
   const [oldPw, setOldPw] = useState('');
   const [newPw, setNewPw] = useState('');
 
   useEffect(() => {
-    LocalAuthentication.hasHardwareAsync().then(setBioAvailable);
-    AsyncStorage.getItem('bio_enabled').then(v => setBioEnabled(v === 'true'));
+    (async () => {
+      const status = await isBiometricAvailable();
+      setBioAvailable(status.available);
+      setBioReason(status.reason);
+      setBioEnabled(await isBiometricEnabled());
+    })();
   }, []);
 
   const toggleBio = async () => {
-    if (!bioEnabled) {
-      const result = await LocalAuthentication.authenticateAsync({ promptMessage: 'Биометр баталгаажуулах' });
-      if (!result.success) return;
+    if (bioEnabled) {
+      await disableBiometric();
+      setBioEnabled(false);
+      return;
     }
-    const next = !bioEnabled;
-    setBioEnabled(next);
-    await AsyncStorage.setItem('bio_enabled', String(next));
+
+    // Enabling — confirm hardware/enrollment, prompt biometric, then persist
+    // the phone hint via enableBiometric. The previous version stored only
+    // the flag in AsyncStorage, leaving getBiometricSession() unable to
+    // return a phone, so unlock silently failed even when "enabled".
+    if (!bioAvailable) {
+      const msg = bioReason === 'not-enrolled'
+        ? 'Хурууны хээ / Face ID-аа эхлээд утсандаа бүртгээрэй'
+        : 'Энэ төхөөрөмж дээр биометр боломжгүй';
+      Alert.alert('Боломжгүй', msg);
+      return;
+    }
+
+    const phone = user?.phone;
+    if (!phone) {
+      Alert.alert('Алдаа', 'Биометр идэвхжүүлэхийн тулд утасны дугаартай профайл хэрэгтэй');
+      return;
+    }
+
+    const auth = await authenticateWithBiometric('Биометр баталгаажуулах');
+    if (!auth.success) return;
+
+    await enableBiometric(phone);
+    setBioEnabled(true);
   };
 
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }} contentContainerStyle={{ padding: R.lg, paddingBottom: 60 }}>
       <Text style={{ ...F.h2, color: C.white, marginBottom: R.lg }}>Аюулгүй байдал</Text>
 
-      {/* Biometric */}
+      {/* Biometric — only shown when hardware is present AND a biometric is
+          enrolled. Other states (no hardware, no enrolled) are hidden rather
+          than shown disabled, matching mobile platform conventions. */}
       {bioAvailable && (
         <View style={st.row}>
           <Ionicons name="finger-print" size={22} color={C.primary} />

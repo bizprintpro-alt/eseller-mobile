@@ -2,8 +2,11 @@ import { create } from 'zustand';
 import { persist, createJSONStorage } from 'zustand/middleware';
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import * as SecureStore from 'expo-secure-store';
-import * as LocalAuth from 'expo-local-authentication';
-import { post, get, setOnUnauthorized } from '../services/api';
+import { post, get, setOnUnauthorized, isOfflineError, type ApiError } from '../services/api';
+
+const log = (...args: unknown[]) => {
+  if (__DEV__) console.log('[auth]', ...args);
+};
 
 /** Backend role as returned by the Express API. */
 export type BackendRole =
@@ -39,8 +42,6 @@ interface AuthStore {
   restoreSession: (token: string) => Promise<void>;
   logout:         () => Promise<void>;
   setRole:        (role: AppRole) => void;
-  checkBio:       () => Promise<boolean>;
-  loginWithBio:   () => Promise<boolean>;
 }
 
 // Backend role → app role mapping
@@ -67,6 +68,7 @@ export const useAuth = create<AuthStore>()(
 
       // POST /auth/login (Express backend)
       login: async (identifier, password) => {
+        log('login start');
         set({ loading: true });
         try {
           // Detect phone (digits only, 8 chars) vs email
@@ -78,6 +80,7 @@ export const useAuth = create<AuthStore>()(
           const token = res.token;
           const user = res.user;
           await SecureStore.setItemAsync('token', token);
+          log('login ok, role:', user?.role);
           set({
             user,
             token,
@@ -85,6 +88,7 @@ export const useAuth = create<AuthStore>()(
             loading: false,
           });
         } catch (e: any) {
+          log('login failed:', e?.message);
           set({ loading: false });
           throw new Error(e?.message || 'Нэвтрэх амжилтгүй');
         }
@@ -114,25 +118,43 @@ export const useAuth = create<AuthStore>()(
         return res;
       },
 
-      // Restore a session using a previously issued JWT (e.g. after biometric unlock).
-      // Verifies the token with the backend before marking the user as logged in.
+      // Restore a session using a previously issued JWT (e.g. after biometric
+      // unlock or cold-start gate). Verifies the token with the backend before
+      // marking the user as logged in.
+      //
+      // Error handling distinguishes "the token is bad" from "we couldn't reach
+      // the backend". Only the former wipes SecureStore — a transient 5xx or
+      // network blip used to cause `getBiometricSession()` to return null on
+      // the next attempt because we'd already deleted the JWT.
       restoreSession: async (token: string) => {
+        log('restoreSession start, token len:', token?.length);
         set({ loading: true });
         try {
           await SecureStore.setItemAsync('token', token);
           const res: any = await get('/auth/me');
           const user = res?.user || res;
-          if (!user || !user.email) throw new Error('Сесс хүчингүй');
+          if (!user || !user.email) {
+            log('restoreSession: /auth/me returned no usable user');
+            throw new Error('Сесс хүчингүй');
+          }
+          log('restoreSession ok, role:', user.role);
           set({
             user,
             token,
             role: mapRole(user?.role),
             loading: false,
           });
-        } catch (e: any) {
-          await SecureStore.deleteItemAsync('token');
+        } catch (e: unknown) {
+          const err = e as ApiError;
+          const transient = isOfflineError(err) || (err.status != null && err.status >= 500);
+          log('restoreSession failed:', err.message, 'status:', err.status, 'transient:', transient);
+          if (!transient) {
+            // 401/403/404 → token is genuinely invalid; wipe so the next launch
+            // doesn't keep retrying it.
+            await SecureStore.deleteItemAsync('token');
+          }
           set({ user: null, token: null, role: 'BUYER', loading: false });
-          throw new Error(e?.message || 'Сесс сэргээх амжилтгүй');
+          throw new Error(err?.message || 'Сесс сэргээх амжилтгүй');
         }
       },
 
@@ -142,37 +164,17 @@ export const useAuth = create<AuthStore>()(
       },
 
       setRole: (role) => set({ role }),
-
-      checkBio: async () => {
-        try {
-          const hw = await LocalAuth.hasHardwareAsync();
-          const en = await LocalAuth.isEnrolledAsync();
-          return hw && en;
-        } catch {
-          return false;
-        }
-      },
-
-      loginWithBio: async () => {
-        try {
-          const result = await LocalAuth.authenticateAsync({
-            promptMessage:         'Нэвтрэхийн тулд',
-            cancelLabel:           'Болих',
-            disableDeviceFallback: false,
-          });
-          return result.success;
-        } catch {
-          return false;
-        }
-      },
     }),
     {
       name:    'auth-store',
       storage: createJSONStorage(() => AsyncStorage),
-      partialize: (state) => ({
-        user: state.user,
-        role: state.role,
-      }),
+      // ⚠️ DO NOT persist `user` or `token` here. The token lives in SecureStore,
+      // and persisting `user` without the token makes the app appear logged in
+      // on cold start while every API call 401s — which then triggers the axios
+      // 401 interceptor that wipes SecureStore, defeating biometric restore.
+      // The cold-start gate (src/shared/sessionGate.ts) is the only path that
+      // populates `user`/`token`, and it does so by verifying with /auth/me.
+      partialize: (state) => ({ role: state.role }),
     },
   ),
 );
