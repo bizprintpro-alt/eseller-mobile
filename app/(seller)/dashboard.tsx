@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import { get } from '../../src/services/api'
 import { C, R, F } from '../../src/shared/design'
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
+import { EmptyState } from '../../src/shared/ui/EmptyState'
 import { LogoutButton } from '../components/LogoutButton'
 import { SellerNetworkSection } from '../../src/features/sellerNetwork/SellerNetworkSection'
 
@@ -91,10 +92,7 @@ export default function SellerDashboard() {
           </View>
         ))}
         {!((data as any)?.recent?.length || (data as any)?.commissions?.length) && (
-          <View style={{ alignItems: 'center', padding: 40 }}>
-            <Text style={{ fontSize: 40 }}>💸</Text>
-            <Text style={{ color: C.textSub, marginTop: 8 }}>Одоогоор орлого байхгүй</Text>
-          </View>
+          <EmptyState icon="💸" title="Одоогоор орлого байхгүй" />
         )}
       </View>
 

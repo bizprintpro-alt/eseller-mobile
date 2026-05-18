@@ -6,6 +6,7 @@ import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/store/auth';
 import { LogoutButton } from '../components/LogoutButton';
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
+import { ErrorState } from '../../src/shared/ui/ErrorState';
 import {
   ProfileHeader,
   SectionTitle,
@@ -94,7 +95,12 @@ export default function SellerProfile() {
             {me.isLoading ? (
               <InfoRow icon="⏳" label="Ачааллаж байна…" value="" />
             ) : me.isError ? (
-              <InfoRow icon="⚠️" label="Алдаа" value="Дахин оролдоно уу" />
+              <ErrorState
+                compact
+                title="Статус ачаалж чадсангүй"
+                subtitle="Дахин оролдоно уу"
+                onRetry={me.refetch}
+              />
             ) : me.data ? (
               <>
                 <View style={{ flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between', paddingVertical: 8 }}>

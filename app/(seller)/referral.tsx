@@ -1,7 +1,8 @@
 import React, { useState } from 'react'
-import { View, Text, StyleSheet, TouchableOpacity, Share, Alert, ScrollView } from 'react-native'
+import { View, Text, StyleSheet, TouchableOpacity, Share, ScrollView } from 'react-native'
 import { Ionicons } from '@expo/vector-icons'
 import * as Clipboard from 'expo-clipboard'
+import { C, R, F } from '../../src/shared/design'
 
 export default function ReferralScreen() {
   const [copied, setCopied] = useState(false)
@@ -13,6 +14,10 @@ export default function ReferralScreen() {
     setCopied(true)
     setTimeout(() => setCopied(false), 2000)
   }
+  // Hidden behind the (seller) tabs href:null; only reachable via push from
+  // SellerProfile. Static placeholder data here is unchanged in this PR —
+  // hooking it to /api/seller/referral-summary is deferred (no API/business
+  // logic changes in the shell-UI normalization).
 
   const shareLink = async () => {
     await Share.share({
@@ -60,20 +65,44 @@ export default function ReferralScreen() {
 }
 
 const styles = StyleSheet.create({
-  container: { flex: 1, backgroundColor: '#f5f5f5' },
-  hero: { backgroundColor: '#e74c3c', padding: 32, alignItems: 'center', gap: 8 },
-  heroTitle: { fontSize: 24, fontWeight: '800', color: '#fff' },
-  heroSub: { fontSize: 14, color: 'rgba(255,255,255,0.8)' },
-  card: { backgroundColor: '#fff', margin: 16, padding: 20, borderRadius: 16, shadowColor: '#000', shadowOpacity: 0.08, shadowRadius: 6, elevation: 3 },
-  label: { fontSize: 13, color: '#888', marginBottom: 8 },
-  code: { fontSize: 28, fontWeight: '900', color: '#e74c3c', letterSpacing: 2 },
-  linkText: { fontSize: 12, color: '#666', marginTop: 4, marginBottom: 16 },
-  btnRow: { flexDirection: 'row', gap: 10 },
-  btn: { flex: 1, flexDirection: 'row', alignItems: 'center', justifyContent: 'center', gap: 6, backgroundColor: '#e74c3c', padding: 12, borderRadius: 10 },
-  btnSuccess: { backgroundColor: '#2ecc71' },
-  btnText: { color: '#fff', fontWeight: '700' },
-  statsRow: { flexDirection: 'row', gap: 12, marginHorizontal: 16 },
-  statCard: { flex: 1, backgroundColor: '#fff', padding: 16, borderRadius: 12, alignItems: 'center' },
-  statNum: { fontSize: 22, fontWeight: '800', color: '#333' },
-  statLabel: { fontSize: 12, color: '#888', marginTop: 4 },
+  container: { flex: 1, backgroundColor: C.bg },
+  hero: { backgroundColor: C.brand, padding: R.xxxl, alignItems: 'center', gap: R.sm },
+  heroTitle: { ...F.h2, color: C.white },
+  heroSub: { ...F.small, color: 'rgba(255,255,255,0.8)' },
+  card: {
+    backgroundColor: C.bgCard,
+    margin: R.lg,
+    padding: R.xl,
+    borderRadius: R.lg,
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  label: { ...F.small, color: C.textMuted, marginBottom: R.sm },
+  code: { fontSize: 28, fontWeight: '900', color: C.brand, letterSpacing: 2 },
+  linkText: { ...F.tiny, color: C.textSub, marginTop: R.xs, marginBottom: R.lg },
+  btnRow: { flexDirection: 'row', gap: R.sm },
+  btn: {
+    flex: 1,
+    flexDirection: 'row',
+    alignItems: 'center',
+    justifyContent: 'center',
+    gap: R.xs,
+    backgroundColor: C.brand,
+    padding: R.md,
+    borderRadius: R.md,
+  },
+  btnSuccess: { backgroundColor: C.success },
+  btnText: { color: C.white, fontWeight: '700' },
+  statsRow: { flexDirection: 'row', gap: R.md, marginHorizontal: R.lg },
+  statCard: {
+    flex: 1,
+    backgroundColor: C.bgCard,
+    padding: R.lg,
+    borderRadius: R.md,
+    alignItems: 'center',
+    borderWidth: 1,
+    borderColor: C.border,
+  },
+  statNum: { ...F.h2, color: C.text },
+  statLabel: { ...F.tiny, color: C.textMuted, marginTop: R.xs },
 })

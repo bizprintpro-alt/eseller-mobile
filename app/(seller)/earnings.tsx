@@ -4,6 +4,7 @@ import { get } from '../../src/services/api'
 import { C, R, F } from '../../src/shared/design'
 import { useSellerCommissionSummary } from '../../src/hooks/useSellerDashboard'
 import { describeSellerError } from '../../src/api/sellerDashboard'
+import { EmptyState } from '../../src/shared/ui/EmptyState'
 
 export default function SellerEarningsScreen() {
   const { data, refetch, isRefetching } = useQuery({
@@ -46,10 +47,7 @@ export default function SellerEarningsScreen() {
       <View style={{ margin: 12 }}>
         <Text style={{ ...F.h4, color: C.text, marginBottom: 12 }}>Гүйлгээний түүх</Text>
         {commissions.length === 0 ? (
-          <View style={{ alignItems: 'center', padding: 40 }}>
-            <Text style={{ fontSize: 48 }}>💸</Text>
-            <Text style={{ color: C.textSub, marginTop: 12 }}>Гүйлгээ байхгүй байна</Text>
-          </View>
+          <EmptyState icon="💸" title="Гүйлгээ байхгүй байна" />
         ) : commissions.map((c: any, i: number) => (
           <View key={i} style={{ flexDirection: 'row', justifyContent: 'space-between', alignItems: 'center', backgroundColor: C.bgCard, borderRadius: R.lg, padding: 14, marginBottom: 8, borderWidth: 1, borderColor: C.border }}>
             <View style={{ flex: 1 }}>
