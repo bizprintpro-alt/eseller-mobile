@@ -5,6 +5,7 @@ import { Ionicons } from '@expo/vector-icons'
 import * as Haptics from 'expo-haptics'
 import { get } from '../../src/services/api'
 import { C, R } from '../../src/shared/design'
+import { EmptyState } from '../../src/shared/ui/EmptyState'
 
 export default function SellerProductsScreen() {
   const { data, refetch, isRefetching } = useQuery({
@@ -56,12 +57,7 @@ export default function SellerProductsScreen() {
             </TouchableOpacity>
           </TouchableOpacity>
         )}
-        ListEmptyComponent={
-          <View style={{ alignItems: 'center', marginTop: 60 }}>
-            <Text style={{ fontSize: 48 }}>📦</Text>
-            <Text style={{ color: C.textSub, marginTop: 12 }}>Бараа байхгүй байна</Text>
-          </View>
-        }
+        ListEmptyComponent={<EmptyState icon="📦" title="Бараа байхгүй байна" />}
       />
     </View>
   )
