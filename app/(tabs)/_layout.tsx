@@ -8,6 +8,13 @@ import { C, roleColor } from '../../src/shared/design'
 
 type TabItem = { title: string; icon: string; iconActive: string }
 
+// `/(tabs)` is the BUYER root only. STORE / SELLER / DRIVER routes are
+// routed to their own group layouts via routeByRole() in src/shared/routing.ts
+// (e.g. STORE → /(owner)/dashboard) and never land here, so this layout
+// configures only the BUYER tab bar. Hidden screens (store, gold, feed,
+// chat, social, notifications) remain reachable via router.push from
+// home/cart/push-notification deep-links — see app/(tabs)/index.tsx and
+// src/lib/notifications.ts.
 const TAB_CONFIG: Record<string, Record<string, TabItem>> = {
   BUYER: {
     index:   { title: 'Нүүр',    icon: 'home-outline',   iconActive: 'home' },
@@ -15,13 +22,6 @@ const TAB_CONFIG: Record<string, Record<string, TabItem>> = {
     action:  { title: 'Нэмэх',   icon: 'add',            iconActive: 'add' },
     search:  { title: 'Хайлт',   icon: 'search-outline', iconActive: 'search' },
     profile: { title: 'Би',      icon: 'person-outline', iconActive: 'person' },
-  },
-  STORE: {
-    index:   { title: 'Самбар',    icon: 'grid-outline',       iconActive: 'grid' },
-    store:   { title: 'Бараа',     icon: 'cube-outline',       iconActive: 'cube' },
-    feed:    { title: 'Захиалга',  icon: 'receipt-outline',    iconActive: 'receipt' },
-    chat:    { title: 'Чат',       icon: 'chatbubble-outline', iconActive: 'chatbubble' },
-    profile: { title: 'Профайл',   icon: 'person-outline',     iconActive: 'person' },
   },
 }
 
@@ -106,13 +106,6 @@ export default function TabsLayout() {
                 ),
               }}
             />
-          )
-        }
-
-        // Gold tab (legacy BUYER — no longer in config but keep handler)
-        if (name === 'gold') {
-          return (
-            <Tabs.Screen key={name} name={name} options={{ href: null }} />
           )
         }
 
