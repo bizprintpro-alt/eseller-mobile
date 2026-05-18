@@ -25,10 +25,13 @@ const TAB_CONFIG: Record<string, Record<string, TabItem>> = {
   },
 }
 
-// Every screen file under app/(tabs)/ must be registered here
+// Every screen file under app/(tabs)/ must be registered here. Names not
+// present in TAB_CONFIG[role] render as hidden routes (`href: null`) so
+// expo-router doesn't auto-add them to the tab bar with the raw filename
+// as label (which is what produced the "notificatio..." truncation).
 const ALL_TABS = [
   'index', 'orders', 'action', 'search', 'profile',
-  'store', 'feed', 'social', 'chat', 'gold',
+  'store', 'feed', 'social', 'chat', 'gold', 'notifications',
 ] as const
 
 export default function TabsLayout() {

@@ -65,10 +65,6 @@ export default function SellerLayout() {
           tabBarIcon: ({ color }) => <Ionicons name="person" size={22} color={color} />,
         }}
       />
-      <Tabs.Screen
-        name="influencer"
-        options={{ href: null }}
-      />
     </Tabs>
   );
 }

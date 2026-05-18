@@ -1,9 +1,7 @@
-import React, { useState } from 'react';
+import React from 'react';
 import { View, Text, ScrollView, Switch } from 'react-native';
 import { router } from 'expo-router';
-import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/store/auth';
-import { post } from '../../src/services/api';
 import { LogoutButton } from '../components/LogoutButton';
 import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
 import {
@@ -16,20 +14,14 @@ import {
   PC,
 } from '../components/profile-ui';
 
+// Online/offline status broadcasting (`POST /driver/status`) is not yet
+// shipped by the backend. The toggle is rendered disabled with a clear
+// "Backend бэлэн болоогүй" state so drivers don't see a fake success when
+// flipping it. When the endpoint lands, restore the local `useState` +
+// `toggleOnline` and re-enable the Switch.
+
 export default function DriverProfile() {
   const { user } = useAuth();
-  const [isOnline, setIsOnline] = useState(false);
-
-  async function toggleOnline(next: boolean) {
-    setIsOnline(next);
-    Haptics.impactAsync(Haptics.ImpactFeedbackStyle.Light).catch(() => {});
-    // TODO: backend endpoint /driver/status not yet implemented
-    try {
-      await post('/driver/status', { online: next });
-    } catch {
-      /* silent — local-only until backend lands */
-    }
-  }
 
   return (
     <View style={{ flex: 1, backgroundColor: PC.bg }}>
@@ -40,10 +32,10 @@ export default function DriverProfile() {
           icon="🚚"
           name={user?.name ?? 'Жолооч'}
           sub={user?.phone ?? user?.email ?? ''}
-          roleLabel={isOnline ? '🟢 ОНЛАЙН' : '⚪ ОФФЛАЙН'}
+          roleLabel="🚚 Жолооч"
         />
 
-        {/* Online / Offline toggle — big */}
+        {/* Online / Offline toggle — disabled until /driver/status ships */}
         <View
           style={{
             marginHorizontal: 12,
@@ -56,22 +48,21 @@ export default function DriverProfile() {
             flexDirection: 'row',
             alignItems: 'center',
             gap: 12,
+            opacity: 0.7,
           }}
         >
-          <Text style={{ fontSize: 26 }}>{isOnline ? '🟢' : '⚪'}</Text>
+          <Text style={{ fontSize: 26 }}>🟡</Text>
           <View style={{ flex: 1 }}>
             <Text style={{ fontSize: 15, fontWeight: '800', color: PC.text }}>
-              {isOnline ? 'Хүргэлт хүлээн авна' : 'Хүргэлт хүлээн авахгүй'}
+              Онлайн төлөв
             </Text>
             <Text style={{ fontSize: 11, color: PC.textMuted, marginTop: 2 }}>
-              {isOnline
-                ? 'Шинэ захиалгын мэдэгдэл ирнэ'
-                : 'Онлайн болох хэрэгтэй үед асаа'}
+              Backend бэлэн болоогүй — удахгүй идэвхжинэ
             </Text>
           </View>
           <Switch
-            value={isOnline}
-            onValueChange={toggleOnline}
+            value={false}
+            disabled
             trackColor={{ true: '#10B981', false: '#D1D5DB' }}
             thumbColor="#fff"
           />
