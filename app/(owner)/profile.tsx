@@ -5,7 +5,6 @@ import { useQuery } from '@tanstack/react-query';
 import { useAuth } from '../../src/store/auth';
 import { get } from '../../src/services/api';
 import { LogoutButton } from '../components/LogoutButton';
-import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
 import {
   ProfileHeader,
   SectionTitle,
@@ -28,7 +27,6 @@ export default function OwnerProfile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: PC.bg }}>
-      <RoleSwitcherBar />
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <ProfileHeader
           gradient={['#059669', '#10B981']}

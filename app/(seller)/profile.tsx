@@ -5,7 +5,6 @@ import * as Clipboard from 'expo-clipboard';
 import * as Haptics from 'expo-haptics';
 import { useAuth } from '../../src/store/auth';
 import { LogoutButton } from '../components/LogoutButton';
-import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
 import { ErrorState } from '../../src/shared/ui/ErrorState';
 import {
   ProfileHeader,
@@ -62,7 +61,6 @@ export default function SellerProfile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: PC.bg }}>
-      <RoleSwitcherBar />
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <ProfileHeader
           gradient={['#7C3AED', '#A855F7']}

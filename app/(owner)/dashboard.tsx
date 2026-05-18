@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { get } from '../../src/services/api'
 import { C, R } from '../../src/shared/design'
-import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
 
 export default function OwnerDashboard() {
   const { data, refetch, isRefetching } = useQuery({
@@ -34,9 +33,11 @@ export default function OwnerDashboard() {
       style={{ flex: 1, backgroundColor: C.bg }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.brand} />}
     >
-      <View style={{ paddingTop: 52 }}>
-        <RoleSwitcherBar />
-      </View>
+      {/* Top spacer — was a wrapper around RoleSwitcherBar; the bar was
+          removed for the production shell (kept as a component for future
+          dev-only / settings-tool use). The spacer stays to preserve the
+          status-bar clearance the dashboard header relied on. */}
+      <View style={{ paddingTop: 52 }} />
 
       <View style={{ padding: 16 }}>
         <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>Самбар</Text>
