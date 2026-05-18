@@ -3,7 +3,6 @@ import { View, Text, ScrollView, Switch } from 'react-native';
 import { router } from 'expo-router';
 import { useAuth } from '../../src/store/auth';
 import { LogoutButton } from '../components/LogoutButton';
-import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
 import {
   ProfileHeader,
   SectionTitle,
@@ -25,7 +24,6 @@ export default function DriverProfile() {
 
   return (
     <View style={{ flex: 1, backgroundColor: PC.bg }}>
-      <RoleSwitcherBar />
       <ScrollView contentContainerStyle={{ paddingBottom: 120 }}>
         <ProfileHeader
           gradient={['#EA580C', '#F97316']}

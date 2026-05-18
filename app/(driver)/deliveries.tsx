@@ -7,7 +7,6 @@ import { useFocusEffect } from 'expo-router';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import * as Haptics from 'expo-haptics';
 import { get, post } from '../../src/services/api';
-import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar';
 import { LogoutButton } from '../components/LogoutButton';
 
 export default function DriverDeliveriesScreen() {
@@ -53,9 +52,10 @@ export default function DriverDeliveriesScreen() {
 
   return (
     <View style={s.screen}>
-      <View style={{ paddingTop: 44 }}>
-        <RoleSwitcherBar />
-      </View>
+      {/* Top spacer — was a wrapper around RoleSwitcherBar; the bar was
+          removed for the production shell. Spacer kept for status-bar
+          clearance. */}
+      <View style={{ paddingTop: 44 }} />
       <View style={[s.header, { flexDirection: 'row', alignItems: 'center', justifyContent: 'space-between' }]}>
         <Text style={s.headerTitle}>🚚 Хүргэлтийн самбар</Text>
         <LogoutButton variant="icon" />

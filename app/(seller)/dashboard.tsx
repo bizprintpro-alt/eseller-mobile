@@ -4,7 +4,6 @@ import { useQuery } from '@tanstack/react-query'
 import { Ionicons } from '@expo/vector-icons'
 import { get } from '../../src/services/api'
 import { C, R, F } from '../../src/shared/design'
-import { RoleSwitcherBar } from '../../src/shared/ui/RoleSwitcherBar'
 import { EmptyState } from '../../src/shared/ui/EmptyState'
 import { LogoutButton } from '../components/LogoutButton'
 import { SellerNetworkSection } from '../../src/features/sellerNetwork/SellerNetworkSection'
@@ -34,9 +33,11 @@ export default function SellerDashboard() {
   return (
     <ScrollView style={{ flex: 1, backgroundColor: C.bg }}
       refreshControl={<RefreshControl refreshing={isRefetching} onRefresh={refetch} tintColor={C.brand} />}>
-      <View style={{ paddingTop: 52 }}>
-        <RoleSwitcherBar />
-      </View>
+      {/* Top spacer — was a wrapper around RoleSwitcherBar; the bar was
+          removed for the production shell (kept as a component for future
+          dev-only / settings-tool use). The spacer stays to preserve the
+          status-bar clearance the dashboard header relied on. */}
+      <View style={{ paddingTop: 52 }} />
       <View style={{ padding: 16 }}>
         <Text style={{ color: C.text, fontSize: 22, fontWeight: '900' }}>Самбар</Text>
         <Text style={{ color: C.textSub, fontSize: 13, marginTop: 4 }}>Борлуулагчийн хяналтын самбар</Text>
