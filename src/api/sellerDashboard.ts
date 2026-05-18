@@ -95,9 +95,13 @@ export class SellerApiError extends Error {
 }
 
 function unwrap<T>(envelope: unknown): T {
+  // Fallback messages are user-facing — errorMessageForCode() returns
+  // err.message verbatim for INTERNAL_ERROR, so these strings can reach
+  // the UI. Keep them in Mongolian to stay consistent with the rest of
+  // the seller shell copy.
   if (!envelope || typeof envelope !== 'object') {
     throw new SellerApiError(
-      { code: 'INTERNAL_ERROR', message: 'Empty response from server' },
+      { code: 'INTERNAL_ERROR', message: 'Сервэрийн хариу хоосон байна.' },
       undefined,
     );
   }
@@ -105,12 +109,12 @@ function unwrap<T>(envelope: unknown): T {
   if (e.ok && 'data' in e) return e.data;
   if (!e.ok) {
     throw new SellerApiError(
-      e.error ?? { code: 'INTERNAL_ERROR', message: 'Unknown server error' },
+      e.error ?? { code: 'INTERNAL_ERROR', message: 'Сервэрийн алдаа гарлаа.' },
       e.correlationId,
     );
   }
   throw new SellerApiError(
-    { code: 'INTERNAL_ERROR', message: 'Malformed seller dashboard response' },
+    { code: 'INTERNAL_ERROR', message: 'Сервэрийн өгөгдөл буруу байна.' },
     undefined,
   );
 }

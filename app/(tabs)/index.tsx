@@ -32,7 +32,7 @@ const QA_ITEMS = [
   { icon: 'car-outline' as const, label: 'Хүргэлт', color: '#EA580C', bg: '#FFF7ED', route: '/track/search' },
   { icon: 'cash-outline' as const, label: 'Хэтэвч', color: '#059669', bg: '#ECFDF5', route: '/(customer)/wallet' },
   { icon: 'star-outline' as const, label: 'Gold', color: '#CA8A04', bg: '#FEF9C3', route: '/(customer)/tier-details' },
-  { icon: 'heart-outline' as const, label: 'Wishlist', color: '#E11D48', bg: '#FFF1F2', route: '/(customer)/wishlist' },
+  { icon: 'heart-outline' as const, label: 'Хадгалсан', color: '#E11D48', bg: '#FFF1F2', route: '/(customer)/wishlist' },
   { icon: 'chatbubble-outline' as const, label: 'Чат', color: '#2563EB', bg: '#EFF6FF', route: '/chat/list' },
   { icon: 'globe-outline' as const, label: 'Dropship', color: '#16A34A', bg: '#F0FDF4', route: '/(customer)/dropship' },
   { icon: 'lock-closed-outline' as const, label: 'BNPL', color: '#7C3AED', bg: '#FAF5FF', route: '/(customer)/bnpl' },
@@ -56,7 +56,7 @@ const SERVICE_ITEMS_BASE = [
   {
     icon: 'people' as const,
     color: '#7C3AED',
-    name: 'Referral',
+    name: 'Урилгын код',
     sub: 'Найзаа урих',
     route: '/(customer)/become-seller',
   },
