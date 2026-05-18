@@ -77,13 +77,13 @@ export default function SellerProfile() {
           <Card>
             <InfoRow
               icon="🔗"
-              label="Referral код"
+              label="Урилгын код"
               value={refCode}
               accent="#7C3AED"
               onCopy={copyReferral}
             />
             <InfoRow icon="💰" label="Комиссын хувь"   value="—" />
-            <InfoRow icon="🏆" label="Tier"             value={getTierLabel(null)} />
+            <InfoRow icon="🏆" label="Түвшин"           value={getTierLabel(null)} />
             <InfoRow icon="📊" label="Нийт борлуулалт" value="—" />
           </Card>
 

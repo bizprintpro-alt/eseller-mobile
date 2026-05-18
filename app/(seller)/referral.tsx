@@ -30,7 +30,7 @@ export default function ReferralScreen() {
     <ScrollView style={styles.container}>
       <View style={styles.hero}>
         <Ionicons name="gift-outline" size={48} color="#fff" />
-        <Text style={styles.heroTitle}>Миний Referral</Text>
+        <Text style={styles.heroTitle}>Миний урилгын код</Text>
         <Text style={styles.heroSub}>Найздаа хуваалц — комисс ол</Text>
       </View>
 
